@@ -1,462 +1,52 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, X, CheckCircle2, Undo2, Paperclip } from "lucide-react";
+import { Plus, Search, X, CheckCircle2, Undo2, Pencil, Trash2, Eye } from "lucide-react";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
-import { getAccounts, uploadReceipt, type Account } from "../lib/finance";
+import { getAccounts, uploadReceipt, updateExpense, deleteExpense, type Account } from "../lib/finance";
 import { createExpenseWithOptionalRecurrence, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
 import { generateRecurringExpenses, getRecurrences, setRecurrenceActive, type Recurrence } from "../services/recurrences";
 import { money, Badge, Empty, dateOnly, formatDate, formatMonth } from "../components/UI";
-type Expense = {
-  id: string;
-  descricao: string;
-  categoria?: string;
-  competencia?: string;
-  data_vencimento: string;
-  valor: number;
-  status: string;
-  fornecedor?: string;
-  comprovante_url?: string;
-  conta_bancaria_id?: string;
-  contas_bancarias?: { nome: string } | null;
-  recorrente: boolean;
-};
-const month = new Date().toISOString().slice(0, 7);
-export default function Expenses() {
-  const [rows, setRows] = useState<Expense[]>([]),
-    [accounts, setAccounts] = useState<Account[]>([]),
-    [recurrences, setRecurrences] = useState<Recurrence[]>([]),
-    [form, setForm] = useState(false),
-    [pay, setPay] = useState<Expense | null>(null),
-    [search, setSearch] = useState(""),
-    [status, setStatus] = useState(""),
-    [filterMonth, setFilterMonth] = useState(month),
-    [error, setError] = useState("");
-  async function load() {
-    if (!isConfigured) return;
-    const [data, a, recurrenceRows] = await Promise.all([getExpenses(), getAccounts(), getRecurrences().catch(() => [])]);
-    const accountName = new Map(a.map((x) => [x.id, x.nome]));
-    setRows(data.map((x: any) => ({ ...x, contas_bancarias: x.conta_id ? { nome: accountName.get(x.conta_id) || "—" } : null })) as Expense[]);
-    setAccounts(a);
-    setRecurrences(recurrenceRows);
-  }
-  useEffect(() => {
-    load();
-  }, []);
-  const visible = useMemo(
-    () =>
-      rows.filter(
-        (x) =>
-          (!search ||
-            JSON.stringify(x).toLowerCase().includes(search.toLowerCase())) &&
-          (!status || x.status === status) &&
-          (!filterMonth ||
-            dateOnly(x.competencia || x.data_vencimento).startsWith(filterMonth)),
-      ),
-    [rows, search, status, filterMonth],
-  );
-  const total = visible.reduce((a, x) => a + Number(x.valor), 0),
-    paid = visible
-      .filter((x) => x.status === "pago")
-      .reduce((a, x) => a + Number(x.valor), 0),
-    pending = visible
-      .filter((x) => x.status === "pendente")
-      .reduce((a, x) => a + Number(x.valor), 0);
-  async function create(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError("");
-    const d: any = Object.fromEntries(new FormData(e.currentTarget));
-    d.valor = Number(d.valor);
-    d.recorrente = d.repetir === "on";
-    delete d.repetir;
-    const months = Number(d.quantidade_meses || 1);
-    delete d.quantidade_meses;
-    try {
-      await createExpenseWithOptionalRecurrence(d, months);
-      setForm(false);
-      load();
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }
-  async function confirmPayment(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!pay) return;
-    const f = e.currentTarget,
-      d: any = Object.fromEntries(new FormData(f));
-    try {
-      const file = (f.elements.namedItem("arquivo") as HTMLInputElement)
-        .files?.[0];
-      if (file) d.comprovante_id = await uploadReceipt(file);
-      await payExpense({ despesa_id: pay.id, conta_id: d.conta_id, valor_pago: Number(d.valor),
-        data_pagamento: d.data_pagamento, comprovante_id: d.comprovante_id || "", observacao: d.observacao || "" });
-      setPay(null);
-      load();
-    } catch (e: any) {
-      setError(e.message);
-    }
-  }
-  async function reverse(x: Expense) {
-    const data = await findActivePayment(x.id);
-    if (!data) return alert("Pagamento ativo não encontrado.");
-    if (!confirm("Estornar o pagamento e devolver o saldo à conta?")) return;
-    try { await reverseExpensePayment({ pagamento_id: data.id, observacao: "Estorno manual" }); await load(); }
-    catch (e: any) { alert(e.message); }
-  }
-  async function runRecurrences() {
-    try {
-      const result = await generateRecurringExpenses();
-      alert(result.created.length ? `${result.created.length} despesa(s) gerada(s).` : "Nenhuma despesa nova para a competência atual.");
-      await load();
-    } catch (e: any) {
-      alert(e.message);
-    }
-  }
-  async function toggleRecurrence(x: Recurrence) {
-    await setRecurrenceActive(x.id, !x.ativo);
-    await load();
-  }
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Despesas</h2>
-          <p className="text-sm text-slate-500">
-            Cadastre, programe e pague as despesas com segurança.
-          </p>
-        </div>
-        <button
-          onClick={() => setForm(true)}
-          className="flex items-center gap-2 rounded-xl bg-[#0b2b66] px-5 py-3 text-sm font-semibold text-white"
-        >
-          <Plus size={18} />
-          Cadastrar despesa
-        </button>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <Summary title="Total do mês" value={total} />
-        <Summary title="Pagas" value={paid} green />
-        <Summary title="Pendentes" value={pending} amber />
-      </div>
-      <div className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-3">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-2.5 text-slate-400"
-            size={18}
-          />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar despesa..."
-            className="w-full rounded-lg border py-2 pl-10 pr-3"
-          />
-        </div>
-        <input
-          type="month"
-          value={filterMonth}
-          onChange={(e) => setFilterMonth(e.target.value)}
-          className="rounded-lg border px-3"
-        />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="rounded-lg border px-3"
-        >
-          <option value="">Todos os status</option>
-          <option value="pendente">Pendente</option>
-          <option value="pago">Pago</option>
-          <option value="cancelado">Cancelado</option>
-        </select>
-      </div>
-      <div className="overflow-hidden rounded-xl border bg-white">
-        {visible.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1050px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500">
-                <tr>
-                  {[
-                    "Descrição",
-                    "Categoria",
-                    "Competência",
-                    "Vencimento",
-                    "Valor",
-                    "Conta",
-                    "Comprovante",
-                    "Status",
-                    "Ações",
-                  ].map((x) => (
-                    <th className="px-4 py-3" key={x}>
-                      {x}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((x) => (
-                  <tr className="border-t" key={x.id}>
-                    <td className="px-4 py-4 font-medium">{x.descricao}</td>
-                    <td className="px-4">{x.categoria || "—"}</td>
-                    <td className="px-4">{formatMonth(x.competencia)}</td>
-                    <td className="px-4">{formatDate(x.data_vencimento)}</td>
-                    <td className="px-4 font-semibold">{money(x.valor)}</td>
-                    <td className="px-4">{x.contas_bancarias?.nome || "—"}</td>
-                    <td className="px-4">
-                      {x.comprovante_url ? (
-                        <Paperclip size={17} className="text-blue-600" />
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="px-4">
-                      <Badge status={x.status} />
-                    </td>
-                    <td className="px-4">
-                      <div className="flex gap-2">
-                        {x.status !== "pago" ? (
-                          <button
-                            onClick={() => setPay(x)}
-                            title="Marcar como paga"
-                            className="rounded-lg bg-emerald-50 p-2 text-emerald-600"
-                          >
-                            <CheckCircle2 size={17} />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => reverse(x)}
-                            title="Estornar pagamento"
-                            className="rounded-lg bg-amber-50 p-2 text-amber-600"
-                          >
-                            <Undo2 size={17} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <Empty />
-        )}
-      </div>
-      <section className="rounded-xl border bg-white p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-bold text-[#0b1d3a]">Recorrências ativas</h3>
-            <p className="text-sm text-slate-500">Modelos usados para gerar despesas mensais sem duplicar competências.</p>
-          </div>
-          <button onClick={runRecurrences} disabled={!isConfigured} className="rounded-xl border border-[#0b2b66] px-4 py-2 text-sm font-semibold text-[#0b2b66] disabled:opacity-50">
-            Gerar mês atual
-          </button>
-        </div>
-        {recurrences.length ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs text-slate-500">
-                <tr>{["Descrição", "Dia", "Valor", "Início", "Status", "Ações"].map((x) => <th key={x} className="px-4 py-3">{x}</th>)}</tr>
-              </thead>
-              <tbody>
-                {recurrences.map((x) => (
-                  <tr key={x.id} className="border-t">
-                    <td className="px-4 py-3 font-medium">{x.descricao}</td>
-                    <td className="px-4">{x.dia_vencimento}</td>
-                    <td className="px-4 font-semibold">{money(x.valor)}</td>
-                    <td className="px-4">{formatDate(x.data_inicio)}</td>
-                    <td className="px-4"><Badge status={x.ativo ? "ativo" : "inativo"} /></td>
-                    <td className="px-4">
-                      <button onClick={() => toggleRecurrence(x)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold text-[#0b2b66]">
-                        {x.ativo ? "Pausar" : "Reativar"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : <Empty />}
-      </section>
-      {form && (
-        <Modal title="Cadastrar despesa" close={() => setForm(false)}>
-          <form onSubmit={create}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <F label="Descrição">
-                <input name="descricao" required className="input" />
-              </F>
-              <F label="Categoria">
-                <input name="categoria" required className="input" />
-              </F>
-              <F label="Vencimento">
-                <input
-                  name="data_vencimento"
-                  type="date"
-                  required
-                  className="input"
-                />
-              </F>
-              <F label="Valor">
-                <input
-                  name="valor"
-                  type="number"
-                  step=".01"
-                  required
-                  className="input"
-                />
-              </F>
-              <F label="Conta prevista">
-                <select name="conta_bancaria_id" className="input">
-                  <option value="">Selecione</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>{a.nome}</option>
-                  ))}
-                </select>
-              </F>
-              <F label="Fornecedor">
-                <input name="fornecedor" className="input" />
-              </F>
-              <label className="flex items-center gap-2 text-sm sm:col-span-2">
-                <input name="repetir" type="checkbox" />
-                Repetir nos próximos meses
-              </label>
-              <F label="Quantidade de meses">
-                <input
-                  name="quantidade_meses"
-                  type="number"
-                  min="1"
-                  max="60"
-                  defaultValue="1"
-                  className="input"
-                />
-              </F>
-              <F label="Observação">
-                <textarea name="observacoes" className="input" />
-              </F>
-            </div>
-            {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-            <Actions cancel={() => setForm(false)} text="Cadastrar despesas" />
-          </form>
-        </Modal>
-      )}
-      {pay && (
-        <Modal title="Confirmar pagamento" close={() => setPay(null)}>
-          <form onSubmit={confirmPayment}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <F label="Data do pagamento">
-                <input
-                  name="data_pagamento"
-                  type="date"
-                  required
-                  defaultValue={new Date().toISOString().slice(0, 10)}
-                  className="input"
-                />
-              </F>
-              <F label="Conta utilizada">
-                <select name="conta_id" required className="input">
-                  <option value="">Selecione</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.nome} · {money(a.saldo_atual)}
-                    </option>
-                  ))}
-                </select>
-              </F>
-              <F label="Valor pago">
-                <input
-                  name="valor"
-                  type="number"
-                  step=".01"
-                  required
-                  defaultValue={pay.valor}
-                  className="input"
-                />
-              </F>
-              <F label="Comprovante">
-                <input
-                  name="arquivo"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="input"
-                />
-              </F>
-              <F label="Observação">
-                <textarea name="observacao" className="input" />
-              </F>
-            </div>
-            {error && <p className="mt-3 text-red-600">{error}</p>}
-            <Actions cancel={() => setPay(null)} text="Confirmar pagamento" />
-          </form>
-        </Modal>
-      )}
-    </div>
-  );
+
+type Expense = { id:string; descricao:string; categoria?:string; competencia?:string; data_vencimento:string; valor:number; status:string; fornecedor?:string; comprovante_url?:string; conta_bancaria_id?:string; conta_id?:string; contas_bancarias?:{nome:string}|null; recorrente:boolean; observacao?:string };
+const month = new Date().toISOString().slice(0,7);
+
+export default function Expenses(){
+  const [rows,setRows]=useState<Expense[]>([]), [accounts,setAccounts]=useState<Account[]>([]), [recurrences,setRecurrences]=useState<Recurrence[]>([]);
+  const [form,setForm]=useState(false), [edit,setEdit]=useState<Expense|null>(null), [pay,setPay]=useState<Expense|null>(null), [details,setDetails]=useState<Expense|null>(null);
+  const [search,setSearch]=useState(""), [status,setStatus]=useState(""), [filterMonth,setFilterMonth]=useState(month), [error,setError]=useState("");
+
+  async function load(force=false){ if(!isConfigured)return; const [data,a,rr]=await Promise.all([getExpenses(force),getAccounts(),getRecurrences().catch(()=>[])]); const names=new Map(a.map(x=>[x.id,x.nome])); setRows(data.map((x:any)=>({...x,contas_bancarias:x.conta_id?{nome:names.get(x.conta_id)||"—"}:null})) as Expense[]); setAccounts(a); setRecurrences(rr); }
+  useEffect(()=>{load();},[]);
+  const visible=useMemo(()=>rows.filter(x=>(!search||JSON.stringify(x).toLowerCase().includes(search.toLowerCase()))&&(!status||x.status===status)&&(!filterMonth||dateOnly(x.competencia||x.data_vencimento).startsWith(filterMonth))),[rows,search,status,filterMonth]);
+  const total=visible.reduce((a,x)=>a+Number(x.valor),0), paid=visible.filter(x=>x.status==="pago").reduce((a,x)=>a+Number(x.valor),0), pending=visible.filter(x=>x.status==="pendente").reduce((a,x)=>a+Number(x.valor),0);
+
+  async function create(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setError("");const d:any=Object.fromEntries(new FormData(e.currentTarget));d.valor=Number(d.valor);d.recorrente=d.repetir==="on";delete d.repetir;const months=Number(d.quantidade_meses||1);delete d.quantidade_meses;try{await createExpenseWithOptionalRecurrence(d,months);setForm(false);await load(true)}catch(e:any){setError(e.message)}}
+  async function saveEdit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();if(!edit)return;setError("");const d:any=Object.fromEntries(new FormData(e.currentTarget));try{await updateExpense(edit.id,{...d,valor:Number(d.valor),conta_id:d.conta_id||""});setEdit(null);await load(true)}catch(e:any){setError(e.message)}}
+  async function remove(x:Expense){if(!confirm(`Excluir a despesa "${x.descricao}"?`))return;try{await deleteExpense(x.id);await load(true)}catch(e:any){alert(e.message)}}
+  async function confirmPayment(e:React.FormEvent<HTMLFormElement>){e.preventDefault();if(!pay)return;const f=e.currentTarget,d:any=Object.fromEntries(new FormData(f));try{const file=(f.elements.namedItem("arquivo") as HTMLInputElement).files?.[0];if(file)d.comprovante_id=await uploadReceipt(file);await payExpense({despesa_id:pay.id,conta_id:d.conta_id,valor_pago:Number(d.valor),data_pagamento:d.data_pagamento,comprovante_id:d.comprovante_id||"",observacao:d.observacao||""});setPay(null);await load(true)}catch(e:any){setError(e.message)}}
+  async function reverse(x:Expense){const p=await findActivePayment(x.id);if(!p)return alert("Pagamento ativo não encontrado.");if(!confirm("Estornar o pagamento e devolver o saldo à conta?"))return;try{await reverseExpensePayment({pagamento_id:p.id,observacao:"Estorno manual"});await load(true)}catch(e:any){alert(e.message)}}
+  async function runRecurrences(){try{const r=await generateRecurringExpenses();alert(r.created.length?`${r.created.length} despesa(s) gerada(s).`:"Nenhuma despesa nova para a competência atual.");await load(true)}catch(e:any){alert(e.message)}}
+  async function toggleRecurrence(x:Recurrence){await setRecurrenceActive(x.id,!x.ativo);await load(true)}
+
+  return <div className="space-y-6">
+    <div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-[28px] font-extrabold text-[#0b1d3a]">Despesas</h2><p className="mt-1 text-[15px] text-slate-500">Controle despesas por competência, sem alongar a página.</p></div><button onClick={()=>setForm(true)} className="flex items-center gap-2 rounded-lg bg-[#0b2b66] px-5 py-3 font-bold text-white"><Plus size={18}/>Cadastrar despesa</button></div>
+    <div className="grid gap-4 md:grid-cols-3"><Summary title="Total no período" value={total}/><Summary title="Pagas" value={paid} green/><Summary title="Pendentes" value={pending} amber/></div>
+    <div className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-3"><div className="relative"><Search className="absolute left-3 top-4 text-slate-400" size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar despesa..." className="h-13 w-full rounded-lg border py-2 pl-10 pr-3"/></div><input type="month" value={filterMonth} onChange={e=>setFilterMonth(e.target.value)} className="h-13 rounded-lg border px-3"/><select value={status} onChange={e=>setStatus(e.target.value)} className="h-13 rounded-lg border px-3"><option value="">Todos os status</option><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="cancelado">Cancelado</option></select></div>
+
+    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">{visible.length?<div className="max-h-[500px] overflow-auto"><table className="w-full min-w-[1180px] text-left"><thead className="sticky top-0 z-10"><tr>{["Descrição","Categoria","Competência","Vencimento","Valor","Conta","Status","Ações"].map(x=><th key={x} className="px-4 py-4">{x}</th>)}</tr></thead><tbody>{visible.map(x=><tr key={x.id}><td className="px-4 py-4 font-bold">{x.descricao}</td><td className="px-4">{x.categoria||"—"}</td><td className="px-4">{formatMonth(x.competencia)}</td><td className="px-4">{formatDate(x.data_vencimento)}</td><td className="px-4 font-extrabold">{money(x.valor)}</td><td className="px-4">{x.contas_bancarias?.nome||"—"}</td><td className="px-4"><Badge status={x.status}/></td><td className="px-4"><div className="flex gap-1"><Action title="Detalhes" onClick={()=>setDetails(x)}><Eye size={17}/></Action><Action title="Editar" onClick={()=>setEdit(x)} disabled={x.status==="pago"}><Pencil size={17}/></Action>{x.status!=="pago"?<Action title="Marcar como paga" green onClick={()=>setPay(x)}><CheckCircle2 size={17}/></Action>:<Action title="Estornar" amber onClick={()=>reverse(x)}><Undo2 size={17}/></Action>}<Action title="Excluir" danger onClick={()=>remove(x)} disabled={x.status==="pago"}><Trash2 size={17}/></Action></div></td></tr>)}</tbody></table></div>:<Empty/>}</div>
+
+    <section className="rounded-xl border bg-white p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-lg font-bold text-[#0b1d3a]">Recorrências ativas</h3><p className="text-sm text-slate-500">Modelos usados para gerar despesas mensais.</p></div><button onClick={runRecurrences} disabled={!isConfigured} className="rounded-lg border border-[#0b2b66] px-4 py-2 font-bold text-[#0b2b66]">Gerar mês atual</button></div>{recurrences.length?<div className="mt-4 max-h-[250px] overflow-auto"><table className="w-full min-w-[760px] text-left"><thead className="sticky top-0 z-10"><tr>{["Descrição","Dia","Valor","Início","Status","Ações"].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{recurrences.map(x=><tr key={x.id}><td className="px-4 py-3 font-medium">{x.descricao}</td><td className="px-4">{x.dia_vencimento}</td><td className="px-4 font-semibold">{money(x.valor)}</td><td className="px-4">{formatDate(x.data_inicio)}</td><td className="px-4"><Badge status={x.ativo?"ativo":"inativo"}/></td><td className="px-4"><button onClick={()=>toggleRecurrence(x)} className="rounded-lg border px-3 py-1.5 text-xs font-bold text-[#0b2b66]">{x.ativo?"Pausar":"Reativar"}</button></td></tr>)}</tbody></table></div>:<Empty/>}</section>
+
+    {form&&<Modal title="Cadastrar despesa" close={()=>setForm(false)}><ExpenseForm accounts={accounts} submit={create} error={error} cancel={()=>setForm(false)} submitText="Cadastrar despesa"/></Modal>}
+    {edit&&<Modal title="Editar despesa" close={()=>setEdit(null)}><ExpenseForm accounts={accounts} edit={edit} submit={saveEdit} error={error} cancel={()=>setEdit(null)} submitText="Salvar alterações"/></Modal>}
+    {pay&&<Modal title="Confirmar pagamento" close={()=>setPay(null)}><form onSubmit={confirmPayment}><div className="grid gap-4 sm:grid-cols-2"><F label="Data do pagamento"><input name="data_pagamento" type="date" required defaultValue={new Date().toISOString().slice(0,10)} className="input"/></F><F label="Conta utilizada"><select name="conta_id" required className="input"><option value="">Selecione</option>{accounts.map(a=><option key={a.id} value={a.id}>{a.nome} · {money(a.saldo_atual)}</option>)}</select></F><F label="Valor pago"><input name="valor" type="number" step=".01" required defaultValue={pay.valor} className="input"/></F><F label="Comprovante"><input name="arquivo" type="file" accept=".pdf,.jpg,.jpeg,.png" className="input"/></F><F label="Observação"><textarea name="observacao" className="input"/></F></div>{error&&<p className="mt-3 text-red-600">{error}</p>}<Actions cancel={()=>setPay(null)} text="Confirmar pagamento"/></form></Modal>}
+    {details&&<Modal title="Detalhes da despesa" close={()=>setDetails(null)}><div className="grid gap-4 sm:grid-cols-2"><Info l="Descrição" v={details.descricao} wide/><Info l="Categoria" v={details.categoria||"—"}/><Info l="Fornecedor" v={details.fornecedor||"—"}/><Info l="Competência" v={formatMonth(details.competencia)}/><Info l="Vencimento" v={formatDate(details.data_vencimento)}/><Info l="Valor" v={money(details.valor)}/><Info l="Status" v={details.status}/><Info l="Conta" v={details.contas_bancarias?.nome||"—"} wide/></div></Modal>}
+  </div>
 }
-function Summary({
-  title,
-  value,
-  green,
-  amber,
-}: {
-  title: string;
-  value: number;
-  green?: boolean;
-  amber?: boolean;
-}) {
-  return (
-    <div className="rounded-xl border bg-white p-6">
-      <p className="text-sm text-slate-500">{title}</p>
-      <b
-        className={`mt-2 block text-2xl ${green ? "text-emerald-600" : amber ? "text-amber-600" : ""}`}
-      >
-        {money(value)}
-      </b>
-    </div>
-  );
-}
-function Modal({
-  title,
-  close,
-  children,
-}: {
-  title: string;
-  close: () => void;
-  children: any;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4">
-      <div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white">
-        <div className="flex justify-between border-b px-6 py-5">
-          <h3 className="text-xl font-bold">{title}</h3>
-          <button onClick={close}>
-            <X />
-          </button>
-        </div>
-        <div className="p-6">{children}</div>
-      </div>
-    </div>
-  );
-}
-function F({ label, children }: { label: string; children: any }) {
-  return (
-    <label className="text-sm font-medium">
-      {label}
-      {children}
-    </label>
-  );
-}
-function Actions({ cancel, text }: { cancel: () => void; text: string }) {
-  return (
-    <div className="mt-6 flex justify-end gap-3">
-      <button
-        type="button"
-        onClick={cancel}
-        className="rounded-lg border px-4 py-2"
-      >
-        Cancelar
-      </button>
-      <button
-        disabled={!isConfigured}
-        className="rounded-lg bg-[#0b2b66] px-5 py-2 font-semibold text-white disabled:opacity-50"
-      >
-        {text}
-      </button>
-    </div>
-  );
-}
+
+function ExpenseForm({accounts,edit,submit,error,cancel,submitText}:any){return <form onSubmit={submit}><div className="grid gap-4 sm:grid-cols-2"><F label="Descrição"><input name="descricao" required className="input" defaultValue={edit?.descricao||""}/></F><F label="Categoria"><input name="categoria" required className="input" defaultValue={edit?.categoria||""}/></F><F label="Competência"><input name="competencia" type="month" className="input" defaultValue={edit?.competencia?dateOnly(edit.competencia).slice(0,7):month}/></F><F label="Vencimento"><input name="data_vencimento" type="date" required className="input" defaultValue={edit?dateOnly(edit.data_vencimento):""}/></F><F label="Valor"><input name="valor" type="number" step=".01" required className="input" defaultValue={edit?.valor||""}/></F><F label="Conta prevista"><select name={edit?"conta_id":"conta_bancaria_id"} className="input" defaultValue={edit?.conta_id||edit?.conta_bancaria_id||""}><option value="">Selecione</option>{accounts.map((a:Account)=><option key={a.id} value={a.id}>{a.nome}</option>)}</select></F><F label="Fornecedor"><input name="fornecedor" className="input" defaultValue={edit?.fornecedor||""}/></F>{!edit&&<label className="flex items-center gap-2 text-sm sm:col-span-2"><input name="repetir" type="checkbox"/>Repetir nos próximos meses</label>}{!edit&&<F label="Quantidade de meses"><input name="quantidade_meses" type="number" min="1" max="60" defaultValue="1" className="input"/></F>}<F label="Observação"><textarea name={edit?"observacao":"observacoes"} className="input" defaultValue={edit?.observacao||""}/></F></div>{error&&<p className="mt-3 text-red-600">{error}</p>}<Actions cancel={cancel} text={submitText}/></form>}
+function Modal({title,close,children}:any){return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><div className="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-xl bg-white shadow-2xl"><div className="flex items-center justify-between border-b p-6"><h3 className="text-xl font-extrabold text-[#0b1d3a]">{title}</h3><button onClick={close}><X/></button></div><div className="p-6">{children}</div></div></div>}
+function F({label,children}:any){return <label className="text-sm font-semibold text-slate-700">{label}{children}</label>}
+function Actions({cancel,text}:any){return <div className="mt-6 flex justify-end gap-2"><button type="button" onClick={cancel} className="rounded-lg border px-5 py-2.5">Cancelar</button><button className="rounded-lg bg-[#0b2b66] px-5 py-2.5 font-bold text-white">{text}</button></div>}
+function Summary({title,value,green,amber}:any){return <div className="rounded-xl border bg-white p-5 shadow-sm"><span className="text-sm font-semibold text-slate-500">{title}</span><strong className={`mt-2 block text-2xl ${green?"text-emerald-700":amber?"text-amber-700":"text-[#0b1d3a]"}`}>{money(value)}</strong></div>}
+function Action({children,onClick,title,danger,green,amber,disabled}:any){return <button type="button" onClick={onClick} disabled={disabled} title={disabled?"Estorne o pagamento antes desta ação":title} className={`grid size-9 place-items-center rounded-md border ${danger?"border-rose-200 text-rose-600":green?"border-emerald-200 text-emerald-600":amber?"border-amber-200 text-amber-600":"border-slate-200 text-[#0b2b66]"} disabled:cursor-not-allowed disabled:opacity-30`}>{children}</button>}
+function Info({l,v,wide}:any){return <div className={wide?"sm:col-span-2":""}><span className="text-xs font-bold uppercase text-slate-400">{l}</span><p className="mt-1 font-semibold text-slate-800">{v}</p></div>}
