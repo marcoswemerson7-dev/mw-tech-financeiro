@@ -52,6 +52,7 @@ export const registerMovement = (values: Record<string, unknown>) => execute(val
 export const updateMovement = (id: string, values: Record<string, unknown>) => execute("updateMovement", { movimentacao_id: id, ...values });
 export const deleteMovement = (id: string) => execute("deleteMovement", { movimentacao_id: id });
 export const updateExpense = (id: string, values: Record<string, unknown>) => execute("updateExpense", { despesa_id: id, ...values });
+export const cancelExpense = (id: string) => execute("cancelExpense", { despesa_id: id });
 export const deleteExpense = (id: string) => execute("deleteExpense", { despesa_id: id });
 export const payExpense = (values: Record<string, unknown>) => execute("payExpense", values);
 export const reverseExpensePayment = (values: Record<string, unknown>) => execute("reverseExpensePayment", values);
