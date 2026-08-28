@@ -3,15 +3,31 @@ import { account, appwriteConfig, tables, TABLES } from "../lib/appwrite";
 import { createRecurrence } from "./recurrences";
 import { payExpense, reverseExpensePayment } from "./transactions";
 
-export async function getExpenses() {
+let expensesCache: any[] | null = null;
+let expensesCacheAt = 0;
+const CACHE_TTL = 2 * 60 * 1000;
+
+export function peekExpenses() {
+  return expensesCache;
+}
+
+export function invalidateExpensesCache() {
+  expensesCache = null;
+  expensesCacheAt = 0;
+}
+
+export async function getExpenses(force = false) {
+  if (!force && expensesCache && Date.now() - expensesCacheAt < CACHE_TTL) return expensesCache;
   const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses,
     queries: [Query.orderAsc("vencimento"), Query.limit(500)] });
-  return result.rows.map((x: any) => ({ ...x, id: x.$id, data_vencimento: x.vencimento,
+  expensesCache = result.rows.map((x: any) => ({ ...x, id: x.$id, data_vencimento: x.vencimento,
     conta_bancaria_id: x.conta_id, comprovante_url: x.comprovante_id }));
+  expensesCacheAt = Date.now();
+  return expensesCache;
 }
 export async function createExpenses(records: Record<string, any>[]) {
   const user = await account.get();
-  return Promise.all(records.map((x) => tables.createRow({ databaseId: appwriteConfig.databaseId,
+  const result = await Promise.all(records.map((x) => tables.createRow({ databaseId: appwriteConfig.databaseId,
     tableId: TABLES.expenses, rowId: ID.unique(), data: {
       descricao: x.descricao, categoria_id: x.categoria_id || "", categoria: x.categoria || "",
       competencia: new Date(`${x.competencia}T12:00:00`).toISOString(),
@@ -21,7 +37,9 @@ export async function createExpenses(records: Record<string, any>[]) {
       status: "pendente", recorrente: Boolean(x.recorrente), recorrencia_id: x.recorrencia_id || "",
       data_pagamento: "", comprovante_id: "", created_by: user.$id,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-    } }))); 
+    } })));
+  invalidateExpensesCache();
+  return result;
 }
 export async function createExpenseWithOptionalRecurrence(data: Record<string, any>, months: number) {
   let recurrenceId = "";
@@ -54,7 +72,17 @@ export async function createExpenseWithOptionalRecurrence(data: Record<string, a
   }
   return createExpenses(records);
 }
-export { payExpense, reverseExpensePayment };
+export async function payExpenseAndRefresh(values: Record<string, unknown>) {
+  const result = await payExpense(values);
+  invalidateExpensesCache();
+  return result;
+}
+export async function reverseExpensePaymentAndRefresh(values: Record<string, unknown>) {
+  const result = await reverseExpensePayment(values);
+  invalidateExpensesCache();
+  return result;
+}
+export { payExpenseAndRefresh as payExpense, reverseExpensePaymentAndRefresh as reverseExpensePayment };
 export async function findActivePayment(expenseId: string) {
   const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments,
     queries: [Query.equal("despesa_id", expenseId), Query.equal("estornado", false), Query.limit(1)] });
