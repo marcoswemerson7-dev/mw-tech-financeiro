@@ -3,7 +3,7 @@ import { CheckCircle2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { getAccounts, getMovements, registerMovement, type Account, type Movement } from "../lib/finance";
 import { getExpenses, payExpense } from "../services/expenses";
 import { deactivateCounterparty, getCounterparties, saveCounterparty, type Counterparty } from "../services/counterparties";
-import { Badge, Empty, formatDate, money } from "../components/UI";
+import { Badge, Empty, FinancialAmount, Toast, formatDate, money } from "../components/UI";
 
 type K = "clientes" | "receitas" | "contas-receber" | "retiradas";
 
@@ -23,6 +23,7 @@ export default function DataPage({ kind }: { kind: K }) {
   const [editParty, setEditParty] = useState<Partial<Counterparty> | null>(null);
   const [movementOpen, setMovementOpen] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
 
   async function load() {
     const [partyRows, movementRows, expenseRows, accountRows] = await Promise.all([
@@ -64,9 +65,15 @@ export default function DataPage({ kind }: { kind: K }) {
     setError("");
     try {
       const values: any = Object.fromEntries(new FormData(e.currentTarget));
-      await saveCounterparty({ ...values, id: editParty?.id });
+      const saved = await saveCounterparty({ ...values, id: editParty?.id });
       setEditParty(null);
-      await load();
+      setParties((current) =>
+        editParty?.id
+          ? current.map((party) => party.id === editParty.id ? saved : party)
+          : [...current, saved].sort((a, b) => a.nome.localeCompare(b.nome)),
+      );
+      setToast(editParty?.id ? "Alterações salvas com sucesso." : "Cadastro financeiro salvo com sucesso.");
+      setTimeout(() => setToast(""), 2600);
     } catch (e: any) {
       setError(e.message);
     }
@@ -80,7 +87,7 @@ export default function DataPage({ kind }: { kind: K }) {
       const party = parties.find((x) => x.id === values.parte_id);
       const tipo = kind === "receitas" ? "entrada" : "saida";
       const prefix = kind === "receitas" ? "Recebido de" : "Retirada para";
-      await registerMovement({
+      const result = await registerMovement({
         tipo,
         data: values.data,
         conta_id: values.conta_id,
@@ -89,7 +96,20 @@ export default function DataPage({ kind }: { kind: K }) {
         observacao: values.observacao || "",
       });
       setMovementOpen(false);
-      await load();
+      const account = accounts.find((item) => item.id === values.conta_id);
+      setMovements((current) => [{
+        id: String((result as any)?.id || crypto.randomUUID()),
+        tipo,
+        data: String(values.data),
+        conta_id: String(values.conta_id || ""),
+        valor: Number(values.valor),
+        descricao: `${prefix} ${party?.nome || "parte financeira"} - ${values.descricao}`,
+        observacao: String(values.observacao || ""),
+        created_at: new Date().toISOString(),
+        contas_bancarias: account ? { nome: account.nome } : null,
+      } as Movement, ...current]);
+      setToast("Registro salvo com sucesso.");
+      setTimeout(() => setToast(""), 2600);
     } catch (e: any) {
       setError(e.message);
     }
@@ -98,7 +118,9 @@ export default function DataPage({ kind }: { kind: K }) {
   async function removeParty(id: string) {
     if (!confirm("Inativar este cadastro financeiro?")) return;
     await deactivateCounterparty(id);
-    await load();
+    setParties((current) => current.filter((party) => party.id !== id));
+    setToast("Cadastro financeiro excluído com sucesso.");
+    setTimeout(() => setToast(""), 2600);
   }
 
   async function markExpensePaid(expense: any) {
@@ -111,11 +133,14 @@ export default function DataPage({ kind }: { kind: K }) {
       data_pagamento: new Date().toISOString().slice(0, 10),
       observacao: "Pagamento registrado pela tela de pendências.",
     });
-    await load();
+    setExpenses((current) => current.map((item) => item.id === expense.id ? { ...item, status: "pago", conta_id: accountId } : item));
+    setToast("Despesa paga com sucesso.");
+    setTimeout(() => setToast(""), 2600);
   }
 
   return (
     <div className="space-y-5">
+      <Toast message={toast} />
       <div className="flex flex-wrap justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">{titles[kind]}</h2>
@@ -204,7 +229,7 @@ function PartyTable({ rows, edit, remove }: { rows: Counterparty[]; edit: (x: Co
 function MovementTable({ rows }: { rows: Movement[] }) {
   return (
     <div className="overflow-hidden rounded-2xl border bg-white">
-      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Data", "Descrição", "Tipo", "Valor", "Status"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4">{formatDate(x.data)}</td><td className="font-medium">{x.descricao}</td><td>{x.tipo}</td><td className="font-semibold">{money(x.valor)}</td><td><Badge status="pago" /></td></tr>)}</tbody></table> : <Empty />}
+      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Data", "Descrição", "Tipo", "Valor", "Status"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4">{formatDate(x.data)}</td><td className="font-medium">{x.descricao}</td><td>{x.tipo}</td><td className="font-semibold"><FinancialAmount value={x.valor} kind={x.tipo} /></td><td><Badge status="pago" /></td></tr>)}</tbody></table> : <Empty />}
     </div>
   );
 }
@@ -212,7 +237,7 @@ function MovementTable({ rows }: { rows: Movement[] }) {
 function ExpenseTable({ rows, pay }: { rows: any[]; pay: (x: any) => void }) {
   return (
     <div className="overflow-hidden rounded-2xl border bg-white">
-      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Vencimento", "Descrição", "Valor", "Status", "Ações"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4">{formatDate(x.data_vencimento)}</td><td className="font-medium">{x.descricao}</td><td className="font-semibold">{money(x.valor)}</td><td><Badge status={x.status} /></td><td><button onClick={() => pay(x)} className="p-2 text-emerald-600"><CheckCircle2 size={18} /></button></td></tr>)}</tbody></table> : <Empty />}
+      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Vencimento", "Descrição", "Valor", "Status", "Ações"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4">{formatDate(x.data_vencimento)}</td><td className="font-medium">{x.descricao}</td><td className="font-semibold"><FinancialAmount value={x.valor} kind="pendente" /></td><td><Badge status={x.status} /></td><td><button onClick={() => pay(x)} className="p-2 text-emerald-600"><CheckCircle2 size={18} /></button></td></tr>)}</tbody></table> : <Empty />}
     </div>
   );
 }

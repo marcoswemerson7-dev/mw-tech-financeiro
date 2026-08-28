@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, X, Landmark, Pencil, Trash2, Upload, ImageOff } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { Grid2X2, Landmark, List, Plus, Search, TrendingUp, WalletCards, X, Pencil, Trash2, UserRound } from "lucide-react";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { deleteAccount, getAccounts, saveAccount } from "../services/accounts";
-import { deleteBankLogo, getBankLogoView, uploadBankLogo } from "../services/storage";
-import { money, Empty } from "../components/UI";
-
+import { money, Empty, ActionButton, FilterBar, IconAction, PageHeader, StatCard, Badge, Toast } from "../components/UI";
+import { BankLogo } from "../components/BankLogo";
 type Account = {
   id: string;
   nome: string;
@@ -16,9 +16,9 @@ type Account = {
   saldo_inicial: number;
   saldo_atual: number;
   cor: string;
+  observacao?: string;
   ativo: boolean;
 };
-
 const demo: Account = {
   id: "demo-bb",
   nome: "Conta principal",
@@ -30,199 +30,238 @@ const demo: Account = {
   saldo_inicial: 0,
   saldo_atual: 0,
   cor: "#f7c600",
+  observacao: "",
   ativo: true,
 };
-
 export default function Accounts() {
-  const [rows, setRows] = useState<Account[]>([]);
-  const [edit, setEdit] = useState<Partial<Account> | null>(null);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState("");
-  const [removeLogo, setRemoveLogo] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [logoVersion, setLogoVersion] = useState(Date.now());
-
+  const [rows, setRows] = useState<Account[]>([]),
+    [edit, setEdit] = useState<Partial<Account> | null>(null),
+    [search, setSearch] = useState(""),
+    [type, setType] = useState(""),
+    [busy, setBusy] = useState(false),
+    [toast, setToast] = useState("");
   async function load() {
     if (!isConfigured) {
-      setRows(JSON.parse(localStorage.getItem("mw-accounts") || JSON.stringify([demo])));
+      setRows(
+        JSON.parse(
+          localStorage.getItem("mw-accounts") || JSON.stringify([demo]),
+        ),
+      );
       return;
     }
     setRows((await getAccounts()) as Account[]);
   }
-
-  useEffect(() => { void load(); }, []);
-  useEffect(() => () => { if (logoPreview) URL.revokeObjectURL(logoPreview); }, [logoPreview]);
-
-  function openEditor(account: Partial<Account> = {}) {
-    setLogoFile(null);
-    setLogoPreview("");
-    setRemoveLogo(false);
-    setEdit(account);
-  }
-
-  function chooseLogo(file?: File) {
-    if (!file) return;
-    if (!["image/png", "image/jpeg"].includes(file.type)) return alert("A logomarca deve estar em PNG, JPG ou JPEG.");
-    if (file.size > 2_000_000) return alert("A logomarca deve ter no máximo 2 MB.");
-    if (logoPreview) URL.revokeObjectURL(logoPreview);
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-    setRemoveLogo(false);
-  }
-
+  useEffect(() => {
+    load();
+  }, []);
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (saving) return;
+    setBusy(true);
     const d: any = Object.fromEntries(new FormData(e.currentTarget));
     d.saldo_inicial = Number(d.saldo_inicial || 0);
-    d.saldo_atual = edit?.id ? Number(edit.saldo_atual ?? edit.saldo_inicial ?? 0) : d.saldo_inicial;
+    if (!edit?.id) d.saldo_atual = d.saldo_inicial;
     d.ativo = true;
     d.cor = edit?.cor || "#0b2b66";
-    setSaving(true);
     try {
-      let accountId = edit?.id || "";
+      let saved: Account;
       if (!isConfigured) {
-        accountId ||= crypto.randomUUID();
-        const nextRow = { ...edit, ...d, id: accountId } as Account;
-        const next = edit?.id ? rows.map((x) => x.id === edit.id ? nextRow : x) : [...rows, nextRow];
+        saved = { ...edit, ...d, id: edit?.id || crypto.randomUUID() } as Account;
+        const next = edit?.id
+          ? rows.map((x) => (x.id === edit.id ? saved : x))
+          : [...rows, saved];
         localStorage.setItem("mw-accounts", JSON.stringify(next));
         setRows(next);
       } else {
-        const saved: any = await saveAccount(d, edit?.id);
-        accountId = saved.$id || edit?.id || "";
-        if (removeLogo && accountId) await deleteBankLogo(accountId);
-        if (logoFile && accountId) await uploadBankLogo(accountId, logoFile);
-        const nextRow: Account = {
-          id: accountId,
-          nome: d.nome,
-          banco: d.banco,
-          codigo_banco: d.codigo_banco,
-          agencia: d.agencia,
-          conta: d.conta,
-          tipo_conta: d.tipo_conta,
-          saldo_inicial: d.saldo_inicial,
-          saldo_atual: d.saldo_atual,
-          cor: d.cor,
-          ativo: true,
-        };
-        setRows((current) => edit?.id ? current.map((x) => x.id === edit.id ? nextRow : x) : [...current, nextRow]);
-        setLogoVersion(Date.now());
+        const row: any = await saveAccount({ ...edit, ...d }, edit?.id);
+        saved = {
+          ...edit,
+          ...d,
+          id: row.$id || edit?.id,
+          tipo_conta: row.tipo || d.tipo_conta || "corrente",
+          conta: row.numero_conta || d.conta || "",
+          saldo_atual: Number(row.saldo_atual ?? d.saldo_atual ?? d.saldo_inicial ?? 0),
+          ativo: row.ativo ?? true,
+        } as Account;
+        setRows((current) =>
+          edit?.id
+            ? current.map((x) => (x.id === edit.id ? saved : x))
+            : [...current, saved],
+        );
       }
       setEdit(null);
-      setLogoFile(null);
-      setLogoPreview("");
-      alert("Conta bancária salva com sucesso.");
-    } catch (error: any) {
-      alert(error?.message || "Não foi possível salvar a conta.");
+      setToast(edit?.id ? "Alterações salvas com sucesso." : "Conta salva com sucesso.");
+      setTimeout(() => setToast(""), 2600);
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
-
   async function remove(id: string) {
-    if (!confirm("Excluir esta conta bancária?")) return;
+    if (!confirm("Excluir esta conta? Se houver histórico vinculado, ela será inativada para preservar os registros financeiros.")) return;
+    setBusy(true);
     if (!isConfigured) {
       const n = rows.filter((x) => x.id !== id);
       localStorage.setItem("mw-accounts", JSON.stringify(n));
       setRows(n);
+      setToast("Conta excluída com sucesso.");
+      setTimeout(() => setToast(""), 2600);
+      setBusy(false);
     } else {
-      await deleteAccount(id);
-      void deleteBankLogo(id).catch(() => undefined);
-      setRows((current) => current.filter((x) => x.id !== id));
+      try {
+        await deleteAccount(id);
+        setRows((current) => current.filter((x) => x.id !== id));
+        setToast("Conta excluída com sucesso.");
+        setTimeout(() => setToast(""), 2600);
+      } finally {
+        setBusy(false);
+      }
     }
-    alert("Conta bancária excluída com sucesso.");
   }
+  const visible = rows.filter(
+    (a) =>
+      (!type || a.tipo_conta === type) &&
+      JSON.stringify(a).toLowerCase().includes(search.toLowerCase()),
+  );
+  const total = rows.reduce((s, a) => s + Number(a.saldo_atual ?? a.saldo_inicial), 0);
+  const average = rows.length ? total / rows.length : 0;
 
   return (
     <div className="space-y-7">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="text-[30px] font-extrabold tracking-tight text-[#0b1d3a]">Contas bancárias e caixa</h2>
-          <p className="mt-1.5 text-[16px] text-slate-500">Visualize suas contas, dados bancários e saldos de forma rápida.</p>
-        </div>
-        <button onClick={() => openEditor({})} className="flex min-h-[50px] items-center gap-2 rounded-lg bg-[#0b2b66] px-5 py-3 text-[15px] font-bold text-white shadow-sm transition hover:bg-[#082454]">
-          <Plus size={19} /> Cadastrar conta
-        </button>
+      <Toast message={toast} />
+      <PageHeader
+        title="Contas bancárias e caixa"
+        subtitle="Visualize suas contas, dados bancários e saldos de forma rápida e segura."
+        actions={
+          <ActionButton onClick={() => setEdit({})} disabled={busy}>
+            <Plus size={18} />
+            Cadastrar conta
+          </ActionButton>
+        }
+      />
+
+      <div className="grid gap-5 md:grid-cols-3">
+        <StatCard title="Saldo total em contas" value={money(total)} icon={<Landmark size={27} />} tone="blue" hint="↑ 100% vs mês anterior" />
+        <StatCard title="Quantidade de contas" value={rows.length} icon={<WalletCards size={27} />} tone="green" hint="— 0% vs mês anterior" />
+        <StatCard title="Saldo médio por conta" value={money(average)} icon={<TrendingUp size={27} />} tone="gold" hint="↑ 100% vs mês anterior" />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
-          <span className="text-[15px] font-semibold text-slate-500">Saldo total em contas</span>
-          <strong className="mt-3 block text-[34px] tracking-tight text-[#0b1d3a]">{money(rows.reduce((s, a) => s + Number(a.saldo_atual ?? a.saldo_inicial), 0))}</strong>
+      <FilterBar>
+        <div className="relative min-w-[280px] flex-1">
+          <Search className="absolute left-4 top-3.5 text-slate-400" size={20} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por banco, agência, conta ou titular..." className="min-h-[52px] w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-[15px] outline-none focus:border-blue-500" />
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
-          <span className="text-[15px] font-semibold text-slate-500">Quantidade de contas</span>
-          <strong className="mt-3 block text-[34px] tracking-tight text-[#0b1d3a]">{rows.length}</strong>
+        <select value={type} onChange={(e) => setType(e.target.value)} className="min-h-[52px] min-w-[190px] rounded-xl border border-slate-200 bg-white px-4 text-[15px] font-semibold text-[#061426] outline-none">
+          <option value="">Todos os tipos</option>
+          {[...new Set(rows.map((a) => a.tipo_conta).filter(Boolean))].map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+        <div className="ml-auto flex rounded-xl bg-slate-100 p-1">
+          <button className="grid size-11 place-items-center rounded-lg bg-white text-[#061426] shadow-sm" aria-label="Visualização em lista"><List size={20} /></button>
+          <button className="grid size-11 place-items-center rounded-lg text-slate-500" aria-label="Visualização em cards"><Grid2X2 size={20} /></button>
         </div>
-      </div>
+      </FilterBar>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {rows.map((a) => (
-          <div key={a.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <div className="h-2.5" style={{ background: a.cor }} />
-            <div className="p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex min-w-0 gap-4">
-                  <BankLogo account={a} version={logoVersion} />
+      <div className="space-y-5">
+        {visible.map((a) => (
+          <div
+            key={a.id}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(15,35,70,.09)]"
+          >
+            <div className="h-1.5 bg-[#0b2b66]" style={{ background: a.cor || "#0b2b66" }} />
+            <div className="p-6 sm:p-7">
+              <div className="flex flex-wrap items-start justify-between gap-5">
+                <div className="flex min-w-0 gap-5">
+                  <BankLogo code={a.codigo_banco} name={a.banco} size="lg" />
                   <div className="min-w-0">
-                    <b className="block truncate text-[17px] font-extrabold text-[#0b1d3a]">{a.nome}</b>
-                    <span className="mt-1 block text-[14px] font-medium text-slate-500">{a.banco} · {a.codigo_banco || "—"}</span>
-                    <span className="mt-1 block text-[12px] uppercase tracking-wide text-slate-400">{a.tipo_conta || "Conta bancária"}</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <b className="block text-[24px] font-black leading-tight text-[#061426]">{a.banco || a.nome}</b>
+                      <Badge status={a.tipo_conta || "conta"} />
+                    </div>
+                    <span className="mt-1 block text-[15px] text-slate-500">
+                      {a.codigo_banco || "—"} - {a.banco || a.nome}
+                    </span>
+                    <p className="mt-2"><Badge status={a.ativo ? "ativo" : "inativo"} /></p>
                   </div>
                 </div>
-                <div className="flex shrink-0 gap-1">
-                  <button onClick={() => openEditor(a)} className="grid size-10 place-items-center rounded-lg border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100" aria-label="Editar conta"><Pencil size={17} /></button>
-                  <button onClick={() => remove(a.id)} className="grid size-10 place-items-center rounded-lg border border-rose-100 bg-rose-50 text-rose-700 transition hover:bg-rose-100" aria-label="Excluir conta"><Trash2 size={17} /></button>
+                <div className="flex gap-3">
+                  <ActionButton onClick={() => setEdit(a)} tone="outline" disabled={busy}>
+                    <Pencil size={16} />
+                    Editar
+                  </ActionButton>
+                  <ActionButton onClick={() => remove(a.id)} tone="danger" disabled={busy}>
+                    <Trash2 size={16} />
+                    Excluir
+                  </ActionButton>
                 </div>
               </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                <div><span className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Agência</span><b className="mt-1 block text-[15px] text-slate-700">{a.agencia || "Não informada"}</b></div>
-                <div><span className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Conta</span><b className="mt-1 block text-[15px] text-slate-700">{a.conta || "Não informada"}</b></div>
+              <div className="mt-7 grid gap-4 rounded-2xl border border-slate-200 p-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1.25fr_1.35fr_1.4fr]">
+                <Info icon={<Landmark size={20} />} label="Agência" value={a.agencia || "Não informada"} />
+                <Info icon={<WalletCards size={20} />} label="Conta" value={a.conta || "Não informada"} />
+                <Info icon={<Grid2X2 size={20} />} label="Tipo de conta" value={a.tipo_conta || "Não informado"} />
+                <Info icon={<UserRound size={20} />} label="Titular" value={a.nome || "Não informado"} />
+                <div className="rounded-xl bg-slate-50 p-4">
+                  <span className="text-[14px] font-bold text-slate-500">Saldo atual</span>
+                  <strong className="mt-1 block text-[29px] font-black tracking-[-0.02em] text-[#061426]">{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
+                </div>
               </div>
-
-              <div className="mt-5 flex items-end justify-between border-t border-slate-100 pt-5">
-                <span className="text-[14px] font-semibold text-slate-500">Saldo atual</span>
-                <strong className="text-[24px] tracking-tight text-[#0b1d3a]">{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
-              </div>
+              {a.observacao && <p className="mt-4 rounded-xl border border-slate-100 p-3 text-sm text-slate-500">{a.observacao}</p>}
             </div>
           </div>
         ))}
       </div>
-      {!rows.length && <Empty />}
-
+      {!visible.length && <Empty />}
       {edit && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4">
-          <form onSubmit={save} className="max-h-[94vh] w-full max-w-2xl overflow-auto rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-200 px-7 py-6">
-              <div><p className="text-[12px] font-bold uppercase tracking-[.16em] text-[#b97f2e]">Dados bancários</p><h3 className="mt-1 text-[26px] font-extrabold text-[#0b1d3a]">{edit.id ? "Editar" : "Nova"} conta</h3></div>
-              <button type="button" onClick={() => setEdit(null)} className="grid size-10 place-items-center rounded-lg hover:bg-slate-100"><X /></button>
+          <form
+            onSubmit={save}
+            className="w-full max-w-xl rounded-2xl bg-white p-6"
+          >
+            <div className="flex justify-between">
+              <h3 className="text-lg font-bold">
+                {edit.id ? "Editar" : "Nova"} conta
+              </h3>
+              <IconAction title="Fechar" onClick={() => setEdit(null)} tone="slate">
+                <X />
+              </IconAction>
             </div>
-
-            <div className="border-b border-slate-100 bg-slate-50/70 px-7 py-5">
-              <p className="mb-3 text-[14px] font-bold text-slate-700">Logomarca do banco</p>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="grid size-20 place-items-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                  {logoPreview ? <img src={logoPreview} alt="Prévia da logomarca" className="h-full w-full object-contain p-2" /> : edit.id && !removeLogo ? <LogoPreview account={edit as Account} version={logoVersion} /> : <Landmark className="text-slate-400" size={30} />}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#0b2b66] bg-white px-4 py-2.5 text-sm font-bold text-[#0b2b66] hover:bg-blue-50"><Upload size={16}/> Selecionar logomarca<input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => chooseLogo(e.target.files?.[0])}/></label>
-                  {edit.id && <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(""); setRemoveLogo(true); }} className="flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50"><ImageOff size={16}/> Remover</button>}
-                </div>
-                <p className="w-full text-xs text-slate-500">PNG, JPG ou JPEG · máximo 2 MB. A imagem será ajustada sem distorção no card da conta.</p>
-              </div>
-            </div>
-
-            <div className="grid gap-5 p-7 sm:grid-cols-2">
-              {[["nome", "Nome da conta"],["banco", "Banco"],["codigo_banco", "Código do banco"],["agencia", "Agência"],["conta", "Número da conta"],["tipo_conta", "Tipo da conta"],["saldo_inicial", "Saldo inicial"]].map(([n, l]) => (
-                <label key={n} className="text-[14px] font-bold text-slate-700">{l}
-                  <input required={["nome", "banco"].includes(n)} name={n} type={n === "saldo_inicial" ? "number" : "text"} step="0.01" defaultValue={String((edit as any)[n] ?? "")} className="input" />
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {[
+                ["nome", "Nome da conta"],
+                ["banco", "Banco"],
+                ["codigo_banco", "Código do banco"],
+                ["agencia", "Agência"],
+                ["conta", "Número da conta"],
+                ["tipo_conta", "Tipo da conta"],
+                ["saldo_inicial", "Saldo inicial"],
+              ].map(([n, l]) => (
+                <label key={n} className="text-sm font-medium">
+                  {l}
+                  <input
+                    required={["nome", "banco"].includes(n)}
+                    name={n}
+                    type={n === "saldo_inicial" ? "number" : "text"}
+                    step="0.01"
+                    defaultValue={String((edit as any)[n] || "")}
+                    className="mt-1.5 w-full rounded-xl border p-3"
+                  />
                 </label>
               ))}
+              <label className="text-sm font-medium sm:col-span-2">
+                Observação
+                <textarea
+                  name="observacao"
+                  defaultValue={String((edit as any).observacao || "")}
+                  className="mt-1.5 w-full rounded-xl border p-3"
+                />
+              </label>
             </div>
-            <div className="flex justify-end gap-3 border-t border-slate-200 px-7 py-5">
-              <button type="button" onClick={() => setEdit(null)} className="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-700">Cancelar</button>
-              <button disabled={saving} className="rounded-lg bg-[#0b2b66] px-6 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-60">{saving ? "Salvando..." : "Salvar conta"}</button>
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setEdit(null)} className="rounded-xl border px-4 py-2">
+                Cancelar
+              </button>
+              <button disabled={busy} className="rounded-xl bg-[#0b2b66] px-5 py-2 text-white disabled:opacity-50">
+                {busy ? "Salvando..." : "Salvar conta"}
+              </button>
             </div>
           </form>
         </div>
@@ -231,20 +270,14 @@ export default function Accounts() {
   );
 }
 
-function BankLogo({ account, version }: { account: Account; version: number }) {
-  const [failed, setFailed] = useState(false);
-  const src = useMemo(() => isConfigured ? `${getBankLogoView(account.id)}${getBankLogoView(account.id).includes("?") ? "&" : "?"}v=${version}` : "", [account.id, version]);
-  if (!isConfigured || failed) return <FallbackLogo account={account} />;
-  return <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><img src={src} alt={`Logo ${account.banco}`} className="h-full w-full object-contain p-2" onError={() => setFailed(true)} /></span>;
-}
-
-function LogoPreview({ account, version }: { account: Account; version: number }) {
-  const [failed, setFailed] = useState(false);
-  const src = `${getBankLogoView(account.id)}${getBankLogoView(account.id).includes("?") ? "&" : "?"}v=${version}`;
-  if (failed) return <Landmark className="text-slate-400" size={30} />;
-  return <img src={src} alt="Logomarca atual" className="h-full w-full object-contain p-2" onError={() => setFailed(true)} />;
-}
-
-function FallbackLogo({ account }: { account: Account }) {
-  return <span className={`grid size-14 shrink-0 place-items-center rounded-xl border ${account.codigo_banco === "001" ? "border-[#e3c100] bg-[#f7c600] text-[#153c8a]" : "border-slate-200 bg-slate-50 text-slate-600"}`}>{account.codigo_banco === "001" ? <b className="text-[14px]">BB</b> : <Landmark size={25} />}</span>;
+function Info({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="min-w-0 border-slate-200 px-2 py-3 xl:border-r">
+      <div className="flex items-center gap-3 text-slate-500">
+        <span className="text-slate-500">{icon}</span>
+        <span className="text-[14px] font-bold">{label}</span>
+      </div>
+      <b className="mt-2 block break-words text-[18px] font-black text-[#061426]">{value}</b>
+    </div>
+  );
 }
