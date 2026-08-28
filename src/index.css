@@ -1,2 +1,160 @@
-@import "tailwindcss";:root{font-family:Inter,"Segoe UI",ui-sans-serif,system-ui,sans-serif;font-synthesis:none;text-rendering:optimizeLegibility}*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#101828}button,input,select,textarea{font:inherit}button{cursor:pointer}::selection{background:#c78b3533}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#cbd2dc;border:2px solid transparent;border-radius:99px;background-clip:padding-box}.report-table th,.report-table td{border-bottom:1px solid #e5e7eb}.report-table tbody tr:nth-child(even){background:#f8fafc}@media print{@page{size:A4 landscape;margin:10mm}aside,header,.no-print{display:none!important}body{background:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.lg\:pl-\[224px\]{padding-left:0!important}main{max-width:none!important;padding:0!important}.report-sheet{width:100%!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}.report-summary{grid-template-columns:repeat(3,1fr)!important}.report-table{font-size:9px!important}.report-table th{background:#0b2b66!important;color:white!important}.receipt-sheet{display:block!important}}
-.input{margin-top:.375rem;width:100%;border:1px solid #cbd5e1;border-radius:.75rem;background:#fff;padding:.75rem;outline:none}.input:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
+@import "tailwindcss";
+
+:root {
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #f4f6f9;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f9;
+  color: #101828;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  color: #172033;
+}
+
+::placeholder {
+  color: #94a3b8;
+}
+
+::selection {
+  background: #c78b3533;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd2dc;
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background-clip: padding-box;
+}
+
+.input {
+  margin-top: 0.45rem;
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.8rem;
+  background: #fff;
+  padding: 0.75rem 0.9rem;
+  font-size: 15px;
+  line-height: 1.45;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+textarea.input {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px #2563eb18;
+}
+
+.report-table th,
+.report-table td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.report-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+
+  .input {
+    font-size: 16px;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .lg\:pl-\[224px\],
+  .lg\:pl-\[248px\],
+  .lg\:pl-\[270px\] {
+    padding-left: 0 !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .report-sheet {
+    width: 100% !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .report-summary {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  .report-table {
+    font-size: 9px !important;
+  }
+
+  .report-table th {
+    background: #0b2b66 !important;
+    color: white !important;
+  }
+
+  .receipt-sheet {
+    display: block !important;
+  }
+}
