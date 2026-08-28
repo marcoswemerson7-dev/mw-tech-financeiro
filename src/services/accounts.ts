@@ -1,5 +1,6 @@
 import { ID, Query } from "appwrite";
 import { appwriteConfig, tables, TABLES } from "../lib/appwrite";
+import { clearFastCache, readFastCache, writeFastCache } from "../lib/fast-cache";
 
 export type Account = {
   id: string; nome: string; tipo_conta: string; banco?: string; codigo_banco?: string;
@@ -8,9 +9,10 @@ export type Account = {
 };
 
 const map = (row: any): Account => ({ ...row, id: row.$id, tipo_conta: row.tipo, conta: row.numero_conta });
-let accountsCache: Account[] | null = null;
-let accountsCacheAt = 0;
-const CACHE_TTL = 2 * 60 * 1000;
+let accountsCache: Account[] | null = readFastCache<Account[]>("accounts", 30 * 60 * 1000);
+let accountsCacheAt = accountsCache ? Date.now() : 0;
+const CACHE_TTL = 5 * 60 * 1000;
+let reconcilePromise: Promise<Account[]> | null = null;
 
 export function peekAccounts() {
   return accountsCache;
@@ -19,6 +21,7 @@ export function peekAccounts() {
 export function invalidateAccountsCache() {
   accountsCache = null;
   accountsCacheAt = 0;
+  clearFastCache("accounts");
 }
 
 async function reconcileBalances(accounts: Account[]) {
@@ -32,14 +35,12 @@ async function reconcileBalances(accounts: Account[]) {
   for (const movement of movements.rows as any[]) {
     const value = Number(movement.valor || 0);
     if (!Number.isFinite(value) || value === 0) continue;
-
     const originId = String(movement.conta_id || "");
     if (originId && expected.has(originId)) {
       const current = expected.get(originId) || 0;
       const isOut = movement.tipo === "saida" || movement.tipo === "transferencia";
       expected.set(originId, current + (isOut ? -value : value));
     }
-
     if (movement.tipo === "transferencia" && movement.conta_destino_id && expected.has(String(movement.conta_destino_id))) {
       const destinationId = String(movement.conta_destino_id);
       expected.set(destinationId, (expected.get(destinationId) || 0) + value);
@@ -59,21 +60,35 @@ async function reconcileBalances(accounts: Account[]) {
     }
     return { ...account, saldo_atual: calculated };
   }));
-
+  accountsCache = reconciled;
+  accountsCacheAt = Date.now();
+  writeFastCache("accounts", reconciled);
   return reconciled;
+}
+
+export function reconcileAccountsInBackground() {
+  if (!accountsCache || reconcilePromise) return reconcilePromise;
+  reconcilePromise = reconcileBalances(accountsCache).finally(() => { reconcilePromise = null; });
+  return reconcilePromise;
 }
 
 export async function getAccounts(force = false) {
   if (!force && accountsCache && Date.now() - accountsCacheAt < CACHE_TTL) return accountsCache;
+
   const result = await tables.listRows({
     databaseId: appwriteConfig.databaseId,
     tableId: TABLES.accounts,
     queries: [Query.orderAsc("nome"), Query.limit(200)],
   });
   const rows = result.rows.map(map);
-  accountsCache = await reconcileBalances(rows);
+  accountsCache = rows;
   accountsCacheAt = Date.now();
-  return accountsCache;
+  writeFastCache("accounts", rows);
+
+  // A conferência completa é importante, mas não deve bloquear a tela.
+  if (force) return reconcileBalances(rows);
+  void reconcileAccountsInBackground();
+  return rows;
 }
 
 export async function saveAccount(data: Partial<Account>, id?: string) {
