@@ -14,9 +14,11 @@ import {
 } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { money, Empty } from "../components/UI";
+
 export default function Cash() {
   const [accounts, setAccounts] = useState<Account[]>([]),
     [mov, setMov] = useState<Movement[]>([]);
+
   useEffect(() => {
     if (isConfigured)
       Promise.all([getAccounts(), getMovements(30)]).then(([a, m]) => {
@@ -24,6 +26,7 @@ export default function Cash() {
         setMov(m);
       });
   }, []);
+
   const cash = accounts
       .filter((x) => x.tipo_conta === "caixa")
       .reduce((a, x) => a + Number(x.saldo_atual), 0),
@@ -38,76 +41,72 @@ export default function Cash() {
     outs = daily
       .filter((x) => x.tipo.includes("saida"))
       .reduce((a, x) => a + Number(x.valor), 0);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-[#0b1d3a]">Caixa</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Dinheiro disponível em caixa e nas contas bancárias.
+    <div className="space-y-8 lg:space-y-9">
+      <section>
+        <h2 className="text-[30px] font-bold tracking-[-0.025em] text-[#0b1d3a] sm:text-[34px]">Caixa</h2>
+        <p className="mt-2 max-w-2xl text-[15px] leading-6 text-slate-500">
+          Acompanhe com clareza o dinheiro disponível em caixa e nas contas bancárias.
         </p>
+      </section>
+
+      <div className="grid gap-5 md:grid-cols-3">
+        <Balance title="Saldo em caixa" value={cash} icon={<Banknote size={25} />} />
+        <Balance title="Saldo bancário" value={bank} icon={<Landmark size={25} />} />
+        <Balance title="Saldo total" value={cash + bank} icon={<Wallet size={25} />} featured />
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <Balance title="Saldo em caixa" value={cash} icon={<Banknote />} />
-        <Balance title="Saldo bancário" value={bank} icon={<Landmark />} />
-        <Balance
-          title="Saldo total"
-          value={cash + bank}
-          icon={<Wallet />}
-          featured
-        />
-      </div>
-      <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
-        <div className="rounded-xl border bg-white p-6">
-          <h3 className="font-bold">Evolução do caixa</h3>
-          <p className="text-xs text-slate-500">
-            O histórico será formado pelas movimentações registradas.
-          </p>
-          <div className="mt-8 grid h-56 place-items-center rounded-xl bg-slate-50 text-sm text-slate-400">
-            Saldo consolidado: {money(cash + bank)}
+
+      <div className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_10px_32px_rgba(15,35,70,.05)] sm:p-7">
+          <h3 className="text-[20px] font-bold text-[#0b1d3a]">Evolução do caixa</h3>
+          <p className="mt-1 text-[13px] text-slate-500">O histórico é formado pelas movimentações registradas.</p>
+          <div className="mt-7 flex min-h-[255px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-6 text-center">
+            <span className="grid size-14 place-items-center rounded-2xl bg-amber-50 text-[#b9802f]"><Wallet size={26} /></span>
+            <p className="mt-4 text-[14px] font-medium text-slate-500">Saldo consolidado atual</p>
+            <strong className="mt-2 text-[34px] font-bold tracking-[-0.03em] text-[#0b1d3a]">{money(cash + bank)}</strong>
           </div>
-        </div>
-        <div className="rounded-xl border bg-white p-6">
-          <h3 className="font-bold">Resumo do dia</h3>
-          <div className="mt-8 space-y-5">
-            <Daily label="Entradas" value={ins} icon={<ArrowUpRight />} green />
-            <Daily label="Saídas" value={outs} icon={<ArrowDownRight />} />
-            <div className="border-t pt-5">
-              <p className="text-sm text-slate-500">Saldo final</p>
-              <b className="text-2xl">{money(ins - outs)}</b>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_10px_32px_rgba(15,35,70,.05)] sm:p-7">
+          <h3 className="text-[20px] font-bold text-[#0b1d3a]">Resumo do dia</h3>
+          <p className="mt-1 text-[13px] text-slate-500">Movimentação financeira de hoje</p>
+          <div className="mt-7 space-y-4">
+            <Daily label="Entradas" value={ins} icon={<ArrowUpRight size={21} />} green />
+            <Daily label="Saídas" value={outs} icon={<ArrowDownRight size={21} />} />
+            <div className="mt-2 rounded-xl border border-slate-100 bg-slate-50/80 p-5">
+              <p className="text-[14px] font-medium text-slate-500">Saldo final do dia</p>
+              <b className="mt-2 block text-[28px] font-bold tracking-[-0.025em] text-[#0b1d3a]">{money(ins - outs)}</b>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-      <div className="rounded-xl border bg-white">
-        <div className="border-b p-5">
-          <h3 className="font-bold">Lançamentos de caixa</h3>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_10px_32px_rgba(15,35,70,.05)]">
+        <div className="border-b border-slate-200 px-6 py-5 sm:px-7 sm:py-6">
+          <h3 className="text-[20px] font-bold text-[#0b1d3a]">Lançamentos de caixa</h3>
+          <p className="mt-1 text-[13px] text-slate-500">Entradas e saídas registradas recentemente</p>
         </div>
         {mov.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50">
+            <table className="w-full min-w-[820px] text-left text-[14px]">
+              <thead className="bg-slate-50/90 text-[12px] font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
                   {["Data", "Descrição", "Tipo", "Conta", "Valor"].map((x) => (
-                    <th className="px-5 py-3" key={x}>
-                      {x}
-                    </th>
+                    <th className="px-6 py-4" key={x}>{x}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {mov.map((x) => (
-                  <tr className="border-t" key={x.id}>
-                    <td className="px-5 py-4">
-                      {new Date(x.data + "T12:00:00").toLocaleDateString(
-                        "pt-BR",
-                      )}
+                  <tr className="border-t border-slate-100 transition hover:bg-slate-50/70" key={x.id}>
+                    <td className="whitespace-nowrap px-6 py-5 text-slate-600">
+                      {new Date(x.data + "T12:00:00").toLocaleDateString("pt-BR")}
                     </td>
-                    <td className="px-5">{x.descricao}</td>
-                    <td className="px-5 capitalize">
-                      {x.tipo.replace("_", " ")}
-                    </td>
-                    <td className="px-5">{x.contas_bancarias?.nome}</td>
-                    <td className="px-5 font-semibold">{money(x.valor)}</td>
+                    <td className="px-6 py-5 font-semibold text-slate-800">{x.descricao}</td>
+                    <td className="px-6 py-5 capitalize text-slate-600">{x.tipo.replace("_", " ")}</td>
+                    <td className="px-6 py-5 text-slate-600">{x.contas_bancarias?.nome || "—"}</td>
+                    <td className={`whitespace-nowrap px-6 py-5 text-[15px] font-bold ${x.tipo.includes("entrada") ? "text-emerald-600" : "text-rose-600"}`}>{money(x.valor)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -116,59 +115,34 @@ export default function Cash() {
         ) : (
           <Empty />
         )}
-      </div>
+      </section>
     </div>
   );
 }
-function Balance({
-  title,
-  value,
-  icon,
-  featured,
-}: {
-  title: string;
-  value: number;
-  icon: any;
-  featured?: boolean;
-}) {
+
+function Balance({ title, value, icon, featured }: { title: string; value: number; icon: any; featured?: boolean }) {
   return (
-    <div
-      className={`rounded-xl border p-6 ${featured ? "bg-[#0b2b66] text-white" : "bg-white"}`}
-    >
-      <div className="flex justify-between">
-        <div>
-          <p className="text-sm opacity-70">{title}</p>
-          <b className="mt-2 block text-3xl">{money(value)}</b>
+    <div className={`min-h-[166px] rounded-2xl border p-6 shadow-[0_10px_32px_rgba(15,35,70,.055)] sm:p-7 ${featured ? "border-[#0b2b66] bg-[#0b2b66] text-white" : "border-slate-200/90 bg-white"}`}>
+      <div className="flex items-start justify-between gap-5">
+        <div className="min-w-0">
+          <p className={`text-[15px] font-semibold ${featured ? "text-blue-100" : "text-slate-600"}`}>{title}</p>
+          <b className="mt-4 block break-words text-[30px] font-bold leading-tight tracking-[-0.03em] sm:text-[33px]">{money(value)}</b>
+          <p className={`mt-3 text-[12px] ${featured ? "text-blue-200" : "text-slate-400"}`}>Saldo atualizado</p>
         </div>
-        <span className="grid size-12 place-items-center rounded-xl bg-amber-50 text-[#c78b35]">
-          {icon}
-        </span>
+        <span className={`grid size-13 shrink-0 place-items-center rounded-2xl ${featured ? "bg-white/10 text-[#f0c66f]" : "bg-amber-50 text-[#b9802f]"}`}>{icon}</span>
       </div>
     </div>
   );
 }
-function Daily({
-  label,
-  value,
-  icon,
-  green,
-}: {
-  label: string;
-  value: number;
-  icon: any;
-  green?: boolean;
-}) {
+
+function Daily({ label, value, icon, green }: { label: string; value: number; icon: any; green?: boolean }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span
-          className={`grid size-10 place-items-center rounded-lg ${green ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}
-        >
-          {icon}
-        </span>
-        {label}
+    <div className="flex min-h-[72px] items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-4">
+      <div className="flex items-center gap-3.5">
+        <span className={`grid size-11 place-items-center rounded-xl ${green ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>{icon}</span>
+        <span className="text-[15px] font-semibold text-slate-700">{label}</span>
       </div>
-      <b>{money(value)}</b>
+      <b className={`whitespace-nowrap text-[17px] ${green ? "text-emerald-600" : "text-rose-600"}`}>{money(value)}</b>
     </div>
   );
 }
