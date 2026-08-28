@@ -193,7 +193,7 @@ export default function Reports() {
             </div>
           ))}
         </div>
-        <div className="no-break mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="report-charts no-break mt-5 grid gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-slate-200 p-4">
             <h4 className="text-xs font-black uppercase text-slate-500">Entradas x Saídas</h4>
             <ResponsiveContainer width="100%" height={150}>
@@ -221,7 +221,7 @@ export default function Reports() {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="mt-6 overflow-x-auto">
+        <div className="report-table-wrapper mt-6 overflow-x-auto">
           {filtered.length ? (
             <table className="report-table w-full border-collapse text-left text-xs">
               <thead className="bg-[#061426] text-[10px] uppercase tracking-[0.12em] text-white">

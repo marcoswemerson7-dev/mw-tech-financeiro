@@ -175,7 +175,17 @@ textarea.input {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 10mm;
+    margin: 7mm;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
   }
 
   aside,
@@ -185,9 +195,8 @@ textarea.input {
   }
 
   body {
-    background: white !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .lg\:pl-\[224px\],
@@ -197,20 +206,44 @@ textarea.input {
   }
 
   main {
+    width: 100% !important;
     max-width: none !important;
+    margin: 0 !important;
     padding: 0 !important;
   }
 
   .report-sheet {
     width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    padding: 0 !important;
+    padding: 5mm !important;
+    overflow: visible !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .report-header {
+    margin-bottom: 4mm !important;
+    padding-bottom: 3mm !important;
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-header img {
+    width: 34mm !important;
+    height: 15mm !important;
+  }
+
+  .report-meta {
+    padding: 2.5mm 4mm !important;
+  }
+
+  .report-meta h2 {
+    font-size: 15px !important;
   }
 
   .report-header::after {
@@ -223,28 +256,72 @@ textarea.input {
 
   .report-summary {
     grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .report-summary-card {
-    min-height: 70px;
-    padding: 10px !important;
+    min-height: 0 !important;
+    padding: 3mm !important;
   }
 
   .report-summary-card strong {
     font-size: 14px !important;
   }
 
+  .report-charts {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4mm !important;
+    margin-top: 4mm !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-charts > div {
+    padding: 3mm !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-charts .recharts-responsive-container {
+    height: 42mm !important;
+  }
+
+  .report-table-wrapper {
+    margin-top: 4mm !important;
+    overflow: visible !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .report-table {
-    font-size: 9.5px !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+    font-size: 7.5px !important;
   }
 
   .report-table th {
     background: #0b2b66 !important;
     color: white !important;
+    padding: 2mm !important;
+    font-size: 7px !important;
+  }
+
+  .report-table td {
+    padding: 2mm !important;
+    font-size: 7.5px !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere;
   }
 
   .report-footer {
+    margin-top: 4mm !important;
+    padding-top: 2mm !important;
+    gap: 1mm 4mm !important;
     break-inside: avoid;
+    page-break-inside: avoid;
   }
 
   .report-page-number::after {
