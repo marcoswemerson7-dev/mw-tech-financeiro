@@ -82,6 +82,12 @@ export async function reverseExpensePayment(values: Record<string, unknown>) {
   invalidateExpensesCache();
   return result;
 }
+export async function deleteExpenseDirect(expenseId: string) {
+  const expense = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expenseId });
+  if ((expense as any).status === "pago") throw new Error("Estorne o pagamento antes de excluir definitivamente esta despesa.");
+  await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expenseId });
+  invalidateExpensesCache();
+}
 export async function findActivePayment(expenseId: string) {
   const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments,
     queries: [Query.equal("despesa_id", expenseId), Query.equal("estornado", false), Query.limit(1)] });
