@@ -56,12 +56,18 @@ export default async ({req,res,error})=>{
       if(expense.status==="pago")throw new Error("Estorne o pagamento antes de editar uma despesa paga.");
       resultId=expense.$id;
       await update(T.expenses,expense.$id,{descricao:input.descricao??expense.descricao,categoria:input.categoria??expense.categoria,competencia:input.competencia?new Date(input.competencia).toISOString():expense.competencia,vencimento:input.data_vencimento?new Date(input.data_vencimento).toISOString():expense.vencimento,valor:positive(input.valor??expense.valor),conta_id:input.conta_id??expense.conta_id,fornecedor:input.fornecedor??expense.fornecedor,observacao:input.observacao??expense.observacao,updated_at:now});
+    }else if(action==="cancelExpense"){
+      const expense=await get(T.expenses,input.despesa_id);
+      if(expense.status==="pago")throw new Error("Estorne o pagamento antes de cancelar uma despesa paga.");
+      if(expense.status==="cancelado")throw new Error("Despesa já cancelada.");
+      resultId=expense.$id;
+      await update(T.expenses,expense.$id,{status:"cancelado",updated_at:now});
     }else if(action==="deleteExpense"){
       const expense=await get(T.expenses,input.despesa_id);
-      if(expense.status==="pago")throw new Error("Estorne o pagamento antes de excluir uma despesa paga.");
+      if(expense.status==="pago")throw new Error("Estorne o pagamento antes de excluir definitivamente uma despesa paga.");
       resultId=expense.$id;await remove(T.expenses,expense.$id);
     }else if(action==="payExpense"){
-      const expense=await get(T.expenses,input.despesa_id);if(expense.status==="pago")throw new Error("Esta despesa já está paga.");
+      const expense=await get(T.expenses,input.despesa_id);if(expense.status==="pago")throw new Error("Esta despesa já está paga.");if(expense.status==="cancelado")throw new Error("Reative ou edite a despesa antes de efetuar o pagamento.");
       const value=positive(input.valor_pago),account=await get(T.accounts,input.conta_id);if(Number(account.saldo_atual)<value)throw new Error("Saldo insuficiente.");
       const paymentId=ID.unique(),movementId=ID.unique();resultId=paymentId;
       await create(T.payments,paymentId,{despesa_id:expense.$id,conta_id:account.$id,valor:value,data_pagamento:new Date(input.data_pagamento).toISOString(),comprovante_id:input.comprovante_id||"",observacao:input.observacao||"",created_by:userId,estornado:false,created_at:now,idempotency_key:idempotencyKey});
