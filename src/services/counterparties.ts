@@ -34,6 +34,68 @@ export async function getCounterparties(includeInactive = false) {
   return result.rows.map(map);
 }
 
+async function syncCounterpartyReferences(before: Counterparty, after: Counterparty) {
+  const oldName = String(before.nome || "").trim();
+  const newName = String(after.nome || "").trim();
+  const oldDocument = String(before.documento || "").trim();
+  const newDocument = String(after.documento || "").trim();
+
+  if (!oldName || (oldName === newName && oldDocument === newDocument)) return;
+
+  const [movementResult, expenseResult] = await Promise.all([
+    tables.listRows({
+      databaseId: appwriteConfig.databaseId,
+      tableId: TABLES.transactions,
+      queries: [Query.limit(500)],
+    }),
+    tables.listRows({
+      databaseId: appwriteConfig.databaseId,
+      tableId: TABLES.expenses,
+      queries: [Query.limit(500)],
+    }),
+  ]);
+
+  await Promise.all(
+    movementResult.rows.map(async (row: any) => {
+      const description = String(row.descricao || "");
+      const note = String(row.observacao || "");
+      const linkedById = note.includes(`Parte financeira ID: ${before.id}`);
+      const linkedByName = description.includes(oldName) || note.includes(oldName);
+      if (!linkedById && !linkedByName) return;
+
+      let nextDescription = description;
+      let nextNote = note;
+      if (oldName !== newName) {
+        nextDescription = nextDescription.split(oldName).join(newName);
+        nextNote = nextNote.split(oldName).join(newName);
+      }
+      if (oldDocument && oldDocument !== newDocument) {
+        nextNote = nextNote.split(oldDocument).join(newDocument);
+      }
+
+      await tables.updateRow({
+        databaseId: appwriteConfig.databaseId,
+        tableId: TABLES.transactions,
+        rowId: row.$id,
+        data: { descricao: nextDescription, observacao: nextNote },
+      });
+    }),
+  );
+
+  await Promise.all(
+    expenseResult.rows.map(async (row: any) => {
+      const supplier = String(row.fornecedor || "").trim();
+      if (!supplier || supplier !== oldName) return;
+      await tables.updateRow({
+        databaseId: appwriteConfig.databaseId,
+        tableId: TABLES.expenses,
+        rowId: row.$id,
+        data: { fornecedor: newName },
+      });
+    }),
+  );
+}
+
 export async function saveCounterparty(values: CounterpartyInput) {
   const nome = values.nome?.trim();
   if (!nome) throw new Error("Informe o nome ou razão social.");
@@ -48,6 +110,16 @@ export async function saveCounterparty(values: CounterpartyInput) {
     ativo: values.ativo ?? true,
   };
 
+  let before: Counterparty | null = null;
+  if (values.id) {
+    const current = await tables.getRow({
+      databaseId: appwriteConfig.databaseId,
+      tableId: TABLES.counterparties,
+      rowId: values.id,
+    });
+    before = map(current);
+  }
+
   const row = values.id
     ? await tables.updateRow({
         databaseId: appwriteConfig.databaseId,
@@ -61,7 +133,10 @@ export async function saveCounterparty(values: CounterpartyInput) {
         rowId: ID.unique(),
         data: { ...data, created_at: new Date().toISOString() },
       });
-  return map(row);
+
+  const saved = map(row);
+  if (before) await syncCounterpartyReferences(before, saved);
+  return saved;
 }
 
 export async function createCounterparty(values: CounterpartyInput | Record<string, unknown>) {
