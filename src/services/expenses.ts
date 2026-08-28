@@ -1,7 +1,7 @@
 import { ID, Query } from "appwrite";
 import { account, appwriteConfig, tables, TABLES } from "../lib/appwrite";
 import { createRecurrence } from "./recurrences";
-import { payExpense, reverseExpensePayment } from "./transactions";
+import { payExpense as payExpenseOperation, reverseExpensePayment as reverseExpensePaymentOperation } from "./transactions";
 
 let expensesCache: any[] | null = null;
 let expensesCacheAt = 0;
@@ -72,17 +72,16 @@ export async function createExpenseWithOptionalRecurrence(data: Record<string, a
   }
   return createExpenses(records);
 }
-export async function payExpenseAndRefresh(values: Record<string, unknown>) {
-  const result = await payExpense(values);
+export async function payExpense(values: Record<string, unknown>) {
+  const result = await payExpenseOperation(values);
   invalidateExpensesCache();
   return result;
 }
-export async function reverseExpensePaymentAndRefresh(values: Record<string, unknown>) {
-  const result = await reverseExpensePayment(values);
+export async function reverseExpensePayment(values: Record<string, unknown>) {
+  const result = await reverseExpensePaymentOperation(values);
   invalidateExpensesCache();
   return result;
 }
-export { payExpenseAndRefresh as payExpense, reverseExpensePaymentAndRefresh as reverseExpensePayment };
 export async function findActivePayment(expenseId: string) {
   const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments,
     queries: [Query.equal("despesa_id", expenseId), Query.equal("estornado", false), Query.limit(1)] });
