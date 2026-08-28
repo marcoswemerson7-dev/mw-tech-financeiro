@@ -36,14 +36,14 @@ export default function Layout() {
   )?.[1];
 
   return (
-    <div className="min-h-screen bg-[#eef2f7] text-slate-900">
+    <div className="min-h-screen bg-[#edf1f6] text-slate-900">
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[292px] flex-col bg-[#07182d] text-white shadow-2xl shadow-slate-950/15 transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-30 flex w-[300px] flex-col bg-[#07182d] text-white shadow-2xl shadow-slate-950/20 transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex h-[150px] items-center justify-center border-b border-white/10 bg-[#061426] px-6">
+        <div className="flex h-[154px] items-center justify-center border-b border-white/10 bg-[#061426] px-6">
           <img
             src="/mw-tech-logo.png"
-            className="h-[126px] w-[198px] object-contain mix-blend-screen"
+            className="h-[130px] w-[205px] object-contain mix-blend-screen"
             alt="MW TECH Financeiro"
           />
           <button
@@ -55,11 +55,16 @@ export default function Layout() {
           </button>
         </div>
 
-        <p className="px-6 pb-3 pt-7 text-[12px] font-bold uppercase tracking-[.2em] text-slate-400">
+        <div className="border-b border-white/8 bg-[#0a203b] px-6 py-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[.24em] text-[#e9b659]">Financeiro</p>
+          <p className="mt-1 text-[13px] font-semibold text-slate-300">Controle administrativo MW TECH</p>
+        </div>
+
+        <p className="px-6 pb-3 pt-6 text-[12px] font-bold uppercase tracking-[.2em] text-slate-400">
           Menu principal
         </p>
 
-        <nav className="flex-1 space-y-1.5 px-3.5">
+        <nav className="flex-1 space-y-2 px-3.5">
           {items.map(([to, label, I]) => (
             <NavLink
               key={to}
@@ -67,10 +72,10 @@ export default function Layout() {
               end={to === "/"}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `flex min-h-[58px] items-center gap-4 rounded-lg border-l-4 px-4 py-3 text-[16.5px] font-semibold transition-all ${isActive ? "border-[#f0b44a] bg-[#dca541] text-white shadow-md shadow-black/10" : "border-transparent text-slate-200 hover:border-white/20 hover:bg-white/[.065] hover:text-white"}`
+                `flex min-h-[60px] items-center gap-4 rounded-md border-l-4 px-4 py-3 text-[17px] font-bold transition-all ${isActive ? "border-[#ffd06a] bg-gradient-to-r from-[#d99b2f] to-[#e7b24d] text-white shadow-lg shadow-black/15" : "border-transparent text-slate-200 hover:border-white/20 hover:bg-white/[.07] hover:text-white"}`
               }
             >
-              <I size={22} strokeWidth={2} />
+              <I size={23} strokeWidth={2.1} />
               <span>{label}</span>
             </NavLink>
           ))}
@@ -79,15 +84,13 @@ export default function Layout() {
         <div className="border-t border-white/10 p-4">
           <button
             onClick={logout}
-            className="flex min-h-[52px] w-full items-center gap-3 rounded-lg px-4 py-3 text-[15px] font-semibold text-slate-300 transition hover:bg-white/[.06] hover:text-white"
+            className="flex min-h-[54px] w-full items-center gap-3 rounded-md px-4 py-3 text-[15px] font-semibold text-slate-300 transition hover:bg-white/[.06] hover:text-white"
           >
             <LogOut size={20} />
             Sair
           </button>
-          <div className="mt-2 flex items-center gap-3 rounded-lg border border-white/10 bg-white/[.06] p-3.5">
-            <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-[#d9a443] text-sm font-extrabold text-[#071426]">
-              MW
-            </span>
+          <div className="mt-2 flex items-center gap-3 rounded-md border border-white/10 bg-white/[.06] p-3.5">
+            <span className="grid size-12 shrink-0 place-items-center rounded-md bg-[#d9a443] text-sm font-extrabold text-[#071426]">MW</span>
             <div className="min-w-0">
               <b className="block truncate text-[14px]">Administrador</b>
               <small className="text-[12px] text-slate-400">Acesso completo</small>
@@ -105,44 +108,38 @@ export default function Layout() {
         />
       )}
 
-      <div className="lg:pl-[292px]">
-        <header className="sticky top-0 z-10 flex min-h-[112px] items-center justify-between border-b border-slate-200 bg-white px-5 shadow-[0_1px_0_rgba(15,23,42,.03)] sm:px-8 lg:px-11">
+      <div className="lg:pl-[300px]">
+        <header className="sticky top-0 z-10 flex min-h-[116px] items-center justify-between border-b border-[#163b66] bg-gradient-to-r from-[#0b2949] via-[#0b3159] to-[#0b2b4d] px-5 shadow-[0_5px_18px_rgba(6,20,38,.16)] sm:px-8 lg:px-11">
           <div className="flex min-w-0 items-center">
             <button
-              className="mr-4 rounded-lg border border-slate-200 p-2.5 text-slate-700 lg:hidden"
+              className="mr-4 rounded-md border border-white/15 bg-white/10 p-2.5 text-white lg:hidden"
               onClick={() => setOpen(true)}
               aria-label="Abrir menu"
             >
               <Menu size={23} />
             </button>
             <div className="min-w-0">
-              <p className="text-[12px] font-extrabold uppercase tracking-[.17em] text-[#b97f2e]">
-                MW TECH Financeiro
-              </p>
-              <h1 className="mt-1 truncate text-[30px] font-extrabold tracking-[-0.025em] text-[#071a38] sm:text-[32px]">
-                {title}
-              </h1>
+              <p className="text-[12px] font-extrabold uppercase tracking-[.2em] text-[#efbd5f]">MW TECH Financeiro</p>
+              <h1 className="mt-1 truncate text-[31px] font-extrabold tracking-[-0.025em] text-white sm:text-[34px]">{title}</h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="relative grid size-13 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <button className="relative grid size-13 place-items-center rounded-md border border-white/15 bg-white/10 text-white shadow-sm transition hover:bg-white/15">
               <Bell size={21} />
-              <i className="absolute right-2.5 top-2.5 size-2.5 rounded-full bg-amber-500 ring-2 ring-white" />
+              <i className="absolute right-2.5 top-2.5 size-2.5 rounded-full bg-amber-400 ring-2 ring-[#0b2b4d]" />
             </button>
-            <button className="hidden min-h-[52px] items-center gap-2.5 rounded-lg border border-slate-200 bg-white p-1.5 pr-4 shadow-sm sm:flex">
-              <span className="grid size-11 place-items-center rounded-md bg-[#07182e] text-xs font-bold text-[#e5b557]">
-                MW
-              </span>
+            <button className="hidden min-h-[54px] items-center gap-2.5 rounded-md border border-white/15 bg-white/10 p-1.5 pr-4 shadow-sm sm:flex">
+              <span className="grid size-11 place-items-center rounded-sm bg-[#061426] text-xs font-bold text-[#f0bd5d]">MW</span>
               <span className="text-left leading-tight">
-                <b className="block text-[14px] text-slate-800">Administrador</b>
-                <small className="text-[12px] text-slate-500">Acesso completo</small>
+                <b className="block text-[14px] text-white">Administrador</b>
+                <small className="text-[12px] text-slate-300">Acesso completo</small>
               </span>
             </button>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1640px] p-5 sm:p-8 lg:p-10 xl:p-11">
+        <main className="mx-auto w-full max-w-[1660px] p-5 sm:p-8 lg:p-9 xl:p-10">
           <Outlet />
         </main>
       </div>
