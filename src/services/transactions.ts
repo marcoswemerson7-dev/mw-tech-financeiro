@@ -20,6 +20,16 @@ export function invalidateMovementsCache() {
   movementCache.clear();
 }
 
+export function syncMovementCounterpartyCache(oldName: string, newName: string, oldDocument = "", newDocument = "") {
+  for (const cached of movementCache.values()) {
+    for (const row of cached.rows) {
+      if (oldName && row.descricao?.includes(oldName)) row.descricao = row.descricao.split(oldName).join(newName);
+      if (oldName && row.observacao?.includes(oldName)) row.observacao = row.observacao.split(oldName).join(newName);
+      if (oldDocument && row.observacao?.includes(oldDocument)) row.observacao = row.observacao.split(oldDocument).join(newDocument);
+    }
+  }
+}
+
 export async function getMovements(limit = 100, force = false) {
   const cached = movementCache.get(limit);
   if (!force && cached && Date.now() - cached.at < CACHE_TTL) return cached.rows;
