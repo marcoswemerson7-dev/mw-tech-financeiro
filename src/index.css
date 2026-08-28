@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, "Segoe UI", Arial, ui-sans-serif, system-ui, sans-serif;
+  font-family: "Segoe UI Variable", "Segoe UI", Inter, Arial, ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,8 +19,10 @@ body {
   margin: 0;
   background: var(--mw-bg);
   color: #101828;
-  font-size: 17px;
-  line-height: 1.58;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: -0.005em;
 }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
@@ -28,7 +30,12 @@ input, select, textarea { color: #172033; }
 ::placeholder { color: #8492a6; }
 ::selection { background: #d9a44338; }
 
-::-webkit-scrollbar { width: 10px; height: 10px; }
+/* Números financeiros mais estáveis e fáceis de comparar */
+b, strong, td, th, [class*="text-"][class*="font-bold"], [class*="text-"][class*="font-extrabold"] {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb {
   background: #b8c3d1;
   border: 2px solid transparent;
@@ -36,8 +43,27 @@ input, select, textarea { color: #172033; }
   background-clip: padding-box;
 }
 
-main h2 { letter-spacing: -0.03em; }
-main h3 { letter-spacing: -0.02em; }
+/* Hierarquia corporativa: títulos fortes, mas sem aparência pesada */
+header h1 {
+  font-family: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+}
+main h1, main h2, main h3 {
+  font-family: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
+  color: #0b1f3a;
+  font-weight: 700 !important;
+}
+main h2 { letter-spacing: -0.025em; }
+main h3 { letter-spacing: -0.018em; }
+
+/* Evita excesso de extrabold na interface financeira */
+main .font-extrabold { font-weight: 700 !important; }
+main .font-bold { font-weight: 600 !important; }
+aside .font-extrabold { font-weight: 700 !important; }
+aside .font-bold { font-weight: 600 !important; }
+header .font-extrabold { font-weight: 700 !important; }
+header .font-bold { font-weight: 600 !important; }
 
 main table {
   border-collapse: separate;
@@ -47,50 +73,44 @@ main table {
 main table thead th {
   background: #0d3159 !important;
   color: #fff !important;
-  font-size: 13.5px !important;
-  font-weight: 800 !important;
-  letter-spacing: .055em;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .045em;
   border-bottom: 1px solid #0a2748 !important;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 main table tbody td {
   color: #142238;
-  font-size: 16px !important;
-  line-height: 1.5;
+  font-size: 14px !important;
+  line-height: 1.42;
+  font-weight: 400;
   vertical-align: middle;
   border-bottom: 1px solid #e3e8ef;
 }
-main table tbody tr:nth-child(even) { background: #f6f8fb; }
+main table tbody tr:nth-child(even) { background: #f7f9fc; }
 main table tbody tr:hover { background: #eef4fb !important; }
 
 /* Identificação financeira por tipo de movimentação */
-main table tbody tr:has(span.text-emerald-700) > td:first-child {
-  border-left: 5px solid #16a34a;
-}
-main table tbody tr:has(span.text-rose-700) > td:first-child {
-  border-left: 5px solid #e11d48;
-}
-main table tbody tr:has(span.text-amber-700) > td:first-child {
-  border-left: 5px solid #f59e0b;
-}
-main table tbody tr:has(span.text-blue-700) > td:first-child {
-  border-left: 5px solid #2563eb;
-}
+main table tbody tr:has(span.text-emerald-700) > td:first-child { border-left: 4px solid #16a34a; }
+main table tbody tr:has(span.text-rose-700) > td:first-child { border-left: 4px solid #e11d48; }
+main table tbody tr:has(span.text-amber-700) > td:first-child { border-left: 4px solid #f59e0b; }
+main table tbody tr:has(span.text-blue-700) > td:first-child { border-left: 4px solid #2563eb; }
 
 main table tbody td span.rounded-full.border {
-  min-width: 92px;
+  min-width: 82px;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
-  font-size: 12px !important;
-  font-weight: 800 !important;
-  letter-spacing: .02em;
+  gap: 5px;
+  padding: 5px 9px;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .018em;
   text-transform: uppercase;
 }
 main table tbody td span.rounded-full.border::before {
   display: inline-block;
-  font-size: 14px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1;
 }
 main table tbody td span.text-emerald-700::before { content: "↗"; }
@@ -98,58 +118,44 @@ main table tbody td span.text-rose-700::before { content: "↘"; }
 main table tbody td span.text-amber-700::before { content: "↶"; }
 main table tbody td span.text-blue-700::before { content: "⇄"; }
 
-main table tbody tr:has(span.text-emerald-700) > td:nth-child(6) {
-  color: #15803d !important;
-  font-weight: 900 !important;
-}
-main table tbody tr:has(span.text-rose-700) > td:nth-child(6) {
-  color: #be123c !important;
-  font-weight: 900 !important;
-}
-main table tbody tr:has(span.text-amber-700) > td:nth-child(6) {
-  color: #b45309 !important;
-  font-weight: 900 !important;
-}
-main table tbody tr:has(span.text-blue-700) > td:nth-child(6) {
-  color: #1d4ed8 !important;
-  font-weight: 900 !important;
-}
+main table tbody tr:has(span.text-emerald-700) > td:nth-child(6) { color: #15803d !important; font-weight: 700 !important; }
+main table tbody tr:has(span.text-rose-700) > td:nth-child(6) { color: #be123c !important; font-weight: 700 !important; }
+main table tbody tr:has(span.text-amber-700) > td:nth-child(6) { color: #b45309 !important; font-weight: 700 !important; }
+main table tbody tr:has(span.text-blue-700) > td:nth-child(6) { color: #1d4ed8 !important; font-weight: 700 !important; }
 
 .input {
-  margin-top: 0.45rem;
-  min-height: 53px;
+  margin-top: 0.4rem;
+  min-height: 47px;
   width: 100%;
-  border: 1px solid #bfcbd9;
-  border-radius: 0.6rem;
+  border: 1px solid #c6d0dc;
+  border-radius: 0.5rem;
   background: #fff;
-  padding: 0.82rem 1rem;
-  font-size: 16px;
-  line-height: 1.45;
+  padding: 0.7rem 0.9rem;
+  font-size: 14px;
+  line-height: 1.4;
   outline: none;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
-textarea.input { min-height: 116px; resize: vertical; }
+textarea.input { min-height: 106px; resize: vertical; }
 .input:focus {
   border-color: #1b5aa3;
-  box-shadow: 0 0 0 4px #1f5daf17;
+  box-shadow: 0 0 0 3px #1f5daf14;
 }
 
 main .rounded-2xl.border.bg-white,
 main .rounded-xl.border.bg-white {
   border-color: var(--mw-border);
-  box-shadow: 0 10px 24px rgba(15, 35, 70, .065);
+  box-shadow: 0 8px 20px rgba(15, 35, 70, .055);
 }
 
-main button {
-  font-weight: 700;
-}
+main button { font-weight: 600; }
 
 .report-table th,
 .report-table td { border-bottom: 1px solid #e5e7eb; }
 .report-table tbody tr:nth-child(even) { background: #f8fafc; }
 
 @media (max-width: 640px) {
-  body { font-size: 15.5px; }
+  body { font-size: 14px; }
   .input { font-size: 16px; }
 }
 
