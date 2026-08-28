@@ -1,138 +1,124 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, "Segoe UI", Arial, ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   color-scheme: light;
+  --mw-navy: #07182d;
+  --mw-blue: #0b2b66;
+  --mw-gold: #d9a443;
+  --mw-bg: #eef2f7;
+  --mw-border: #d7dee8;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html {
-  background: #f4f6f9;
-}
+html { background: var(--mw-bg); }
 
 body {
   margin: 0;
-  background: #f4f6f9;
+  background: var(--mw-bg);
   color: #101828;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 16.5px;
+  line-height: 1.55;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+input, select, textarea { color: #172033; }
+::placeholder { color: #8b98aa; }
+::selection { background: #d9a44338; }
 
-button {
-  cursor: pointer;
-}
-
-input,
-select,
-textarea {
-  color: #172033;
-}
-
-::placeholder {
-  color: #94a3b8;
-}
-
-::selection {
-  background: #c78b3533;
-}
-
-::-webkit-scrollbar {
-  width: 9px;
-  height: 9px;
-}
-
+::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
-  background: #cbd2dc;
+  background: #bcc6d3;
   border: 2px solid transparent;
   border-radius: 99px;
   background-clip: padding-box;
 }
 
+/* Leitura mais forte em todas as telas administrativas */
+main h2 {
+  letter-spacing: -0.025em;
+}
+
+main table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+main table thead th {
+  background: #eef2f6;
+  color: #43536a;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: .045em;
+  border-bottom: 1px solid #d9e0e9;
+}
+
+main table tbody td {
+  color: #172033;
+  font-size: 15.5px !important;
+  line-height: 1.45;
+  vertical-align: middle;
+}
+
+main table tbody tr {
+  transition: background-color .12s ease, box-shadow .12s ease;
+}
+
+main table tbody tr:hover {
+  background: #f5f8fc !important;
+}
+
 .input {
   margin-top: 0.45rem;
-  min-height: 48px;
+  min-height: 51px;
   width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.8rem;
+  border: 1px solid #c5cfdd;
+  border-radius: 0.75rem;
   background: #fff;
-  padding: 0.75rem 0.9rem;
-  font-size: 15px;
+  padding: 0.78rem 0.95rem;
+  font-size: 16px;
   line-height: 1.45;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-textarea.input {
-  min-height: 100px;
-  resize: vertical;
-}
+textarea.input { min-height: 110px; resize: vertical; }
 
 .input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px #2563eb18;
+  border-color: #1f5daf;
+  box-shadow: 0 0 0 4px #1f5daf16;
+}
+
+/* Cards mais sólidos e próximos de um sistema administrativo tradicional */
+main .rounded-2xl.border.bg-white,
+main .rounded-xl.border.bg-white {
+  border-color: var(--mw-border);
 }
 
 .report-table th,
-.report-table td {
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.report-table tbody tr:nth-child(even) {
-  background: #f8fafc;
-}
+.report-table td { border-bottom: 1px solid #e5e7eb; }
+.report-table tbody tr:nth-child(even) { background: #f8fafc; }
 
 @media (max-width: 640px) {
-  body {
-    font-size: 15px;
-  }
-
-  .input {
-    font-size: 16px;
-  }
+  body { font-size: 15.5px; }
+  .input { font-size: 16px; }
 }
 
 @media print {
-  @page {
-    size: A4 landscape;
-    margin: 10mm;
-  }
-
-  aside,
-  header,
-  .no-print {
-    display: none !important;
-  }
-
+  @page { size: A4 landscape; margin: 10mm; }
+  aside, header, .no-print { display: none !important; }
   body {
     background: white !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-
-  .lg\:pl-\[224px\],
-  .lg\:pl-\[248px\],
-  .lg\:pl-\[270px\] {
-    padding-left: 0 !important;
-  }
-
-  main {
-    max-width: none !important;
-    padding: 0 !important;
-  }
-
+  .lg\:pl-\[224px\], .lg\:pl-\[248px\], .lg\:pl-\[270px\], .lg\:pl-\[292px\] { padding-left: 0 !important; }
+  main { max-width: none !important; padding: 0 !important; }
   .report-sheet {
     width: 100% !important;
     border: 0 !important;
@@ -140,21 +126,8 @@ textarea.input {
     box-shadow: none !important;
     padding: 0 !important;
   }
-
-  .report-summary {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-
-  .report-table {
-    font-size: 9px !important;
-  }
-
-  .report-table th {
-    background: #0b2b66 !important;
-    color: white !important;
-  }
-
-  .receipt-sheet {
-    display: block !important;
-  }
+  .report-summary { grid-template-columns: repeat(3, 1fr) !important; }
+  .report-table { font-size: 9px !important; }
+  .report-table th { background: #0b2b66 !important; color: white !important; }
+  .receipt-sheet { display: block !important; }
 }
