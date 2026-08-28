@@ -9,6 +9,7 @@ export {
   updateExpense,
   cancelExpense,
   deleteExpense,
+  hardDeleteExpense,
   type Movement,
 } from "../services/transactions";
 export { uploadReceipt } from "../services/storage";
