@@ -59,10 +59,13 @@ export default async ({req,res,error})=>{
     }else if(action==="cancelExpense"){
       const expense=await get(T.expenses,input.despesa_id);
       if(expense.status==="pago")throw new Error("Estorne o pagamento antes de cancelar uma despesa paga.");
-      if(expense.status==="cancelado")throw new Error("Despesa já cancelada.");
       resultId=expense.$id;
-      await update(T.expenses,expense.$id,{status:"cancelado",updated_at:now});
-    }else if(action==="deleteExpense"){
+      if(expense.status==="cancelado"){
+        await remove(T.expenses,expense.$id);
+      }else{
+        await update(T.expenses,expense.$id,{status:"cancelado",updated_at:now});
+      }
+    }else if(action==="deleteExpense"||action==="hardDeleteExpense"){
       const expense=await get(T.expenses,input.despesa_id);
       if(expense.status==="pago")throw new Error("Estorne o pagamento antes de excluir definitivamente uma despesa paga.");
       resultId=expense.$id;await remove(T.expenses,expense.$id);
@@ -78,6 +81,6 @@ export default async ({req,res,error})=>{
       resultId=ID.unique();await update(T.accounts,account.$id,{saldo_atual:Number(account.saldo_atual)+Number(payment.valor),updated_at:now});await update(T.payments,payment.$id,{estornado:true,estornado_at:now});await update(T.expenses,expense.$id,{status:"pendente",data_pagamento:"",updated_at:now});
       await create(T.moves,resultId,{tipo:"estorno",data:now,descricao:`Estorno: ${expense.descricao}`,categoria_id:expense.categoria_id||"",conta_id:account.$id,conta_destino_id:"",valor:Number(payment.valor),observacao:input.observacao||"",comprovante_id:"",despesa_id:expense.$id,pagamento_id:payment.$id,created_by:userId,idempotency_key:`m-${idempotencyKey}`.slice(0,36),created_at:now});
     }else throw new Error("Ação financeira inválida.");
-    await create(T.ops,idempotencyKey,{action,user_id:userId,result_id:resultId,created_at:now});await db.updateTransaction({transactionId:tid,commit:true});return res.json({ok:true,id:resultId});
+    await create(T.ops,idempotencyKey,{action,user_id:userId,result_id:resultId,created_at:now});await db.updateTransaction({transactionId:tid,commit:true});return res.json({ok:true,id:resultId,action});
   }catch(e){error(e.message);return res.json({error:e.message||"Erro interno."},400)}
 };
