@@ -50,7 +50,60 @@ async function execute(action: string, payload: Record<string, unknown>) {
 
 export const registerMovement = (values: Record<string, unknown>) => execute(values.tipo === "transferencia" ? "transfer" : "registerMovement", values);
 export const updateMovement = (id: string, values: Record<string, unknown>) => execute("updateMovement", { movimentacao_id: id, ...values });
-export const deleteMovement = (id: string) => execute("deleteMovement", { movimentacao_id: id });
+
+export async function deleteMovement(id: string) {
+  const move: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
+  if (move.despesa_id || move.pagamento_id) {
+    throw new Error("Movimentações geradas por despesas ou pagamentos devem ser tratadas na tela de Despesas.");
+  }
+
+  const value = Number(move.valor);
+  if (!Number.isFinite(value) || value <= 0) throw new Error("Valor inválido na movimentação.");
+
+  const origin: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: move.conta_id });
+  const originBalance = Number(origin.saldo_atual || 0);
+  const transfer = move.tipo === "transferencia";
+  const out = move.tipo === "saida" || transfer;
+  const revertedOrigin = originBalance + (out ? value : -value);
+  if (revertedOrigin < 0) {
+    throw new Error("Não é possível excluir esta movimentação porque o saldo atual não permite desfazer seu efeito.");
+  }
+
+  let destination: any = null;
+  let revertedDestination = 0;
+  if (transfer) {
+    if (!move.conta_destino_id) throw new Error("Transferência sem conta de destino vinculada.");
+    destination = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: move.conta_destino_id });
+    revertedDestination = Number(destination.saldo_atual || 0) - value;
+    if (revertedDestination < 0) {
+      throw new Error("Não é possível excluir esta transferência porque a conta de destino não possui saldo suficiente para desfazer a operação.");
+    }
+  }
+
+  const now = new Date().toISOString();
+  await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: origin.$id,
+    data: { saldo_atual: revertedOrigin, updated_at: now } });
+
+  try {
+    if (destination) {
+      await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: destination.$id,
+        data: { saldo_atual: revertedDestination, updated_at: now } });
+    }
+    await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
+  } catch (error) {
+    await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: origin.$id,
+      data: { saldo_atual: originBalance, updated_at: now } }).catch(() => undefined);
+    if (destination) {
+      await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: destination.$id,
+        data: { saldo_atual: Number(destination.saldo_atual || 0), updated_at: now } }).catch(() => undefined);
+    }
+    throw error;
+  }
+
+  invalidateMovementsCache();
+  invalidateAccountsCache();
+}
+
 export const updateExpense = (id: string, values: Record<string, unknown>) => execute("updateExpense", { despesa_id: id, ...values });
 export const cancelExpense = (id: string) => execute("cancelExpense", { despesa_id: id });
 export const deleteExpense = (id: string) => execute("deleteExpense", { despesa_id: id });
