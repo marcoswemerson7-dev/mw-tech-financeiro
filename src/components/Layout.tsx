@@ -13,8 +13,10 @@ import {
   Bell,
   ChevronDown,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../lib/auth";
+import { getAccounts, getMovements } from "../lib/finance";
+import { getExpenses } from "../services/expenses";
 
 const items = [
   ["/", "Visão geral", House],
@@ -30,6 +32,16 @@ export default function Layout() {
   const [open, setOpen] = useState(false),
     loc = useLocation(),
     { logout } = useAuth();
+
+  useEffect(() => {
+    Promise.allSettled([
+      getAccounts(),
+      getMovements(100),
+      getMovements(30),
+      getMovements(8),
+      getExpenses(),
+    ]);
+  }, []);
 
   const title = items.find(([p]) =>
     p === "/" ? loc.pathname === "/" : loc.pathname.startsWith(p),
