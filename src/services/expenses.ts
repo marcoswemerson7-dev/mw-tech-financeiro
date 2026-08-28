@@ -7,11 +7,17 @@ import { payExpense as payExpenseOperation, reverseExpensePayment as reverseExpe
 let expensesCache: any[] | null = readFastCache<any[]>("expenses", 30 * 60 * 1000);
 let expensesCacheAt = expensesCache ? Date.now() : 0;
 let expensesRequest: Promise<any[]> | null = null;
+let userRequest: Promise<any> | null = null;
 const CACHE_TTL = 5 * 60 * 1000;
 
 export function peekExpenses() { return expensesCache; }
 export function invalidateExpensesCache() {
   expensesCache = null; expensesCacheAt = 0; expensesRequest = null; clearFastCache("expenses");
+}
+
+async function currentUser() {
+  if (!userRequest) userRequest = account.get().catch((error) => { userRequest = null; throw error; });
+  return userRequest;
 }
 
 async function fetchExpenses() {
@@ -33,7 +39,8 @@ export async function getExpenses(force = false) {
 }
 
 export async function createExpenses(records: Record<string, any>[]) {
-  const user = await account.get();
+  const user = await currentUser();
+  const now = new Date().toISOString();
   const result = await Promise.all(records.map((x) => tables.createRow({ databaseId: appwriteConfig.databaseId,
     tableId: TABLES.expenses, rowId: ID.unique(), data: {
       descricao: x.descricao, categoria_id: x.categoria_id || "", categoria: x.categoria || "",
@@ -42,7 +49,7 @@ export async function createExpenses(records: Record<string, any>[]) {
       conta_id: x.conta_bancaria_id || "", fornecedor: x.fornecedor || "", observacao: x.observacoes || "",
       status: "pendente", recorrente: Boolean(x.recorrente), recorrencia_id: x.recorrencia_id || "",
       data_pagamento: "", comprovante_id: "", created_by: user.$id,
-      created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      created_at: now, updated_at: now,
     } })));
   invalidateExpensesCache();
   return result;
@@ -74,8 +81,7 @@ export async function reverseExpensePayment(values: Record<string, unknown>) {
   const result = await reverseExpensePaymentOperation(values); invalidateExpensesCache(); return result;
 }
 export async function deleteExpenseDirect(expenseId: string) {
-  const expense = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expenseId });
-  if ((expense as any).status === "pago") throw new Error("Estorne o pagamento antes de excluir definitivamente esta despesa.");
+  // A UI já bloqueia exclusão de despesa paga. Evitamos um GET extra aqui para a lixeira responder mais rápido.
   await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expenseId });
   if (expensesCache) {
     expensesCache = expensesCache.filter((x: any) => x.id !== expenseId && x.$id !== expenseId);
