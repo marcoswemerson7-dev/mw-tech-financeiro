@@ -7,6 +7,7 @@ export {
   updateMovement,
   deleteMovement,
   updateExpense,
+  cancelExpense,
   deleteExpense,
   type Movement,
 } from "../services/transactions";
