@@ -12,7 +12,7 @@ import {
   type Account,
   type Movement,
 } from "../lib/finance";
-import { isConfigured } from "../lib/supabase";
+import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { money, Empty } from "../components/UI";
 export default function Cash() {
   const [accounts, setAccounts] = useState<Account[]>([]),

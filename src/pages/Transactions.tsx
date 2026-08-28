@@ -16,7 +16,7 @@ import {
   type Account,
   type Movement,
 } from "../lib/finance";
-import { isConfigured } from "../lib/supabase";
+import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { money, Empty } from "../components/UI";
 export default function Transactions() {
   const [rows, setRows] = useState<Movement[]>([]),

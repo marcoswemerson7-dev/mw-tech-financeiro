@@ -17,7 +17,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
-import { isConfigured } from "../lib/supabase";
+import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { money, Empty, Badge } from "../components/UI";
 export default function Dashboard() {
   const [rows, setRows] = useState<Movement[]>([]),

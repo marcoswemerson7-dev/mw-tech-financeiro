@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, X, CheckCircle2, Undo2, Paperclip } from "lucide-react";
-import { supabase, isConfigured } from "../lib/supabase";
+import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getAccounts, uploadReceipt, type Account } from "../lib/finance";
+import { createExpenses, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
 import { money, Badge, Empty } from "../components/UI";
 type Expense = {
   id: string;
@@ -29,14 +30,9 @@ export default function Expenses() {
     [error, setError] = useState("");
   async function load() {
     if (!isConfigured) return;
-    const [{ data }, a] = await Promise.all([
-      supabase
-        .from("despesas")
-        .select("*,contas_bancarias(nome)")
-        .order("data_vencimento"),
-      getAccounts(),
-    ]);
-    setRows((data || []) as Expense[]);
+    const [data, a] = await Promise.all([getExpenses(), getAccounts()]);
+    const accountName = new Map(a.map((x) => [x.id, x.nome]));
+    setRows(data.map((x: any) => ({ ...x, contas_bancarias: x.conta_id ? { nome: accountName.get(x.conta_id) || "—" } : null })) as Expense[]);
     setAccounts(a);
   }
   useEffect(() => {
@@ -87,8 +83,7 @@ export default function Expenses() {
           status: "pendente",
         });
       }
-      const { error } = await supabase.from("despesas").insert(records);
-      if (error) throw error;
+      await createExpenses(records);
       setForm(false);
       load();
     } catch (e: any) {
@@ -103,16 +98,9 @@ export default function Expenses() {
     try {
       const file = (f.elements.namedItem("arquivo") as HTMLInputElement)
         .files?.[0];
-      if (file) d.comprovante_url = await uploadReceipt(file);
-      const { error } = await supabase.rpc("pagar_despesa", {
-        p_despesa_id: pay.id,
-        p_conta_id: d.conta_id,
-        p_valor: Number(d.valor),
-        p_data: d.data_pagamento,
-        p_comprovante_url: d.comprovante_url || null,
-        p_observacao: d.observacao || null,
-      });
-      if (error) throw error;
+      if (file) d.comprovante_id = await uploadReceipt(file);
+      await payExpense({ despesa_id: pay.id, conta_id: d.conta_id, valor_pago: Number(d.valor),
+        data_pagamento: d.data_pagamento, comprovante_id: d.comprovante_id || "", observacao: d.observacao || "" });
       setPay(null);
       load();
     } catch (e: any) {
@@ -120,20 +108,11 @@ export default function Expenses() {
     }
   }
   async function reverse(x: Expense) {
-    const { data } = await supabase
-      .from("pagamentos_despesas")
-      .select("id")
-      .eq("despesa_id", x.id)
-      .eq("estornado", false)
-      .maybeSingle();
+    const data = await findActivePayment(x.id);
     if (!data) return alert("Pagamento ativo não encontrado.");
     if (!confirm("Estornar o pagamento e devolver o saldo à conta?")) return;
-    const { error } = await supabase.rpc("estornar_pagamento_despesa", {
-      p_pagamento_id: data.id,
-      p_observacao: "Estorno manual",
-    });
-    if (error) alert(error.message);
-    else load();
+    try { await reverseExpensePayment({ pagamento_id: data.id, observacao: "Estorno manual" }); await load(); }
+    catch (e: any) { alert(e.message); }
   }
   return (
     <div className="space-y-6">

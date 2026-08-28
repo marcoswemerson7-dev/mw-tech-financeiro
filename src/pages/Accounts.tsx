@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, X, Landmark, Pencil, Trash2 } from "lucide-react";
-import { supabase, isConfigured } from "../lib/supabase";
+import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
+import { deleteAccount, getAccounts, saveAccount } from "../services/accounts";
 import { money, Empty } from "../components/UI";
 type Account = {
   id: string;
@@ -40,11 +41,7 @@ export default function Accounts() {
       );
       return;
     }
-    const { data } = await supabase
-      .from("contas_bancarias")
-      .select("*")
-      .order("created_at");
-    setRows(data || []);
+    setRows((await getAccounts()) as Account[]);
   }
   useEffect(() => {
     load();
@@ -62,10 +59,7 @@ export default function Accounts() {
         : [...rows, { ...d, id: crypto.randomUUID() }];
       localStorage.setItem("mw-accounts", JSON.stringify(next));
       setRows(next);
-    } else
-      edit?.id
-        ? await supabase.from("contas_bancarias").update(d).eq("id", edit.id)
-        : await supabase.from("contas_bancarias").insert(d);
+    } else await saveAccount(d, edit?.id);
     setEdit(null);
     load();
   }
@@ -76,7 +70,7 @@ export default function Accounts() {
       localStorage.setItem("mw-accounts", JSON.stringify(n));
       setRows(n);
     } else {
-      await supabase.from("contas_bancarias").delete().eq("id", id);
+      await deleteAccount(id);
       load();
     }
   }

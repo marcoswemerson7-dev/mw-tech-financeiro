@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Printer, ReceiptText, FileSpreadsheet } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { getReportData } from "../services/reports";
 import { money, Badge } from "../components/UI";
 type Mov = {
   id: string;
@@ -23,62 +23,13 @@ export default function Reports() {
     [typeFilter, setTypeFilter] = useState(""),
     [statusFilter, setStatusFilter] = useState("");
   useEffect(() => {
-    Promise.all([
-      supabase
-        .from("receitas")
-        .select(
-          "id,descricao,categoria,valor,status,data_recebimento,data_vencimento,clientes(nome_fantasia,razao_social),contas_bancarias(nome,banco,agencia,conta)",
-        ),
-      supabase
-        .from("despesas")
-        .select(
-          "id,descricao,categoria,valor,status,data_pagamento,data_vencimento,contas_bancarias(nome,banco,agencia,conta)",
-        ),
-      supabase
-        .from("retiradas")
-        .select(
-          "id,descricao,valor,data,contas_bancarias(nome,banco,agencia,conta)",
-        ),
-      supabase.from("configuracoes_empresa").select("*").limit(1).maybeSingle(),
-    ]).then(([r, d, t, c]) => {
-      const account = (x: any) =>
-        x?.contas_bancarias
-          ? `${x.contas_bancarias.banco} · Ag. ${x.contas_bancarias.agencia || "—"} · Conta ${x.contas_bancarias.conta || "—"}`
-          : "Conta não informada";
-      setMov([
-        ...(r.data || []).map((x: any) => ({
-          id: x.id,
-          data: x.data_recebimento || x.data_vencimento,
-          descricao: x.descricao,
-          valor: +x.valor,
-          tipo: "Receita",
-          status: x.status,
-          conta: account(x),
-          cliente: x.clientes?.nome_fantasia || x.clientes?.razao_social,
-          categoria: x.categoria,
-        })),
-        ...(d.data || []).map((x: any) => ({
-          id: x.id,
-          data: x.data_pagamento || x.data_vencimento,
-          descricao: x.descricao,
-          valor: +x.valor,
-          tipo: "Despesa",
-          status: x.status,
-          conta: account(x),
-          categoria: x.categoria,
-        })),
-        ...(t.data || []).map((x: any) => ({
-          id: x.id,
-          data: x.data,
-          descricao: x.descricao,
-          valor: +x.valor,
-          tipo: "Retirada",
-          status: "pago",
-          conta: account(x),
-        })),
-      ] as Mov[]);
-      setCompany(c.data || {});
-    });
+    getReportData().then(({ movements, accounts, company }) => {
+      const names = new Map(accounts.map((x) => [x.id, `${x.nome} · ${x.banco || "Conta"} · Ag. ${x.agencia || "—"} · Conta ${x.conta || "—"}`]));
+      setMov(movements.map((x: any) => ({ id: x.id, data: x.data, descricao: x.descricao,
+        valor: Number(x.valor), tipo: x.tipo === "entrada" ? "Receita" : x.tipo === "retirada" ? "Retirada" : "Despesa",
+        status: "pago", conta: names.get(x.conta_id) || "Conta não informada", categoria: x.categorias_financeiras?.nome })) as Mov[]);
+      setCompany(company);
+    }).catch(() => { setMov([]); setCompany({}); });
   }, []);
   const filtered = useMemo(
     () =>
