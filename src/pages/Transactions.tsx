@@ -24,7 +24,7 @@ import {
   type Counterparty,
 } from "../services/counterparties";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
-import { money, Empty } from "../components/UI";
+import { money, Empty, formatDate } from "../components/UI";
 
 export default function Transactions() {
   const [rows, setRows] = useState<Movement[]>([]),
@@ -292,7 +292,7 @@ function MovementTable({ rows }: { rows: Movement[] }) {
                 const parsed = parseDescription(x.descricao);
                 return (
                   <tr key={x.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                    <td className="px-6 py-5">{new Date(x.data + "T12:00:00").toLocaleDateString("pt-BR")}</td>
+                    <td className="px-6 py-5">{formatDate(x.data)}</td>
                     <td className="px-6 py-5"><div className="flex items-center gap-2 font-semibold text-[#0b1d3a]"><Building2 size={17} className="text-slate-400" />{parsed.party}</div></td>
                     <td className="px-6 py-5 font-medium">{parsed.description}</td>
                     <td className="px-6 py-5 capitalize">{x.tipo.replace("_", " ")}</td>

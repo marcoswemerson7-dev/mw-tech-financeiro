@@ -13,7 +13,7 @@ import {
   type Movement,
 } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
-import { money, Empty } from "../components/UI";
+import { money, Empty, dateOnly, formatDate } from "../components/UI";
 
 export default function Cash() {
   const [accounts, setAccounts] = useState<Account[]>([]),
@@ -34,7 +34,7 @@ export default function Cash() {
       .filter((x) => x.tipo_conta !== "caixa")
       .reduce((a, x) => a + Number(x.saldo_atual), 0),
     today = new Date().toISOString().slice(0, 10),
-    daily = mov.filter((x) => x.data === today),
+    daily = mov.filter((x) => dateOnly(x.data) === today),
     ins = daily
       .filter((x) => x.tipo.includes("entrada"))
       .reduce((a, x) => a + Number(x.valor), 0),
@@ -101,7 +101,7 @@ export default function Cash() {
                 {mov.map((x) => (
                   <tr className="border-t border-slate-100 transition hover:bg-slate-50/70" key={x.id}>
                     <td className="whitespace-nowrap px-6 py-5 text-slate-600">
-                      {new Date(x.data + "T12:00:00").toLocaleDateString("pt-BR")}
+                      {formatDate(x.data)}
                     </td>
                     <td className="px-6 py-5 font-semibold text-slate-800">{x.descricao}</td>
                     <td className="px-6 py-5 capitalize text-slate-600">{x.tipo.replace("_", " ")}</td>

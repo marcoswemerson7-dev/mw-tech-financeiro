@@ -20,6 +20,9 @@ export async function getMovements(limit = 100) {
   })) as Movement[];
 }
 async function execute(action: string, payload: Record<string, unknown>) {
+  if (!appwriteConfig.financialFunctionId) {
+    throw new Error("Configure VITE_APPWRITE_FINANCIAL_FUNCTION_ID para executar operações financeiras.");
+  }
   const execution = await functions.createExecution({ functionId: appwriteConfig.financialFunctionId,
     body: JSON.stringify({ action, idempotencyKey: crypto.randomUUID(), ...payload }), async: false });
   const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};

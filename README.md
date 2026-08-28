@@ -1,12 +1,12 @@
 # MW TECH Financeiro
 
-Sistema interno de gestão financeira construído com React, TypeScript, Vite, Tailwind CSS e Supabase.
+Sistema interno de gestão financeira construído com React, TypeScript, Vite, Tailwind CSS e Appwrite.
 
 ## Configuração
 
-1. Copie `.env.example` para `.env` e informe a URL e a chave anônima do projeto Supabase.
-2. Execute a migration em `supabase/migrations` no projeto Supabase.
-3. Crie o primeiro usuário administrador em Authentication > Users.
-4. Execute `npm install` e `npm run dev`.
+1. Copie `.env.example` para `.env.local` e informe os IDs públicos do Appwrite.
+2. Confira o banco `mw-tech-financeiro`, o bucket `comprovantes` e as Functions descritas em `APPWRITE_SETUP.md`.
+3. Crie o primeiro usuário administrador em Auth > Users.
+4. Execute `npm install`, `npm run build` e `npm run dev`.
 
-O frontend usa exclusivamente a chave anônima. Nunca adicione uma chave `service_role` ao `.env`.
+O frontend usa somente variáveis `VITE_APPWRITE_*`, que são públicas. Nunca adicione `APPWRITE_API_KEY` ou qualquer segredo ao `.env`, `.env.local` versionado ou ao GitHub.

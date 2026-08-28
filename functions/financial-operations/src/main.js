@@ -9,7 +9,7 @@ export default async ({req,res,error})=>{
   const client=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
   const db=new TablesDB(client),databaseId=process.env.APPWRITE_DATABASE_ID;
   try{
-    try{await db.getRow({databaseId,tableId:T.ops,rowId:idempotencyKey});return res.json({error:"Esta operação já foi processada."},409)}catch(e){if(e.code!==404)throw e}
+    try{const done=await db.getRow({databaseId,tableId:T.ops,rowId:idempotencyKey});return res.json({ok:true,id:done.result_id,replayed:true})}catch(e){if(e.code!==404)throw e}
     const tx=await db.createTransaction();const tid=tx.$id,now=new Date().toISOString();
     const get=(tableId,rowId)=>db.getRow({databaseId,tableId,rowId,transactionId:tid});
     const update=(tableId,rowId,data)=>db.updateRow({databaseId,tableId,rowId,data,transactionId:tid});

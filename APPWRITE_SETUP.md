@@ -86,4 +86,4 @@ Na Vercel, importe o repositório e cadastre as mesmas variáveis `VITE_APPWRITE
 
 ## 8. Legado
 
-`clientes`, `receitas` e `retiradas` não foram duplicados no Appwrite nesta etapa. O novo razão financeiro já representa entradas, saídas e retiradas por tipo. As rotas legadas permanecem no código durante a transição, mas devem ser revisadas antes da remoção definitiva do Supabase.
+As rotas antigas de `clientes`, `receitas`, `contas-receber` e `retiradas` foram conectadas ao Appwrite. `clientes` usa `partes_financeiras`; `receitas` e `retiradas` registram movimentos pelo razão financeiro; `contas-receber` aponta para pendências financeiras existentes. O diretório `supabase/migrations` permanece apenas como histórico técnico.

@@ -6,6 +6,26 @@ export const money = (v: unknown) =>
     currency: "BRL",
   });
 
+export const dateOnly = (value?: string | null) => {
+  if (!value) return "";
+  return value.slice(0, 10);
+};
+
+export const formatDate = (value?: string | null) => {
+  const date = dateOnly(value);
+  return date ? new Date(`${date}T12:00:00`).toLocaleDateString("pt-BR") : "--";
+};
+
+export const formatMonth = (value?: string | null) => {
+  const date = dateOnly(value);
+  return date
+    ? new Date(`${date}T12:00:00`).toLocaleDateString("pt-BR", {
+        month: "short",
+        year: "numeric",
+      })
+    : "--";
+};
+
 export function Card({
   title,
   value,

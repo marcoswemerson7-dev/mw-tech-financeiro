@@ -5,7 +5,8 @@ export const appwriteConfig = {
   projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID || "",
   databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID || "",
   receiptsBucketId: import.meta.env.VITE_APPWRITE_COMPROVANTES_BUCKET_ID || "comprovantes",
-  financialFunctionId: import.meta.env.VITE_APPWRITE_FINANCIAL_FUNCTION_ID || "financial-operations",
+  financialFunctionId: import.meta.env.VITE_APPWRITE_FINANCIAL_FUNCTION_ID || "",
+  recurringFunctionId: import.meta.env.VITE_APPWRITE_RECURRING_FUNCTION_ID || "",
 };
 
 export const isAppwriteConfigured = Boolean(
@@ -31,4 +32,5 @@ export const TABLES = {
   recurrences: "despesas_recorrencias",
   payments: "pagamentos_despesas",
   company: "configuracoes_empresa",
+  idempotentOperations: "operacoes_idempotentes",
 } as const;

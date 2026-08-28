@@ -1,447 +1,230 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Pencil, Trash2, CheckCircle2, X } from "lucide-react";
-import { supabase } from "../lib/supabase";
-import { Badge, Empty, money } from "../components/UI";
-const defs = {
-  clientes: {
-    title: "Clientes",
-    table: "clientes",
-    fields: [
-      "razao_social",
-      "nome_fantasia",
-      "cpf_cnpj",
-      "telefone",
-      "email",
-      "cidade",
-      "estado",
-      "produto_contratado",
-      "valor_mensalidade",
-      "valor_implantacao",
-      "dia_vencimento",
-      "data_inicio",
-      "status",
-      "observacoes",
-    ],
-  },
-  receitas: {
-    title: "Receitas",
-    table: "receitas",
-    fields: [
-      "cliente_id",
-      "descricao",
-      "categoria",
-      "tipo",
-      "valor",
-      "data_vencimento",
-      "data_recebimento",
-      "forma_pagamento",
-      "conta_bancaria_id",
-      "status",
-      "observacoes",
-      "comprovante_url",
-    ],
-  },
-  despesas: {
-    title: "Despesas",
-    table: "despesas",
-    fields: [
-      "descricao",
-      "categoria",
-      "fornecedor",
-      "valor",
-      "data_vencimento",
-      "data_pagamento",
-      "forma_pagamento",
-      "conta_bancaria_id",
-      "status",
-      "recorrente",
-      "observacoes",
-      "comprovante_url",
-    ],
-  },
-  retiradas: {
-    title: "Retiradas",
-    table: "retiradas",
-    fields: [
-      "data",
-      "valor",
-      "tipo",
-      "conta_bancaria_id",
-      "descricao",
-      "observacoes",
-    ],
-  },
-  "contas-receber": {
-    title: "Contas a Receber",
-    table: "receitas",
-    fields: [],
-  },
-} as const;
-const selectOptions: Record<string, [string, string][]> = {
-  status: [
-    ["pendente", "Pendente"],
-    ["pago", "Pago"],
-    ["atrasado", "Atrasado"],
-    ["cancelado", "Cancelado"],
-    ["ativo", "Ativo"],
-    ["inativo", "Inativo"],
-    ["suspenso", "Suspenso"],
-  ],
-  tipo: [
-    ["mensalidade", "Mensalidade"],
-    ["implantacao", "Implantação"],
-    ["servico", "Serviço"],
-    ["venda", "Venda"],
-    ["retirada_proprietario", "Retirada do proprietário"],
-    ["pro_labore", "Pró-labore"],
-    ["distribuicao", "Distribuição"],
-    ["outro", "Outro"],
-  ],
-  forma_pagamento: [
-    ["PIX", "PIX"],
-    ["Transferência", "Transferência"],
-    ["Boleto", "Boleto"],
-    ["Dinheiro", "Dinheiro"],
-    ["Cartão", "Cartão"],
-    ["Outro", "Outro"],
-  ],
-  recorrente: [
-    ["false", "Não"],
-    ["true", "Sim"],
-  ],
+import { CheckCircle2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { getAccounts, getMovements, registerMovement, type Account, type Movement } from "../lib/finance";
+import { getExpenses, payExpense } from "../services/expenses";
+import { deactivateCounterparty, getCounterparties, saveCounterparty, type Counterparty } from "../services/counterparties";
+import { Badge, Empty, formatDate, money } from "../components/UI";
+
+type K = "clientes" | "receitas" | "contas-receber" | "retiradas";
+
+const titles: Record<K, string> = {
+  clientes: "Partes financeiras",
+  receitas: "Receitas",
+  "contas-receber": "Despesas pendentes",
+  retiradas: "Retiradas",
 };
-const labels: Record<string, string> = {
-  razao_social: "Razão social",
-  nome_fantasia: "Nome fantasia",
-  cpf_cnpj: "CPF / CNPJ",
-  cliente_id: "Cliente (ID)",
-  data_vencimento: "Data de vencimento",
-  data_recebimento: "Data de recebimento",
-  data_pagamento: "Data de pagamento",
-  forma_pagamento: "Forma de pagamento",
-  conta_bancaria_id: "Conta bancária",
-  comprovante_url: "Comprovante",
-  produto_contratado: "Produto contratado",
-  valor_mensalidade: "Valor da mensalidade",
-  valor_implantacao: "Valor da implantação",
-  dia_vencimento: "Dia do vencimento",
-  data_inicio: "Data de início",
-};
-const fieldLabel = (f: string) =>
-  labels[f] || f.replaceAll("_", " ").replace(/^./, (x) => x.toUpperCase());
-const fieldPlaceholder = (f: string) =>
-  f.includes("valor")
-    ? "0,00"
-    : f === "descricao"
-      ? "Descreva o lançamento"
-      : f === "categoria"
-        ? "Selecione ou informe a categoria"
-        : "Informe o dado";
-const getStatus = (r: any) =>
-  r.status === "pendente" &&
-  r.data_vencimento < new Date().toISOString().slice(0, 10)
-    ? "atrasado"
-    : r.status || "pendente";
-type K = keyof typeof defs;
+
 export default function DataPage({ kind }: { kind: K }) {
-  const def = defs[kind],
-    [rows, setRows] = useState<Record<string, any>[]>([]),
-    [search, setSearch] = useState(""),
-    [statusFilter, setStatusFilter] = useState(""),
-    [typeFilter, setTypeFilter] = useState(""),
-    [from, setFrom] = useState(""),
-    [to, setTo] = useState(""),
-    [edit, setEdit] = useState<Record<string, any> | null>(null),
-    [accounts, setAccounts] = useState<Record<string, any>[]>([]),
-    [loading, setLoading] = useState(true);
+  const [parties, setParties] = useState<Counterparty[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [search, setSearch] = useState("");
+  const [editParty, setEditParty] = useState<Partial<Counterparty> | null>(null);
+  const [movementOpen, setMovementOpen] = useState(false);
+  const [error, setError] = useState("");
+
   async function load() {
-    setLoading(true);
-    let q = supabase
-      .from(def.table)
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (kind === "contas-receber") q = q.eq("status", "pendente");
-    const { data } = await q;
-    setRows(data || []);
-    setLoading(false);
+    const [partyRows, movementRows, expenseRows, accountRows] = await Promise.all([
+      getCounterparties().catch(() => []),
+      getMovements(500).catch(() => []),
+      getExpenses().catch(() => []),
+      getAccounts().catch(() => []),
+    ]);
+    setParties(partyRows);
+    setMovements(movementRows);
+    setExpenses(expenseRows);
+    setAccounts(accountRows);
   }
+
   useEffect(() => {
-    load();
-    supabase
-      .from("contas_bancarias")
-      .select("id,nome,banco,agencia,conta")
-      .eq("ativo", true)
-      .then(({ data }) => setAccounts(data || []));
+    void load();
   }, [kind]);
-  const visible = useMemo(
-    () =>
-      rows.filter((r) => {
-        const date = r.data_vencimento || r.data || r.data_inicio || "";
-        return (
-          JSON.stringify(r).toLowerCase().includes(search.toLowerCase()) &&
-          (!statusFilter || getStatus(r) === statusFilter) &&
-          (!typeFilter || r.tipo === typeFilter) &&
-          (!from || date >= from) &&
-          (!to || date <= to)
-        );
-      }),
-    [rows, search, statusFilter, typeFilter, from, to],
+
+  const visibleParties = useMemo(
+    () => parties.filter((x) => JSON.stringify(x).toLowerCase().includes(search.toLowerCase())),
+    [parties, search],
   );
-  async function save(e: React.FormEvent<HTMLFormElement>) {
+  const visibleMovements = useMemo(
+    () =>
+      movements.filter(
+        (x) =>
+          (kind === "receitas" ? x.tipo === "entrada" : x.tipo === "saida" && x.descricao.toLowerCase().includes("retirada")) &&
+          JSON.stringify(x).toLowerCase().includes(search.toLowerCase()),
+      ),
+    [kind, movements, search],
+  );
+  const visibleExpenses = useMemo(
+    () => expenses.filter((x) => x.status === "pendente" && JSON.stringify(x).toLowerCase().includes(search.toLowerCase())),
+    [expenses, search],
+  );
+
+  async function saveParty(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const data: any = Object.fromEntries(new FormData(e.currentTarget));
-    [
-      "valor",
-      "valor_mensalidade",
-      "valor_implantacao",
-      "dia_vencimento",
-    ].forEach((k) => {
-      if (k in data) data[k] = +data[k];
-    });
-    edit?.id
-      ? await supabase.from(def.table).update(data).eq("id", edit.id)
-      : await supabase.from(def.table).insert(data);
-    setEdit(null);
-    load();
-  }
-  async function del(id: any) {
-    if (confirm("Excluir este registro?")) {
-      await supabase.from(def.table).delete().eq("id", id);
-      load();
+    setError("");
+    try {
+      const values: any = Object.fromEntries(new FormData(e.currentTarget));
+      await saveCounterparty({ ...values, id: editParty?.id });
+      setEditParty(null);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
     }
   }
-  async function paid(r: any) {
-    const date = kind === "despesas" ? "data_pagamento" : "data_recebimento";
-    await supabase
-      .from(def.table)
-      .update({ status: "pago", [date]: new Date().toISOString().slice(0, 10) })
-      .eq("id", r.id);
-    load();
+
+  async function saveMovement(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    try {
+      const values: any = Object.fromEntries(new FormData(e.currentTarget));
+      const party = parties.find((x) => x.id === values.parte_id);
+      const tipo = kind === "receitas" ? "entrada" : "saida";
+      const prefix = kind === "receitas" ? "Recebido de" : "Retirada para";
+      await registerMovement({
+        tipo,
+        data: values.data,
+        conta_id: values.conta_id,
+        valor: Number(values.valor),
+        descricao: `${prefix} ${party?.nome || "parte financeira"} - ${values.descricao}`,
+        observacao: values.observacao || "",
+      });
+      setMovementOpen(false);
+      await load();
+    } catch (e: any) {
+      setError(e.message);
+    }
   }
+
+  async function removeParty(id: string) {
+    if (!confirm("Inativar este cadastro financeiro?")) return;
+    await deactivateCounterparty(id);
+    await load();
+  }
+
+  async function markExpensePaid(expense: any) {
+    const accountId = expense.conta_id || accounts[0]?.id;
+    if (!accountId) return alert("Cadastre uma conta antes de pagar a despesa.");
+    await payExpense({
+      despesa_id: expense.id,
+      conta_id: accountId,
+      valor_pago: Number(expense.valor),
+      data_pagamento: new Date().toISOString().slice(0, 10),
+      observacao: "Pagamento registrado pela tela de pendências.",
+    });
+    await load();
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold">{def.title}</h2>
-          <p className="text-sm text-slate-500">
-            Gerencie os registros da empresa.
-          </p>
+          <h2 className="text-2xl font-bold">{titles[kind]}</h2>
+          <p className="text-sm text-slate-500">Dados conectados ao Appwrite financeiro.</p>
         </div>
-        {kind !== "contas-receber" && (
-          <button
-            onClick={() => setEdit({})}
-            className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white"
-          >
-            <Plus size={18} />
-            Novo registro
+        {kind === "clientes" ? (
+          <button onClick={() => setEditParty({ tipo: "cliente" })} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white">
+            <Plus size={18} /> Novo cadastro
           </button>
-        )}
+        ) : kind !== "contas-receber" ? (
+          <button onClick={() => setMovementOpen(true)} className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-white">
+            <Plus size={18} /> Novo registro
+          </button>
+        ) : null}
       </div>
-      <div className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar descrição, cliente..."
-            className="w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm"
-          />
-        </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-xl border px-3 text-sm"
-        >
-          <option value="">Todos os status</option>
-          <option value="pendente">Pendente</option>
-          <option value="pago">Pago</option>
-          <option value="atrasado">Atrasado</option>
-          <option value="cancelado">Cancelado</option>
-          <option value="ativo">Ativo</option>
-          <option value="inativo">Inativo</option>
-        </select>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="rounded-xl border px-3 text-sm"
-        >
-          <option value="">Todos os tipos</option>
-          <option value="mensalidade">Mensalidade</option>
-          <option value="implantacao">Implantação</option>
-          <option value="servico">Serviço</option>
-          <option value="venda">Venda</option>
-          <option value="pro_labore">Pró-labore</option>
-          <option value="outro">Outro</option>
-        </select>
-        <input
-          aria-label="Data inicial"
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="rounded-xl border px-3 text-sm"
-        />
-        <input
-          aria-label="Data final"
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className="rounded-xl border px-3 text-sm"
-        />
+
+      <div className="relative rounded-2xl border bg-white p-4 shadow-sm">
+        <Search className="absolute left-7 top-7 text-slate-400" size={18} />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar..." className="w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm" />
       </div>
-      <div className="overflow-hidden rounded-2xl border bg-white">
-        {loading ? (
-          <div className="py-14 text-center">Carregando...</div>
-        ) : visible.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-5 py-3">Descrição / Cliente</th>
-                  <th>Valor</th>
-                  <th>Vencimento</th>
-                  <th>Status</th>
-                  <th className="px-5 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr className="border-t" key={r.id}>
-                    <td className="px-5 py-4 font-medium">
-                      {r.razao_social || r.nome_fantasia || r.descricao || "—"}
-                    </td>
-                    <td>{money(r.valor || r.valor_mensalidade)}</td>
-                    <td>{r.data_vencimento || "—"}</td>
-                    <td>
-                      <Badge status={getStatus(r)} />
-                    </td>
-                    <td className="px-5">
-                      <div className="flex justify-end gap-1">
-                        {["receitas", "despesas", "contas-receber"].includes(
-                          kind,
-                        ) &&
-                          r.status === "pendente" && (
-                            <button
-                              onClick={() => paid(r)}
-                              className="p-2 text-emerald-600"
-                            >
-                              <CheckCircle2 size={18} />
-                            </button>
-                          )}
-                        {kind !== "contas-receber" && (
-                          <button
-                            onClick={() => setEdit(r)}
-                            className="p-2 text-blue-600"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => del(r.id)}
-                          className="p-2 text-red-600"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <Empty />
-        )}
-      </div>
-      {edit && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4">
-          <form
-            onSubmit={save}
-            className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white shadow-2xl"
-          >
-            <div className="sticky top-0 z-10 mb-5 flex justify-between border-b bg-white px-7 py-5">
-              <h3 className="text-xl font-bold">
-                {edit.id ? "Editar" : "Novo"} registro
-              </h3>
-              <button type="button" onClick={() => setEdit(null)}>
-                <X />
-              </button>
-            </div>
-            <div className="grid gap-4 px-7 sm:grid-cols-2">
-              {def.fields.map((f) => (
-                <label
-                  key={f}
-                  className={`text-sm font-medium capitalize ${f === "observacoes" ? "sm:col-span-2" : ""}`}
-                >
-                  {fieldLabel(f)}
-                  {f === "conta_bancaria_id" ? (
-                    <select
-                      name={f}
-                      defaultValue={edit[f] || ""}
-                      className="mt-1.5 w-full rounded-xl border p-3"
-                    >
-                      <option value="">Selecione a conta</option>
-                      {accounts.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.banco} · Ag. {a.agencia || "—"} · Conta{" "}
-                          {a.conta || "—"}
-                        </option>
-                      ))}
-                    </select>
-                  ) : selectOptions[f] ? (
-                    <select
-                      name={f}
-                      defaultValue={edit[f] ?? selectOptions[f][0][0]}
-                      className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-3 outline-none focus:border-blue-500"
-                    >
-                      {selectOptions[f].map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : f === "observacoes" ? (
-                    <textarea
-                      name={f}
-                      defaultValue={edit[f] || ""}
-                      placeholder="Informações adicionais do lançamento..."
-                      className="mt-1.5 min-h-24 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-                    />
-                  ) : (
-                    <input
-                      name={f}
-                      defaultValue={
-                        edit[f] ?? (f === "status" ? "pendente" : "")
-                      }
-                      type={
-                        f.includes("data")
-                          ? "date"
-                          : f.includes("valor") || f === "dia_vencimento"
-                            ? "number"
-                            : "text"
-                      }
-                      step={f.includes("valor") ? ".01" : undefined}
-                      placeholder={fieldPlaceholder(f)}
-                      className="mt-1.5 w-full rounded-xl border border-slate-300 p-3 outline-none focus:border-blue-500"
-                    />
-                  )}
-                </label>
-              ))}
-            </div>
-            <div className="sticky bottom-0 mt-6 flex justify-end gap-3 border-t bg-white px-7 py-4">
-              <button
-                type="button"
-                onClick={() => setEdit(null)}
-                className="rounded-xl border px-4 py-2"
-              >
-                Cancelar
-              </button>
-              <button className="rounded-xl bg-blue-600 px-5 py-2 text-white">
-                Salvar
-              </button>
-            </div>
+
+      {kind === "clientes" ? (
+        <PartyTable rows={visibleParties} edit={setEditParty} remove={removeParty} />
+      ) : kind === "contas-receber" ? (
+        <ExpenseTable rows={visibleExpenses} pay={markExpensePaid} />
+      ) : (
+        <MovementTable rows={visibleMovements} />
+      )}
+
+      {editParty && (
+        <Modal title={editParty.id ? "Editar cadastro" : "Novo cadastro"} close={() => setEditParty(null)}>
+          <form onSubmit={saveParty} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Nome / Razão social" wide><input name="nome" required defaultValue={editParty.nome || ""} className="input" /></Field>
+            <Field label="Tipo">
+              <select name="tipo" required defaultValue={editParty.tipo || "cliente"} className="input">
+                <option value="cliente">Cliente</option>
+                <option value="fornecedor">Fornecedor</option>
+                <option value="orgao_publico">Órgão público</option>
+                <option value="outro">Outro</option>
+              </select>
+            </Field>
+            <Field label="CPF / CNPJ"><input name="documento" defaultValue={editParty.documento || ""} className="input" /></Field>
+            <Field label="Observação" wide><textarea name="observacao" defaultValue={editParty.observacao || ""} className="input" /></Field>
+            {error && <p className="text-sm text-red-600 sm:col-span-2">{error}</p>}
+            <Actions cancel={() => setEditParty(null)} text="Salvar" />
           </form>
-        </div>
+        </Modal>
+      )}
+
+      {movementOpen && (
+        <Modal title={kind === "receitas" ? "Nova receita" : "Nova retirada"} close={() => setMovementOpen(false)}>
+          <form onSubmit={saveMovement} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Data"><input name="data" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className="input" /></Field>
+            <Field label="Conta">
+              <select name="conta_id" required className="input">
+                <option value="">Selecione</option>
+                {accounts.map((a) => <option key={a.id} value={a.id}>{a.nome} - {money(a.saldo_atual)}</option>)}
+              </select>
+            </Field>
+            <Field label="Parte financeira">
+              <select name="parte_id" className="input">
+                <option value="">Selecione</option>
+                {parties.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="Valor"><input name="valor" type="number" min="0.01" step="0.01" required className="input" /></Field>
+            <Field label="Descrição" wide><input name="descricao" required className="input" /></Field>
+            <Field label="Observação" wide><textarea name="observacao" className="input" /></Field>
+            {error && <p className="text-sm text-red-600 sm:col-span-2">{error}</p>}
+            <Actions cancel={() => setMovementOpen(false)} text="Salvar" />
+          </form>
+        </Modal>
       )}
     </div>
   );
+}
+
+function PartyTable({ rows, edit, remove }: { rows: Counterparty[]; edit: (x: Counterparty) => void; remove: (id: string) => void }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-white">
+      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Nome", "Tipo", "Documento", "Status", "Ações"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4 font-medium">{x.nome}</td><td>{x.tipo.replace("_", " ")}</td><td>{x.documento || "--"}</td><td><Badge status={x.ativo ? "ativo" : "inativo"} /></td><td className="px-5"><button onClick={() => edit(x)} className="p-2 text-blue-600"><Pencil size={18} /></button><button onClick={() => remove(x.id)} className="p-2 text-red-600"><Trash2 size={18} /></button></td></tr>)}</tbody></table> : <Empty />}
+    </div>
+  );
+}
+
+function MovementTable({ rows }: { rows: Movement[] }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-white">
+      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Data", "Descrição", "Tipo", "Valor", "Status"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4">{formatDate(x.data)}</td><td className="font-medium">{x.descricao}</td><td>{x.tipo}</td><td className="font-semibold">{money(x.valor)}</td><td><Badge status="pago" /></td></tr>)}</tbody></table> : <Empty />}
+    </div>
+  );
+}
+
+function ExpenseTable({ rows, pay }: { rows: any[]; pay: (x: any) => void }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border bg-white">
+      {rows.length ? <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr>{["Vencimento", "Descrição", "Valor", "Status", "Ações"].map((x) => <th key={x} className="px-5 py-3">{x}</th>)}</tr></thead><tbody>{rows.map((x) => <tr key={x.id} className="border-t"><td className="px-5 py-4">{formatDate(x.data_vencimento)}</td><td className="font-medium">{x.descricao}</td><td className="font-semibold">{money(x.valor)}</td><td><Badge status={x.status} /></td><td><button onClick={() => pay(x)} className="p-2 text-emerald-600"><CheckCircle2 size={18} /></button></td></tr>)}</tbody></table> : <Empty />}
+    </div>
+  );
+}
+
+function Modal({ title, close, children }: { title: string; close: () => void; children: any }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4"><div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white shadow-2xl"><div className="sticky top-0 z-10 flex justify-between border-b bg-white px-7 py-5"><h3 className="text-xl font-bold">{title}</h3><button type="button" onClick={close}><X /></button></div><div className="p-7">{children}</div></div></div>;
+}
+
+function Field({ label, children, wide }: { label: string; children: any; wide?: boolean }) {
+  return <label className={`text-sm font-medium ${wide ? "sm:col-span-2" : ""}`}>{label}{children}</label>;
+}
+
+function Actions({ cancel, text }: { cancel: () => void; text: string }) {
+  return <div className="flex justify-end gap-3 sm:col-span-2"><button type="button" onClick={cancel} className="rounded-xl border px-4 py-2">Cancelar</button><button className="rounded-xl bg-blue-600 px-5 py-2 text-white">{text}</button></div>;
 }

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
-import { money, Empty, Badge } from "../components/UI";
+import { money, Empty, Badge, dateOnly, formatDate } from "../components/UI";
 
 export default function Dashboard() {
   const [rows, setRows] = useState<Movement[]>([]),
@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   const now = new Date(),
     month = now.toISOString().slice(0, 7),
-    current = rows.filter((x) => x.data.startsWith(month)),
+    current = rows.filter((x) => dateOnly(x.data).startsWith(month)),
     ins = current
       .filter((x) => x.tipo.includes("entrada"))
       .reduce((a, x) => a + Number(x.valor), 0),
@@ -123,7 +123,7 @@ export default function Dashboard() {
                 {rows.map((x) => (
                   <tr key={x.id} className="border-t border-slate-100 transition hover:bg-slate-50/70">
                     <td className="whitespace-nowrap px-6 py-5 text-slate-600">
-                      {new Date(x.data + "T12:00:00").toLocaleDateString("pt-BR")}
+                      {formatDate(x.data)}
                     </td>
                     <td className="px-6 py-5 font-semibold text-slate-800">{x.descricao}</td>
                     <td className="px-6 py-5 text-slate-600">{x.categorias_financeiras?.nome || "—"}</td>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Printer, ReceiptText, FileSpreadsheet } from "lucide-react";
 import { getReportData } from "../services/reports";
-import { money, Badge } from "../components/UI";
+import { money, Badge, dateOnly, formatDate } from "../components/UI";
 type Mov = {
   id: string;
   data: string;
@@ -36,12 +36,12 @@ export default function Reports() {
       mov
         .filter(
           (x) =>
-            x.data >= from &&
-            x.data <= to &&
+            dateOnly(x.data) >= from &&
+            dateOnly(x.data) <= to &&
             (!typeFilter || x.tipo === typeFilter) &&
             (!statusFilter || x.status === statusFilter),
         )
-        .sort((a, b) => b.data.localeCompare(a.data)),
+        .sort((a, b) => dateOnly(b.data).localeCompare(dateOnly(a.data))),
     [mov, from, to, typeFilter, statusFilter],
   );
   const sums = {
@@ -66,7 +66,7 @@ export default function Reports() {
     const lines = [
       ["Data", "Descrição", "Categoria", "Conta", "Tipo", "Valor", "Status"],
       ...filtered.map((x) => [
-        format(x.data),
+        formatDate(x.data),
         x.descricao,
         x.categoria || "",
         x.conta || "",
@@ -207,7 +207,7 @@ export default function Reports() {
               <tbody>
                 {filtered.map((x) => (
                   <tr key={x.tipo + x.id} className="border-b">
-                    <td className="px-3 py-3">{format(x.data)}</td>
+                    <td className="px-3 py-3">{formatDate(x.data)}</td>
                     <td className="px-3 font-medium">{x.descricao}</td>
                     <td className="px-3 text-slate-500">{x.conta}</td>
                     <td className="px-3">{x.tipo}</td>
@@ -282,7 +282,7 @@ export default function Reports() {
             Recebemos de{" "}
             <b>{receipt.cliente || "________________________________"}</b> o
             valor acima referente a <b>{receipt.descricao}</b>, em{" "}
-            <b>{format(receipt.data)}</b>, pela conta <b>{receipt.conta}</b>.
+            <b>{formatDate(receipt.data)}</b>, pela conta <b>{receipt.conta}</b>.
           </p>
           <div className="mt-20 grid grid-cols-2 gap-12 text-center text-xs">
             <div className="border-t pt-2">Assinatura do responsável</div>
@@ -331,5 +331,4 @@ function PrintHeader({
     </div>
   );
 }
-const format = (d: string) =>
-  d ? new Date(d + "T12:00:00").toLocaleDateString("pt-BR") : "—";
+const format = formatDate;

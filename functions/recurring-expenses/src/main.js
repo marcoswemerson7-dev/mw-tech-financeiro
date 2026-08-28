@@ -1,6 +1,6 @@
 import { Client, Query, TablesDB } from "node-appwrite";
 export default async ({req,res,error})=>{
-  const userId=req.headers["x-appwrite-user-id"];if(!userId)return res.json({error:"Usuário não autenticado."},401);
+  const userId=req.headers["x-appwrite-user-id"]||process.env.APPWRITE_FUNCTION_USER_ID||"system";
   const client=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
   const db=new TablesDB(client),databaseId=process.env.APPWRITE_DATABASE_ID,now=new Date(),created=[];
   try{

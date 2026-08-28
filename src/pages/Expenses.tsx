@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, X, CheckCircle2, Undo2, Paperclip } from "lucide-react";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getAccounts, uploadReceipt, type Account } from "../lib/finance";
-import { createExpenses, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
-import { money, Badge, Empty } from "../components/UI";
+import { createExpenseWithOptionalRecurrence, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
+import { generateRecurringExpenses, getRecurrences, setRecurrenceActive, type Recurrence } from "../services/recurrences";
+import { money, Badge, Empty, dateOnly, formatDate, formatMonth } from "../components/UI";
 type Expense = {
   id: string;
   descricao: string;
@@ -22,6 +23,7 @@ const month = new Date().toISOString().slice(0, 7);
 export default function Expenses() {
   const [rows, setRows] = useState<Expense[]>([]),
     [accounts, setAccounts] = useState<Account[]>([]),
+    [recurrences, setRecurrences] = useState<Recurrence[]>([]),
     [form, setForm] = useState(false),
     [pay, setPay] = useState<Expense | null>(null),
     [search, setSearch] = useState(""),
@@ -30,10 +32,11 @@ export default function Expenses() {
     [error, setError] = useState("");
   async function load() {
     if (!isConfigured) return;
-    const [data, a] = await Promise.all([getExpenses(), getAccounts()]);
+    const [data, a, recurrenceRows] = await Promise.all([getExpenses(), getAccounts(), getRecurrences().catch(() => [])]);
     const accountName = new Map(a.map((x) => [x.id, x.nome]));
     setRows(data.map((x: any) => ({ ...x, contas_bancarias: x.conta_id ? { nome: accountName.get(x.conta_id) || "—" } : null })) as Expense[]);
     setAccounts(a);
+    setRecurrences(recurrenceRows);
   }
   useEffect(() => {
     load();
@@ -46,7 +49,7 @@ export default function Expenses() {
             JSON.stringify(x).toLowerCase().includes(search.toLowerCase())) &&
           (!status || x.status === status) &&
           (!filterMonth ||
-            String(x.competencia || x.data_vencimento).startsWith(filterMonth)),
+            dateOnly(x.competencia || x.data_vencimento).startsWith(filterMonth)),
       ),
     [rows, search, status, filterMonth],
   );
@@ -67,23 +70,7 @@ export default function Expenses() {
     const months = Number(d.quantidade_meses || 1);
     delete d.quantidade_meses;
     try {
-      const records = [];
-      for (let i = 0; i < (d.recorrente ? months : 1); i++) {
-        const due = new Date(d.data_vencimento + "T12:00:00");
-        due.setMonth(due.getMonth() + i);
-        records.push({
-          ...d,
-          descricao: d.recorrente
-            ? `${d.descricao} - ${due.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`
-            : d.descricao,
-          data_vencimento: due.toISOString().slice(0, 10),
-          competencia: new Date(due.getFullYear(), due.getMonth(), 1, 12)
-            .toISOString()
-            .slice(0, 10),
-          status: "pendente",
-        });
-      }
-      await createExpenses(records);
+      await createExpenseWithOptionalRecurrence(d, months);
       setForm(false);
       load();
     } catch (e: any) {
@@ -113,6 +100,19 @@ export default function Expenses() {
     if (!confirm("Estornar o pagamento e devolver o saldo à conta?")) return;
     try { await reverseExpensePayment({ pagamento_id: data.id, observacao: "Estorno manual" }); await load(); }
     catch (e: any) { alert(e.message); }
+  }
+  async function runRecurrences() {
+    try {
+      const result = await generateRecurringExpenses();
+      alert(result.created.length ? `${result.created.length} despesa(s) gerada(s).` : "Nenhuma despesa nova para a competência atual.");
+      await load();
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+  async function toggleRecurrence(x: Recurrence) {
+    await setRecurrenceActive(x.id, !x.ativo);
+    await load();
   }
   return (
     <div className="space-y-6">
@@ -194,21 +194,8 @@ export default function Expenses() {
                   <tr className="border-t" key={x.id}>
                     <td className="px-4 py-4 font-medium">{x.descricao}</td>
                     <td className="px-4">{x.categoria || "—"}</td>
-                    <td className="px-4">
-                      {x.competencia
-                        ? new Date(
-                            x.competencia + "T12:00:00",
-                          ).toLocaleDateString("pt-BR", {
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "—"}
-                    </td>
-                    <td className="px-4">
-                      {new Date(
-                        x.data_vencimento + "T12:00:00",
-                      ).toLocaleDateString("pt-BR")}
-                    </td>
+                    <td className="px-4">{formatMonth(x.competencia)}</td>
+                    <td className="px-4">{formatDate(x.data_vencimento)}</td>
                     <td className="px-4 font-semibold">{money(x.valor)}</td>
                     <td className="px-4">{x.contas_bancarias?.nome || "—"}</td>
                     <td className="px-4">
@@ -251,6 +238,42 @@ export default function Expenses() {
           <Empty />
         )}
       </div>
+      <section className="rounded-xl border bg-white p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-[#0b1d3a]">Recorrências ativas</h3>
+            <p className="text-sm text-slate-500">Modelos usados para gerar despesas mensais sem duplicar competências.</p>
+          </div>
+          <button onClick={runRecurrences} disabled={!isConfigured} className="rounded-xl border border-[#0b2b66] px-4 py-2 text-sm font-semibold text-[#0b2b66] disabled:opacity-50">
+            Gerar mês atual
+          </button>
+        </div>
+        {recurrences.length ? (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs text-slate-500">
+                <tr>{["Descrição", "Dia", "Valor", "Início", "Status", "Ações"].map((x) => <th key={x} className="px-4 py-3">{x}</th>)}</tr>
+              </thead>
+              <tbody>
+                {recurrences.map((x) => (
+                  <tr key={x.id} className="border-t">
+                    <td className="px-4 py-3 font-medium">{x.descricao}</td>
+                    <td className="px-4">{x.dia_vencimento}</td>
+                    <td className="px-4 font-semibold">{money(x.valor)}</td>
+                    <td className="px-4">{formatDate(x.data_inicio)}</td>
+                    <td className="px-4"><Badge status={x.ativo ? "ativo" : "inativo"} /></td>
+                    <td className="px-4">
+                      <button onClick={() => toggleRecurrence(x)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold text-[#0b2b66]">
+                        {x.ativo ? "Pausar" : "Reativar"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <Empty />}
+      </section>
       {form && (
         <Modal title="Cadastrar despesa" close={() => setForm(false)}>
           <form onSubmit={create}>
@@ -282,7 +305,7 @@ export default function Expenses() {
                 <select name="conta_bancaria_id" className="input">
                   <option value="">Selecione</option>
                   {accounts.map((a) => (
-                    <option value={a.id}>{a.nome}</option>
+                    <option key={a.id} value={a.id}>{a.nome}</option>
                   ))}
                 </select>
               </F>
@@ -329,7 +352,7 @@ export default function Expenses() {
                 <select name="conta_id" required className="input">
                   <option value="">Selecione</option>
                   {accounts.map((a) => (
-                    <option value={a.id}>
+                    <option key={a.id} value={a.id}>
                       {a.nome} · {money(a.saldo_atual)}
                     </option>
                   ))}

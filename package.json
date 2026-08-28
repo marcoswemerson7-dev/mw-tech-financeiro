@@ -11,7 +11,6 @@
     "appwrite:setup": "tsx scripts/setup-appwrite.ts"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4",
     "@tailwindcss/vite": "^4.1.13",
     "appwrite": "^26.2.0",
     "lucide-react": "^0.544.0",
