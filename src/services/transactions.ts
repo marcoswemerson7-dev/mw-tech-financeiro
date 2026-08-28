@@ -4,7 +4,8 @@ import { getAccounts, invalidateAccountsCache } from "./accounts";
 
 export type Movement = {
   id: string; tipo: string; data: string; descricao: string; valor: number;
-  observacao?: string; created_at: string; conta_id?: string; categoria_id?: string;
+  observacao?: string; created_at: string; conta_id?: string; conta_destino_id?: string;
+  categoria_id?: string; comprovante_id?: string; despesa_id?: string; pagamento_id?: string;
   contas_bancarias?: { nome: string } | null; categorias_financeiras?: { nome: string } | null;
 };
 
@@ -35,10 +36,9 @@ export async function getMovements(limit = 100, force = false) {
   movementCache.set(limit, { at: Date.now(), rows });
   return rows;
 }
+
 async function execute(action: string, payload: Record<string, unknown>) {
-  if (!appwriteConfig.financialFunctionId) {
-    throw new Error("Configure VITE_APPWRITE_FINANCIAL_FUNCTION_ID para executar operações financeiras.");
-  }
+  if (!appwriteConfig.financialFunctionId) throw new Error("Configure VITE_APPWRITE_FINANCIAL_FUNCTION_ID para executar operações financeiras.");
   const execution = await functions.createExecution({ functionId: appwriteConfig.financialFunctionId,
     body: JSON.stringify({ action, idempotencyKey: crypto.randomUUID(), ...payload }), async: false });
   const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
@@ -47,6 +47,11 @@ async function execute(action: string, payload: Record<string, unknown>) {
   invalidateAccountsCache();
   return body;
 }
+
 export const registerMovement = (values: Record<string, unknown>) => execute(values.tipo === "transferencia" ? "transfer" : "registerMovement", values);
+export const updateMovement = (id: string, values: Record<string, unknown>) => execute("updateMovement", { movimentacao_id: id, ...values });
+export const deleteMovement = (id: string) => execute("deleteMovement", { movimentacao_id: id });
+export const updateExpense = (id: string, values: Record<string, unknown>) => execute("updateExpense", { despesa_id: id, ...values });
+export const deleteExpense = (id: string) => execute("deleteExpense", { despesa_id: id });
 export const payExpense = (values: Record<string, unknown>) => execute("payExpense", values);
 export const reverseExpensePayment = (values: Record<string, unknown>) => execute("reverseExpensePayment", values);
