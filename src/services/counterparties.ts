@@ -1,5 +1,6 @@
 import { ID, Query } from "appwrite";
 import { appwriteConfig, tables, TABLES } from "../lib/appwrite";
+import { syncMovementCounterpartyCache } from "./transactions";
 
 export type Counterparty = {
   id: string;
@@ -94,6 +95,8 @@ async function syncCounterpartyReferences(before: Counterparty, after: Counterpa
       });
     }),
   );
+
+  syncMovementCounterpartyCache(oldName, newName, oldDocument, newDocument);
 }
 
 export async function saveCounterparty(values: CounterpartyInput) {
