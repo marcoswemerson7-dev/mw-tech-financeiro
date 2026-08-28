@@ -8,10 +8,26 @@ export type Account = {
 };
 
 const map = (row: any): Account => ({ ...row, id: row.$id, tipo_conta: row.tipo, conta: row.numero_conta });
-export async function getAccounts() {
+let accountsCache: Account[] | null = null;
+let accountsCacheAt = 0;
+const CACHE_TTL = 2 * 60 * 1000;
+
+export function peekAccounts() {
+  return accountsCache;
+}
+
+export function invalidateAccountsCache() {
+  accountsCache = null;
+  accountsCacheAt = 0;
+}
+
+export async function getAccounts(force = false) {
+  if (!force && accountsCache && Date.now() - accountsCacheAt < CACHE_TTL) return accountsCache;
   const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts,
     queries: [Query.orderAsc("nome"), Query.limit(200)] });
-  return result.rows.map(map);
+  accountsCache = result.rows.map(map);
+  accountsCacheAt = Date.now();
+  return accountsCache;
 }
 export async function saveAccount(data: Partial<Account>, id?: string) {
   const payload = {
@@ -22,8 +38,14 @@ export async function saveAccount(data: Partial<Account>, id?: string) {
     cor: data.cor || "#0b2b66", ativo: data.ativo ?? true,
     updated_at: new Date().toISOString(),
   };
-  return id
-    ? tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: id, data: payload })
-    : tables.createRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: ID.unique(), data: { ...payload, created_at: new Date().toISOString() } });
+  const result = id
+    ? await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: id, data: payload })
+    : await tables.createRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: ID.unique(), data: { ...payload, created_at: new Date().toISOString() } });
+  invalidateAccountsCache();
+  return result;
 }
-export const deleteAccount = (id: string) => tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: id });
+export async function deleteAccount(id: string) {
+  const result = await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: id });
+  invalidateAccountsCache();
+  return result;
+}
