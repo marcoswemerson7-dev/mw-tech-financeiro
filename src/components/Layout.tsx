@@ -17,13 +17,10 @@ export default function Layout() {
 
   useEffect(() => {
     // Uma única carga compartilhada abastece Dashboard, Caixa, Movimentações e Relatórios.
-    const preload = () => void Promise.allSettled([getAccounts(), getMovements(200), getExpenses(), getCounterparties(true)]);
-    if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(preload, { timeout: 800 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = window.setTimeout(preload, 80);
-    return () => window.clearTimeout(id);
+    const id = globalThis.setTimeout(() => {
+      void Promise.allSettled([getAccounts(), getMovements(200), getExpenses(), getCounterparties(true)]);
+    }, 60);
+    return () => globalThis.clearTimeout(id);
   }, []);
 
   const title = items.find(([p]) => p === "/" ? loc.pathname === "/" : loc.pathname.startsWith(p))?.[1];
@@ -49,7 +46,6 @@ export default function Layout() {
           <div className="mt-2 flex items-center gap-3 rounded-md border border-white/10 bg-white/[.06] p-3.5"><span className="grid size-12 shrink-0 place-items-center rounded-md bg-[#d9a443] text-sm font-extrabold text-[#071426]">MW</span><div className="min-w-0"><b className="block truncate text-[14px]">Administrador</b><small className="text-[12px] text-slate-400">Acesso completo</small></div><ChevronDown size={15} className="ml-auto shrink-0 text-slate-400" /></div>
         </div>
       </aside>
-
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
       <div className="lg:pl-[300px]">
         <header className="sticky top-0 z-10 flex min-h-[116px] items-center justify-between border-b border-[#163b66] bg-gradient-to-r from-[#0b2949] via-[#0b3159] to-[#0b2b4d] px-5 shadow-[0_5px_18px_rgba(6,20,38,.16)] sm:px-8 lg:px-11">
