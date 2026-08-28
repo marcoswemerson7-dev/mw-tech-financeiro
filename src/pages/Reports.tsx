@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Printer, ReceiptText } from "lucide-react";
 import { supabase } from "../lib/supabase";
-import { money, Badge, Empty } from "../components/UI";
+import { money, Badge } from "../components/UI";
 type Mov = {
   id: string;
   data: string;
@@ -143,7 +143,7 @@ export default function Reports() {
           title="Relatório financeiro"
           subtitle={`${format(from)} a ${format(to)}`}
         />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="report-summary grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2 lg:grid-cols-3">
           {[
             ["Receitas recebidas", sums.r],
             ["Despesas pagas", sums.d],
@@ -152,15 +152,22 @@ export default function Reports() {
             ["Saldo do período", sums.r - sums.d - sums.t],
             ["Total pendente", sums.a],
           ].map(([n, v]) => (
-            <div key={String(n)} className="rounded-xl bg-slate-50 p-4">
-              <span className="text-xs text-slate-500">{n}</span>
-              <strong className="mt-2 block text-lg">{money(v)}</strong>
+            <div
+              key={String(n)}
+              className="border-b border-r border-slate-200 bg-slate-50/70 p-4"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {n}
+              </span>
+              <strong className="mt-1 block text-lg text-[#0b2b66]">
+                {money(v)}
+              </strong>
             </div>
           ))}
         </div>
         <div className="mt-6 overflow-x-auto">
           {filtered.length ? (
-            <table className="w-full text-left text-xs">
+            <table className="report-table w-full border-collapse text-left text-xs">
               <thead className="border-y bg-slate-50 text-[10px] uppercase text-slate-500">
                 <tr>
                   {[
@@ -199,8 +206,42 @@ export default function Reports() {
               </tbody>
             </table>
           ) : (
-            <Empty />
+            <table className="report-table w-full border-collapse text-left text-xs">
+              <thead>
+                <tr>
+                  {[
+                    "Data",
+                    "Descrição",
+                    "Conta bancária",
+                    "Tipo",
+                    "Valor",
+                    "Status",
+                  ].map((x) => (
+                    <th
+                      key={x}
+                      className="border border-slate-300 bg-[#0b2b66] px-3 py-2 text-[10px] uppercase text-white"
+                    >
+                      {x}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="border border-slate-300 py-12 text-center text-slate-400"
+                  >
+                    Nenhuma movimentação encontrada no período selecionado.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           )}
+        </div>
+        <div className="mt-6 flex justify-between border-t pt-3 text-[10px] text-slate-400">
+          <span>Documento gerado pelo MW TECH Financeiro</span>
+          <span>Emitido em {new Date().toLocaleString("pt-BR")}</span>
         </div>
       </section>
       {receipt && (
