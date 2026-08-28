@@ -8,8 +8,7 @@ export {
   deleteMovement,
   updateExpense,
   cancelExpense,
-  deleteExpense,
-  hardDeleteExpense,
   type Movement,
 } from "../services/transactions";
+export { deleteExpenseDirect as deleteExpense } from "../services/expenses";
 export { uploadReceipt } from "../services/storage";
