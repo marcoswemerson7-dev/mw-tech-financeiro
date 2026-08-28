@@ -34,18 +34,12 @@ export default function Accounts() {
     [edit, setEdit] = useState<Partial<Account> | null>(null);
   async function load() {
     if (!isConfigured) {
-      setRows(
-        JSON.parse(
-          localStorage.getItem("mw-accounts") || JSON.stringify([demo]),
-        ),
-      );
+      setRows(JSON.parse(localStorage.getItem("mw-accounts") || JSON.stringify([demo])));
       return;
     }
     setRows((await getAccounts()) as Account[]);
   }
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d: any = Object.fromEntries(new FormData(e.currentTarget));
@@ -54,9 +48,7 @@ export default function Accounts() {
     d.ativo = true;
     d.cor = edit?.cor || "#0b2b66";
     if (!isConfigured) {
-      const next = edit?.id
-        ? rows.map((x) => (x.id === edit.id ? { ...x, ...d } : x))
-        : [...rows, { ...d, id: crypto.randomUUID() }];
+      const next = edit?.id ? rows.map((x) => (x.id === edit.id ? { ...x, ...d } : x)) : [...rows, { ...d, id: crypto.randomUUID() }];
       localStorage.setItem("mw-accounts", JSON.stringify(next));
       setRows(next);
     } else await saveAccount(d, edit?.id);
@@ -75,149 +67,91 @@ export default function Accounts() {
     }
   }
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-7">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#0b1d3a]">
-            Contas bancárias e caixa
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Identifique de onde cada valor entra e sai.
-          </p>
+          <h2 className="text-[30px] font-extrabold tracking-tight text-[#0b1d3a]">Contas bancárias e caixa</h2>
+          <p className="mt-1.5 text-[16px] text-slate-500">Visualize suas contas, dados bancários e saldos de forma rápida.</p>
         </div>
-        <button
-          onClick={() => setEdit({})}
-          className="flex items-center gap-2 rounded-xl bg-[#0b2b66] px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          <Plus size={18} />
-          Cadastrar conta
+        <button onClick={() => setEdit({})} className="flex min-h-[50px] items-center gap-2 rounded-lg bg-[#0b2b66] px-5 py-3 text-[15px] font-bold text-white shadow-sm transition hover:bg-[#082454]">
+          <Plus size={19} /> Cadastrar conta
         </button>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border bg-white p-5">
-          <span className="text-sm text-slate-500">Saldo total em contas</span>
-          <strong className="mt-2 block text-2xl">
-            {money(
-              rows.reduce(
-                (s, a) => s + Number(a.saldo_atual ?? a.saldo_inicial),
-                0,
-              ),
-            )}
-          </strong>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+          <span className="text-[15px] font-semibold text-slate-500">Saldo total em contas</span>
+          <strong className="mt-3 block text-[34px] tracking-tight text-[#0b1d3a]">{money(rows.reduce((s, a) => s + Number(a.saldo_atual ?? a.saldo_inicial), 0))}</strong>
         </div>
-        <div className="rounded-xl border bg-white p-5">
-          <span className="text-sm text-slate-500">Quantidade de contas</span>
-          <strong className="mt-2 block text-2xl">{rows.length}</strong>
+        <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
+          <span className="text-[15px] font-semibold text-slate-500">Quantidade de contas</span>
+          <strong className="mt-3 block text-[34px] tracking-tight text-[#0b1d3a]">{rows.length}</strong>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((a) => (
-          <div
-            key={a.id}
-            className="overflow-hidden rounded-2xl border bg-white shadow-sm"
-          >
-            <div className="h-2" style={{ background: a.cor }} />
-            <div className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex gap-3">
-                  <span
-                    className={`grid size-12 place-items-center rounded-xl ${a.codigo_banco === "001" ? "bg-[#f7c600] text-[#153c8a]" : "bg-slate-100 text-slate-600"}`}
-                  >
-                    {a.codigo_banco === "001" ? (
-                      <b className="text-xs">BB</b>
-                    ) : (
-                      <Landmark />
-                    )}
+          <div key={a.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="h-2.5" style={{ background: a.cor }} />
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 gap-4">
+                  <span className={`grid size-14 shrink-0 place-items-center rounded-xl border ${a.codigo_banco === "001" ? "border-[#e3c100] bg-[#f7c600] text-[#153c8a]" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
+                    {a.codigo_banco === "001" ? <b className="text-[14px]">BB</b> : <Landmark size={25} />}
                   </span>
-                  <div>
-                    <b className="block text-sm">{a.nome}</b>
-                    <span className="text-xs text-slate-500">
-                      {a.banco} · {a.codigo_banco || "—"}
-                    </span>
+                  <div className="min-w-0">
+                    <b className="block truncate text-[17px] font-extrabold text-[#0b1d3a]">{a.nome}</b>
+                    <span className="mt-1 block text-[14px] font-medium text-slate-500">{a.banco} · {a.codigo_banco || "—"}</span>
+                    <span className="mt-1 block text-[12px] uppercase tracking-wide text-slate-400">{a.tipo_conta || "Conta bancária"}</span>
                   </div>
                 </div>
-                <div className="flex">
-                  <button
-                    onClick={() => setEdit(a)}
-                    className="p-2 text-blue-600"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    onClick={() => remove(a.id)}
-                    className="p-2 text-rose-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                <div className="flex shrink-0 gap-1">
+                  <button onClick={() => setEdit(a)} className="grid size-10 place-items-center rounded-lg border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100" aria-label="Editar conta"><Pencil size={17} /></button>
+                  <button onClick={() => remove(a.id)} className="grid size-10 place-items-center rounded-lg border border-rose-100 bg-rose-50 text-rose-700 transition hover:bg-rose-100" aria-label="Excluir conta"><Trash2 size={17} /></button>
                 </div>
               </div>
-              <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 text-xs">
+
+              <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <div>
-                  <span className="text-slate-400">Agência</span>
-                  <b className="mt-1 block">{a.agencia || "Não informada"}</b>
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Agência</span>
+                  <b className="mt-1 block text-[15px] text-slate-700">{a.agencia || "Não informada"}</b>
                 </div>
                 <div>
-                  <span className="text-slate-400">Conta</span>
-                  <b className="mt-1 block">{a.conta || "Não informada"}</b>
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-slate-400">Conta</span>
+                  <b className="mt-1 block text-[15px] text-slate-700">{a.conta || "Não informada"}</b>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-slate-500">Saldo atual</span>
-                <strong>{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
+
+              <div className="mt-5 flex items-end justify-between border-t border-slate-100 pt-5">
+                <span className="text-[14px] font-semibold text-slate-500">Saldo atual</span>
+                <strong className="text-[24px] tracking-tight text-[#0b1d3a]">{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
               </div>
             </div>
           </div>
         ))}
       </div>
       {!rows.length && <Empty />}
+
       {edit && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4">
-          <form
-            onSubmit={save}
-            className="w-full max-w-xl rounded-2xl bg-white p-6"
-          >
-            <div className="flex justify-between">
-              <h3 className="text-lg font-bold">
-                {edit.id ? "Editar" : "Nova"} conta
-              </h3>
-              <button type="button" onClick={() => setEdit(null)}>
-                <X />
-              </button>
+          <form onSubmit={save} className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-7 py-6">
+              <div>
+                <p className="text-[12px] font-bold uppercase tracking-[.16em] text-[#b97f2e]">Dados bancários</p>
+                <h3 className="mt-1 text-[26px] font-extrabold text-[#0b1d3a]">{edit.id ? "Editar" : "Nova"} conta</h3>
+              </div>
+              <button type="button" onClick={() => setEdit(null)} className="grid size-10 place-items-center rounded-lg hover:bg-slate-100"><X /></button>
             </div>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {[
-                ["nome", "Nome da conta"],
-                ["banco", "Banco"],
-                ["codigo_banco", "Código do banco"],
-                ["agencia", "Agência"],
-                ["conta", "Número da conta"],
-                ["tipo_conta", "Tipo da conta"],
-                ["saldo_inicial", "Saldo inicial"],
-              ].map(([n, l]) => (
-                <label key={n} className="text-sm font-medium">
-                  {l}
-                  <input
-                    required={["nome", "banco"].includes(n)}
-                    name={n}
-                    type={n === "saldo_inicial" ? "number" : "text"}
-                    step="0.01"
-                    defaultValue={String((edit as any)[n] || "")}
-                    className="mt-1.5 w-full rounded-xl border p-3"
-                  />
+            <div className="grid gap-5 p-7 sm:grid-cols-2">
+              {[["nome", "Nome da conta"],["banco", "Banco"],["codigo_banco", "Código do banco"],["agencia", "Agência"],["conta", "Número da conta"],["tipo_conta", "Tipo da conta"],["saldo_inicial", "Saldo inicial"]].map(([n, l]) => (
+                <label key={n} className="text-[14px] font-bold text-slate-700">{l}
+                  <input required={["nome", "banco"].includes(n)} name={n} type={n === "saldo_inicial" ? "number" : "text"} step="0.01" defaultValue={String((edit as any)[n] || "")} className="input" />
                 </label>
               ))}
             </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setEdit(null)}
-                className="rounded-xl border px-4 py-2"
-              >
-                Cancelar
-              </button>
-              <button className="rounded-xl bg-[#0b2b66] px-5 py-2 text-white">
-                Salvar conta
-              </button>
+            <div className="flex justify-end gap-3 border-t border-slate-200 px-7 py-5">
+              <button type="button" onClick={() => setEdit(null)} className="rounded-lg border border-slate-300 px-5 py-3 font-semibold text-slate-700">Cancelar</button>
+              <button className="rounded-lg bg-[#0b2b66] px-6 py-3 font-bold text-white">Salvar conta</button>
             </div>
           </form>
         </div>
