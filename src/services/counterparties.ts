@@ -10,6 +10,15 @@ export type Counterparty = {
   ativo: boolean;
 };
 
+type CounterpartyInput = {
+  id?: string;
+  nome: string;
+  tipo: Counterparty["tipo"];
+  documento?: string;
+  observacao?: string;
+  ativo?: boolean;
+};
+
 export async function getCounterparties() {
   const result = await tables.listRows({
     databaseId: appwriteConfig.databaseId,
@@ -19,14 +28,7 @@ export async function getCounterparties() {
   return result.rows.map((row: any) => ({ ...row, id: row.$id })) as Counterparty[];
 }
 
-export async function saveCounterparty(values: {
-  id?: string;
-  nome: string;
-  tipo: Counterparty["tipo"];
-  documento?: string;
-  observacao?: string;
-  ativo?: boolean;
-}) {
+export async function saveCounterparty(values: CounterpartyInput) {
   const data = {
     nome: values.nome.trim(),
     tipo: values.tipo,
@@ -50,13 +52,20 @@ export async function saveCounterparty(values: {
   return { ...row, id: row.$id } as unknown as Counterparty;
 }
 
-export async function createCounterparty(values: {
-  nome: string;
-  tipo: Counterparty["tipo"];
-  documento?: string;
-  observacao?: string;
-}) {
-  return saveCounterparty(values);
+export async function createCounterparty(values: CounterpartyInput | Record<string, unknown>) {
+  const nome = String(values.nome || "").trim();
+  const tipo = String(values.tipo || "") as Counterparty["tipo"];
+  const allowed: Counterparty["tipo"][] = ["cliente", "fornecedor", "orgao_publico", "outro"];
+
+  if (!nome) throw new Error("Informe o nome ou razão social.");
+  if (!allowed.includes(tipo)) throw new Error("Tipo de cadastro inválido.");
+
+  return saveCounterparty({
+    nome,
+    tipo,
+    documento: String(values.documento || "").trim(),
+    observacao: String(values.observacao || "").trim(),
+  });
 }
 
 export async function deactivateCounterparty(id: string) {
