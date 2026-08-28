@@ -25,6 +25,7 @@ export const TABLES = {
   profiles: "profiles",
   accounts: "contas_financeiras",
   categories: "categorias_financeiras",
+  counterparties: "partes_financeiras",
   transactions: "movimentacoes_financeiras",
   expenses: "despesas",
   recurrences: "despesas_recorrencias",
