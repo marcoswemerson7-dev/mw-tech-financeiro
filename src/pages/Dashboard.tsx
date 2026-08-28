@@ -1,2 +1,244 @@
-import{useEffect,useState}from'react';import{Bar,CartesianGrid,ComposedChart,Line,ResponsiveContainer,Tooltip,XAxis,YAxis,Area,AreaChart}from'recharts';import{Wallet,TrendingUp,TrendingDown,ChartNoAxesCombined,Clock3,ShieldAlert,CalendarDays,ChevronDown,MoreHorizontal,ArrowUp,ArrowDown}from'lucide-react';import{supabase}from'../lib/supabase';import{money,Badge,Empty}from'../components/UI';type R={id:string;descricao:string;valor:number;status:string;data:string;tipo:string};export default function Dashboard(){const[rows,setRows]=useState<R[]>([]),[m,setM]=useState({r:0,d:0,t:0,a:0,v:0});useEffect(()=>{Promise.all([supabase.from('receitas').select('*'),supabase.from('despesas').select('*'),supabase.from('retiradas').select('*')]).then(([r,d,t])=>{const rs=r.data||[],ds=d.data||[],ts=t.data||[];setM({r:rs.filter(x=>x.status==='pago').reduce((a,x)=>a+ +x.valor,0),d:ds.filter(x=>x.status==='pago').reduce((a,x)=>a+ +x.valor,0),t:ts.reduce((a,x)=>a+ +x.valor,0),a:rs.filter(x=>x.status==='pendente').reduce((a,x)=>a+ +x.valor,0),v:rs.filter(x=>x.status==='pendente'&&x.data_vencimento<new Date().toISOString().slice(0,10)).reduce((a,x)=>a+ +x.valor,0)});setRows([...rs.map(x=>({...x,data:x.data_recebimento||x.data_vencimento,tipo:'Receita'})),...ds.map(x=>({...x,data:x.data_pagamento||x.data_vencimento,tipo:'Despesa'}))].slice(0,6))})},[]);const op=m.r-m.d,saldo=op-m.t,months=['Dez','Jan','Fev','Mar','Abr','Mai'];const data=months.map((mes,i)=>({mes,receitas:i===5?m.r:0,despesas:i===5?m.d:0,resultado:i===5?op:0}));const date=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric'}).format(new Date());return <div className="space-y-4"><div className="flex items-center justify-between"><h2 className="text-lg font-bold text-[#0b1d3a]">Resumo financeiro</h2><button className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm"><CalendarDays size={16}/><span className="capitalize">{date}</span><ChevronDown size={14}/></button></div><div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><Kpi title="Saldo disponível" value={saldo} icon={<Wallet/>} tone="navy"/><Kpi title="Receitas recebidas" value={m.r} icon={<TrendingUp/>} tone="green"/><Kpi title="Despesas pagas" value={m.d} icon={<TrendingDown/>} tone="red" down/><Kpi title="Resultado operacional" value={op} icon={<ChartNoAxesCombined/>} tone="gold"/><Kpi title="Total a receber" value={m.a} icon={<Clock3/>} tone="blue" flat/><Kpi title="Valores em atraso" value={m.v} icon={<ShieldAlert/>} tone="red" down/></div><div className="grid gap-4 xl:grid-cols-2"><Panel title="Fluxo financeiro" subtitle="Receitas e despesas por mês"><ResponsiveContainer width="100%" height={240}><ComposedChart data={data}><CartesianGrid stroke="#e8edf3" vertical={false}/><XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{fontSize:11}}/><YAxis axisLine={false} tickLine={false} tick={{fontSize:10}}/><Tooltip formatter={v=>money(v)}/><Bar dataKey="receitas" name="Receitas" fill="#08234a" radius={[3,3,0,0]} maxBarSize={22}/><Bar dataKey="despesas" name="Despesas" fill="#c78b35" radius={[3,3,0,0]} maxBarSize={22}/><Line dataKey="resultado" name="Resultado" stroke="#4d9cff" strokeWidth={2} dot={{r:4,fill:'#4d9cff',stroke:'#fff',strokeWidth:2}}/></ComposedChart></ResponsiveContainer></Panel><Panel title="Evolução do resultado" subtitle="Desempenho operacional mensal"><ResponsiveContainer width="100%" height={240}><AreaChart data={data}><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#c78b35" stopOpacity=".2"/><stop offset="1" stopColor="#c78b35" stopOpacity="0"/></linearGradient></defs><CartesianGrid stroke="#e8edf3" vertical={false}/><XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{fontSize:11}}/><YAxis axisLine={false} tickLine={false} tick={{fontSize:10}}/><Tooltip formatter={v=>money(v)}/><Area type="monotone" dataKey="resultado" stroke="#c78b35" strokeWidth={2.5} fill="url(#gold)" dot={{r:4,fill:'#c78b35',stroke:'#fff',strokeWidth:2}}/></AreaChart></ResponsiveContainer></Panel></div><div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between px-5 py-3.5"><div><h3 className="text-sm font-bold text-[#0b1d3a]">Movimentações recentes</h3><p className="text-[10px] text-slate-500">Últimas movimentações financeiras registradas</p></div><button className="rounded-lg border px-3 py-1.5 text-[10px] font-semibold">Ver todas</button></div>{rows.length?<div className="overflow-x-auto"><table className="w-full text-left text-[11px]"><thead className="border-y bg-slate-50 text-[9px] uppercase tracking-wider text-slate-500"><tr>{['Data','Descrição','Tipo','Valor','Status',''].map(x=><th className="px-5 py-2.5" key={x}>{x}</th>)}</tr></thead><tbody>{rows.map(r=><tr className="border-b border-slate-100" key={r.tipo+r.id}><td className="px-5 py-2.5">{r.data||'—'}</td><td className="px-5 font-medium">{r.descricao}</td><td className="px-5">{r.tipo}</td><td className={`px-5 font-semibold ${r.tipo==='Receita'?'text-emerald-600':'text-rose-600'}`}>{r.tipo==='Despesa'?'- ':''}{money(r.valor)}</td><td className="px-5"><Badge status={r.status}/></td><td><MoreHorizontal size={15}/></td></tr>)}</tbody></table></div>:<Empty/>}</div></div>}
-const tones={navy:'bg-[#08234a] text-white',green:'bg-emerald-50 text-emerald-600',red:'bg-rose-50 text-rose-600',gold:'bg-amber-50 text-[#c78b35]',blue:'bg-blue-50 text-blue-700'};function Kpi({title,value,icon,tone,down,flat}:{title:string;value:number;icon:React.ReactNode;tone:keyof typeof tones;down?:boolean;flat?:boolean}){return <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_4px_18px_rgba(15,23,42,.045)]"><div className="flex justify-between"><div><p className="text-xs font-medium text-slate-600">{title}</p><strong className="mt-1 block text-[21px] font-bold text-[#0b1d3a]">{money(value)}</strong><p className={`mt-2 flex items-center gap-1 text-[10px] ${down?'text-rose-600':flat?'text-blue-500':'text-emerald-600'}`}>{down?<ArrowDown size={11}/>:<ArrowUp size={11}/>} {flat?'0,0%':'12,4%'} <span className="text-slate-400">em relação ao mês anterior</span></p></div><span className={`grid size-12 place-items-center rounded-xl ${tones[tone]}`}>{icon}</span></div></div>}function Panel({title,subtitle,children}:{title:string;subtitle:string;children:React.ReactNode}){return <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="mb-4 flex justify-between"><div><h3 className="text-sm font-bold text-[#0b1d3a]">{title}</h3><p className="text-[10px] text-slate-500">{subtitle}</p></div><MoreHorizontal size={18}/></div>{children}</div>}
+import { useEffect, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  Landmark,
+  ArrowRight,
+  MoreHorizontal,
+} from "lucide-react";
+import { getAccounts, getMovements, type Movement } from "../lib/finance";
+import { isConfigured } from "../lib/supabase";
+import { money, Empty, Badge } from "../components/UI";
+export default function Dashboard() {
+  const [rows, setRows] = useState<Movement[]>([]),
+    [account, setAccount] = useState(0);
+  useEffect(() => {
+    if (isConfigured)
+      Promise.all([getMovements(8), getAccounts()]).then(([m, a]) => {
+        setRows(m);
+        setAccount(a.reduce((s, x) => s + Number(x.saldo_atual), 0));
+      });
+  }, []);
+  const now = new Date(),
+    month = now.toISOString().slice(0, 7),
+    current = rows.filter((x) => x.data.startsWith(month)),
+    ins = current
+      .filter((x) => x.tipo.includes("entrada"))
+      .reduce((a, x) => a + Number(x.valor), 0),
+    outs = current
+      .filter((x) => x.tipo.includes("saida"))
+      .reduce((a, x) => a + Number(x.valor), 0),
+    cash = account;
+  const chart = ["Jan", "Fev", "Mar", "Abr", "Mai", "Atual"].map((mes, i) => ({
+    mes,
+    entradas: i === 5 ? ins : 0,
+    saidas: i === 5 ? outs : 0,
+  }));
+  return (
+    <div className="space-y-7">
+      <div>
+        <h2 className="text-2xl font-bold text-[#0b1d3a]">Resumo financeiro</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Uma visão simples da situação financeira da MW TECH.
+        </p>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <Kpi title="Saldo em caixa" value={cash} icon={<Wallet />} />
+        <Kpi
+          title="Entradas do mês"
+          value={ins}
+          icon={<ArrowUpRight />}
+          green
+        />
+        <Kpi title="Saídas do mês" value={outs} icon={<ArrowDownRight />} red />
+        <Kpi title="Valor em conta" value={account} icon={<Landmark />} />
+      </div>
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <section className="rounded-xl border bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold">Entradas x Saídas</h3>
+          <p className="mb-6 text-xs text-slate-500">Últimos 6 meses</p>
+          <ResponsiveContainer width="100%" height={310}>
+            <BarChart data={chart}>
+              <CartesianGrid stroke="#edf0f4" vertical={false} />
+              <XAxis dataKey="mes" axisLine={false} tickLine={false} />
+              <YAxis axisLine={false} tickLine={false} />
+              <Tooltip formatter={(v) => money(v)} />
+              <Bar
+                dataKey="entradas"
+                fill="#16a34a"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={34}
+              />
+              <Bar
+                dataKey="saidas"
+                fill="#dc2626"
+                radius={[6, 6, 0, 0]}
+                maxBarSize={34}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </section>
+        <section className="rounded-xl border bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-bold">Contas do mês</h3>
+          <p className="mb-7 text-xs text-slate-500">
+            Situação dos compromissos
+          </p>
+          <div className="space-y-4">
+            <Status
+              label="A pagar"
+              value={outs}
+              count={current.filter((x) => x.tipo.includes("saida")).length}
+              color="amber"
+            />
+            <Status
+              label="Pagas"
+              value={outs}
+              count={current.filter((x) => x.tipo.includes("saida")).length}
+              color="green"
+            />
+            <Status label="Pendentes" value={0} count={0} color="red" />
+          </div>
+        </section>
+      </div>
+      <section className="overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b px-6 py-5">
+          <div>
+            <h3 className="text-lg font-bold">Movimentações recentes</h3>
+            <p className="text-xs text-slate-500">
+              Últimos lançamentos registrados
+            </p>
+          </div>
+          <a
+            href="/movimentacoes"
+            className="flex items-center gap-2 text-sm font-semibold text-[#0b2b66]"
+          >
+            Ver todas <ArrowRight size={16} />
+          </a>
+        </div>
+        {rows.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px] text-left text-sm">
+              <thead className="bg-slate-50 text-xs text-slate-500">
+                <tr>
+                  {[
+                    "Data",
+                    "Descrição",
+                    "Categoria",
+                    "Tipo",
+                    "Valor",
+                    "Status",
+                    "Ações",
+                  ].map((x) => (
+                    <th key={x} className="px-6 py-3.5">
+                      {x}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((x) => (
+                  <tr key={x.id} className="border-t">
+                    <td className="px-6 py-4">
+                      {new Date(x.data + "T12:00:00").toLocaleDateString(
+                        "pt-BR",
+                      )}
+                    </td>
+                    <td className="px-6 font-medium">{x.descricao}</td>
+                    <td className="px-6">
+                      {x.categorias_financeiras?.nome || "—"}
+                    </td>
+                    <td className="px-6 capitalize">
+                      {x.tipo.replace("_", " ")}
+                    </td>
+                    <td
+                      className={`px-6 font-semibold ${x.tipo.includes("entrada") ? "text-emerald-600" : "text-rose-600"}`}
+                    >
+                      {money(x.valor)}
+                    </td>
+                    <td className="px-6">
+                      <Badge status="pago" />
+                    </td>
+                    <td className="px-6">
+                      <MoreHorizontal size={17} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <Empty />
+        )}
+      </section>
+    </div>
+  );
+}
+function Kpi({
+  title,
+  value,
+  icon,
+  green,
+  red,
+}: {
+  title: string;
+  value: number;
+  icon: any;
+  green?: boolean;
+  red?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-6 shadow-sm">
+      <div className="flex justify-between">
+        <div>
+          <p className="text-sm text-slate-500">{title}</p>
+          <b className="mt-3 block text-3xl tracking-tight">{money(value)}</b>
+        </div>
+        <span
+          className={`grid size-12 place-items-center rounded-xl ${green ? "bg-emerald-50 text-emerald-600" : red ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-[#c58a33]"}`}
+        >
+          {icon}
+        </span>
+      </div>
+    </div>
+  );
+}
+function Status({
+  label,
+  value,
+  count,
+  color,
+}: {
+  label: string;
+  value: number;
+  count: number;
+  color: string;
+}) {
+  const c =
+    color === "green"
+      ? "bg-emerald-500"
+      : color === "red"
+        ? "bg-rose-500"
+        : "bg-amber-500";
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
+      <div className="flex items-center gap-3">
+        <i className={`size-2.5 rounded-full ${c}`} />
+        <div>
+          <b className="block text-sm">{label}</b>
+          <span className="text-xs text-slate-500">{count} contas</span>
+        </div>
+      </div>
+      <strong>{money(value)}</strong>
+    </div>
+  );
+}

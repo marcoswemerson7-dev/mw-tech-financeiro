@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Printer, ReceiptText } from "lucide-react";
+import { Printer, ReceiptText, FileSpreadsheet } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { money, Badge } from "../components/UI";
 type Mov = {
@@ -11,6 +11,7 @@ type Mov = {
   status: string;
   conta?: string;
   cliente?: string;
+  categoria?: string;
 };
 const today = new Date().toISOString().slice(0, 10);
 export default function Reports() {
@@ -18,18 +19,20 @@ export default function Reports() {
     [to, setTo] = useState(today),
     [mov, setMov] = useState<Mov[]>([]),
     [company, setCompany] = useState<any>({}),
-    [receipt, setReceipt] = useState<Mov | null>(null);
+    [receipt, setReceipt] = useState<Mov | null>(null),
+    [typeFilter, setTypeFilter] = useState(""),
+    [statusFilter, setStatusFilter] = useState("");
   useEffect(() => {
     Promise.all([
       supabase
         .from("receitas")
         .select(
-          "id,descricao,valor,status,data_recebimento,data_vencimento,clientes(nome_fantasia,razao_social),contas_bancarias(nome,banco,agencia,conta)",
+          "id,descricao,categoria,valor,status,data_recebimento,data_vencimento,clientes(nome_fantasia,razao_social),contas_bancarias(nome,banco,agencia,conta)",
         ),
       supabase
         .from("despesas")
         .select(
-          "id,descricao,valor,status,data_pagamento,data_vencimento,contas_bancarias(nome,banco,agencia,conta)",
+          "id,descricao,categoria,valor,status,data_pagamento,data_vencimento,contas_bancarias(nome,banco,agencia,conta)",
         ),
       supabase
         .from("retiradas")
@@ -52,6 +55,7 @@ export default function Reports() {
           status: x.status,
           conta: account(x),
           cliente: x.clientes?.nome_fantasia || x.clientes?.razao_social,
+          categoria: x.categoria,
         })),
         ...(d.data || []).map((x: any) => ({
           id: x.id,
@@ -61,6 +65,7 @@ export default function Reports() {
           tipo: "Despesa",
           status: x.status,
           conta: account(x),
+          categoria: x.categoria,
         })),
         ...(t.data || []).map((x: any) => ({
           id: x.id,
@@ -78,9 +83,15 @@ export default function Reports() {
   const filtered = useMemo(
     () =>
       mov
-        .filter((x) => x.data >= from && x.data <= to)
+        .filter(
+          (x) =>
+            x.data >= from &&
+            x.data <= to &&
+            (!typeFilter || x.tipo === typeFilter) &&
+            (!statusFilter || x.status === statusFilter),
+        )
         .sort((a, b) => b.data.localeCompare(a.data)),
-    [mov, from, to],
+    [mov, from, to, typeFilter, statusFilter],
   );
   const sums = {
     r: filtered
@@ -100,6 +111,36 @@ export default function Reports() {
     setReceipt(r || null);
     setTimeout(() => window.print(), 100);
   }
+  function exportExcel() {
+    const lines = [
+      ["Data", "Descrição", "Categoria", "Conta", "Tipo", "Valor", "Status"],
+      ...filtered.map((x) => [
+        format(x.data),
+        x.descricao,
+        x.categoria || "",
+        x.conta || "",
+        x.tipo,
+        String(x.valor),
+        x.status,
+      ]),
+    ];
+    const blob = new Blob(
+      [
+        "\ufeff" +
+          lines
+            .map((r) =>
+              r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(";"),
+            )
+            .join("\n"),
+      ],
+      { type: "text/csv;charset=utf-8" },
+    );
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `mw-tech-relatorio-${from}-${to}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
   return (
     <div className="space-y-5">
       <div className="no-print flex flex-wrap items-end justify-between gap-4">
@@ -112,6 +153,26 @@ export default function Reports() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-xs"
+          >
+            <option value="">Todos os tipos</option>
+            <option value="Receita">Entradas</option>
+            <option value="Despesa">Saídas</option>
+            <option value="Retirada">Retiradas</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg border px-3 py-2 text-xs"
+          >
+            <option value="">Todos os status</option>
+            <option value="pago">Pago</option>
+            <option value="pendente">Pendente</option>
+            <option value="atrasado">Atrasado</option>
+          </select>
           <input
             aria-label="Data inicial"
             type="date"
@@ -132,6 +193,13 @@ export default function Reports() {
           >
             <Printer size={16} />
             Imprimir relatório
+          </button>
+          <button
+            onClick={exportExcel}
+            className="flex items-center gap-2 rounded-lg border border-emerald-600 px-4 py-2 text-xs font-semibold text-emerald-700"
+          >
+            <FileSpreadsheet size={16} />
+            Excel
           </button>
         </div>
       </div>

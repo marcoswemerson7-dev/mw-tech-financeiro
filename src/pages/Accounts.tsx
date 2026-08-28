@@ -11,6 +11,7 @@ type Account = {
   conta?: string;
   tipo_conta: string;
   saldo_inicial: number;
+  saldo_atual: number;
   cor: string;
   ativo: boolean;
 };
@@ -23,6 +24,7 @@ const demo: Account = {
   conta: "Informe a conta",
   tipo_conta: "corrente",
   saldo_inicial: 0,
+  saldo_atual: 0,
   cor: "#f7c600",
   ativo: true,
 };
@@ -51,6 +53,7 @@ export default function Accounts() {
     e.preventDefault();
     const d: any = Object.fromEntries(new FormData(e.currentTarget));
     d.saldo_inicial = Number(d.saldo_inicial || 0);
+    if (!edit?.id) d.saldo_atual = d.saldo_inicial;
     d.ativo = true;
     d.cor = edit?.cor || "#0b2b66";
     if (!isConfigured) {
@@ -95,6 +98,23 @@ export default function Accounts() {
           <Plus size={18} />
           Cadastrar conta
         </button>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border bg-white p-5">
+          <span className="text-sm text-slate-500">Saldo total em contas</span>
+          <strong className="mt-2 block text-2xl">
+            {money(
+              rows.reduce(
+                (s, a) => s + Number(a.saldo_atual ?? a.saldo_inicial),
+                0,
+              ),
+            )}
+          </strong>
+        </div>
+        <div className="rounded-xl border bg-white p-5">
+          <span className="text-sm text-slate-500">Quantidade de contas</span>
+          <strong className="mt-2 block text-2xl">{rows.length}</strong>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((a) => (
@@ -148,8 +168,8 @@ export default function Accounts() {
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between">
-                <span className="text-xs text-slate-500">Saldo inicial</span>
-                <strong>{money(a.saldo_inicial)}</strong>
+                <span className="text-xs text-slate-500">Saldo atual</span>
+                <strong>{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
               </div>
             </div>
           </div>
