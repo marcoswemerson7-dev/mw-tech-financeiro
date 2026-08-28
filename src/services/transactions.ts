@@ -1,5 +1,6 @@
 import { Query } from "appwrite";
 import { appwriteConfig, functions, tables, TABLES } from "../lib/appwrite";
+import { clearFastCache, readFastCache, writeFastCache } from "../lib/fast-cache";
 import { getAccounts, invalidateAccountsCache } from "./accounts";
 
 export type Movement = {
@@ -9,42 +10,61 @@ export type Movement = {
   contas_bancarias?: { nome: string } | null; categorias_financeiras?: { nome: string } | null;
 };
 
-const movementCache = new Map<number, { at: number; rows: Movement[] }>();
-const CACHE_TTL = 2 * 60 * 1000;
+type MovementCache = { at: number; rows: Movement[] };
+const CACHE_TTL = 5 * 60 * 1000;
+const DEFAULT_FETCH_LIMIT = 200;
+let movementCache: MovementCache | null = (() => {
+  const rows = readFastCache<Movement[]>("movements", 30 * 60 * 1000);
+  return rows ? { at: Date.now(), rows } : null;
+})();
+let movementRequest: Promise<Movement[]> | null = null;
 
 export function peekMovements(limit = 100) {
-  return movementCache.get(limit)?.rows || null;
+  return movementCache?.rows?.slice(0, limit) || null;
 }
 
 export function invalidateMovementsCache() {
-  movementCache.clear();
+  movementCache = null;
+  movementRequest = null;
+  clearFastCache("movements");
 }
 
 export function syncMovementCounterpartyCache(oldName: string, newName: string, oldDocument = "", newDocument = "") {
-  for (const cached of movementCache.values()) {
-    for (const row of cached.rows) {
-      if (oldName && row.descricao?.includes(oldName)) row.descricao = row.descricao.split(oldName).join(newName);
-      if (oldName && row.observacao?.includes(oldName)) row.observacao = row.observacao.split(oldName).join(newName);
-      if (oldDocument && row.observacao?.includes(oldDocument)) row.observacao = row.observacao.split(oldDocument).join(newDocument);
-    }
+  if (!movementCache) return;
+  for (const row of movementCache.rows) {
+    if (oldName && row.descricao?.includes(oldName)) row.descricao = row.descricao.split(oldName).join(newName);
+    if (oldName && row.observacao?.includes(oldName)) row.observacao = row.observacao.split(oldName).join(newName);
+    if (oldDocument && row.observacao?.includes(oldDocument)) row.observacao = row.observacao.split(oldDocument).join(newDocument);
   }
+  writeFastCache("movements", movementCache.rows);
 }
 
-export async function getMovements(limit = 100, force = false) {
-  const cached = movementCache.get(limit);
-  if (!force && cached && Date.now() - cached.at < CACHE_TTL) return cached.rows;
+async function fetchMovements(limit: number) {
+  const fetchLimit = Math.max(DEFAULT_FETCH_LIMIT, limit);
   const [result, accounts, categories] = await Promise.all([
     tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions,
-      queries: [Query.orderDesc("data"), Query.limit(limit)] }),
+      queries: [Query.orderDesc("data"), Query.limit(fetchLimit)] }),
     getAccounts(),
     tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.categories, queries: [Query.limit(200)] }),
   ]);
+  const accountNames = new Map(accounts.map((x) => [x.id, x.nome]));
+  const categoryNames = new Map(categories.rows.map((x: any) => [x.$id, x.nome]));
   const rows = result.rows.map((row: any) => ({ ...row, id: row.$id,
-    contas_bancarias: accounts.find((x) => x.id === row.conta_id) ? { nome: accounts.find((x) => x.id === row.conta_id)!.nome } : null,
-    categorias_financeiras: categories.rows.find((x: any) => x.$id === row.categoria_id) ? { nome: (categories.rows.find((x: any) => x.$id === row.categoria_id) as any).nome } : null,
+    contas_bancarias: accountNames.get(row.conta_id) ? { nome: accountNames.get(row.conta_id)! } : null,
+    categorias_financeiras: categoryNames.get(row.categoria_id) ? { nome: categoryNames.get(row.categoria_id)! } : null,
   })) as Movement[];
-  movementCache.set(limit, { at: Date.now(), rows });
+  movementCache = { at: Date.now(), rows };
+  writeFastCache("movements", rows);
   return rows;
+}
+
+export async function getMovements(limit = 100, force = false) {
+  if (!force && movementCache && Date.now() - movementCache.at < CACHE_TTL && movementCache.rows.length >= Math.min(limit, DEFAULT_FETCH_LIMIT)) {
+    return movementCache.rows.slice(0, limit);
+  }
+  if (!force && movementRequest) return (await movementRequest).slice(0, limit);
+  movementRequest = fetchMovements(limit).finally(() => { movementRequest = null; });
+  return (await movementRequest).slice(0, limit);
 }
 
 async function execute(action: string, payload: Record<string, unknown>) {
@@ -82,17 +102,13 @@ function movementEffect(move: any, effects: Map<string, number>) {
 async function cleanupLinkedMovement(move: any) {
   const expenseId = String(move.despesa_id || "");
   if (!expenseId) throw new Error("Movimentação vinculada sem despesa identificada.");
-
   let expense: any = null;
   try {
     expense = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expenseId });
   } catch (error: any) {
     if (error?.code !== 404) throw error;
   }
-
-  if (expense?.status === "pago") {
-    throw new Error("Estorne o pagamento da despesa antes de excluir estes registros.");
-  }
+  if (expense?.status === "pago") throw new Error("Estorne o pagamento da despesa antes de excluir estes registros.");
 
   const [movementResult, paymentResult] = await Promise.all([
     tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions,
@@ -100,16 +116,12 @@ async function cleanupLinkedMovement(move: any) {
     tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments,
       queries: [Query.equal("despesa_id", expenseId), Query.limit(200)] }),
   ]);
-
   const linkedMovements = movementResult.rows as any[];
   const linkedPayments = paymentResult.rows as any[];
-  if (linkedPayments.some((payment) => !payment.estornado)) {
-    throw new Error("Existe pagamento ativo nesta despesa. Estorne o pagamento antes de excluir definitivamente.");
-  }
+  if (linkedPayments.some((payment) => !payment.estornado)) throw new Error("Existe pagamento ativo nesta despesa. Estorne o pagamento antes de excluir definitivamente.");
 
   const effects = new Map<string, number>();
   linkedMovements.forEach((linked) => movementEffect(linked, effects));
-
   const accountSnapshots = new Map<string, number>();
   const now = new Date().toISOString();
   for (const [accountId, effect] of effects.entries()) {
@@ -123,15 +135,9 @@ async function cleanupLinkedMovement(move: any) {
   }
 
   try {
-    for (const linked of linkedMovements) {
-      await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: linked.$id });
-    }
-    for (const payment of linkedPayments) {
-      await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments, rowId: payment.$id });
-    }
-    if (expense) {
-      await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expense.$id });
-    }
+    for (const linked of linkedMovements) await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: linked.$id });
+    for (const payment of linkedPayments) await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments, rowId: payment.$id });
+    if (expense) await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.expenses, rowId: expense.$id });
   } catch (error) {
     for (const [accountId, balance] of accountSnapshots.entries()) {
       await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: accountId,
@@ -143,25 +149,19 @@ async function cleanupLinkedMovement(move: any) {
 
 export async function deleteMovement(id: string) {
   const move: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
-
   if (move.despesa_id || move.pagamento_id) {
     await cleanupLinkedMovement(move);
-    invalidateMovementsCache();
-    invalidateAccountsCache();
-    return;
+    invalidateMovementsCache(); invalidateAccountsCache(); return;
   }
 
   const value = Number(move.valor);
   if (!Number.isFinite(value) || value <= 0) throw new Error("Valor inválido na movimentação.");
-
   const origin: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: move.conta_id });
   const originBalance = Number(origin.saldo_atual || 0);
   const transfer = move.tipo === "transferencia";
   const out = move.tipo === "saida" || transfer;
   const revertedOrigin = originBalance + (out ? value : -value);
-  if (revertedOrigin < 0) {
-    throw new Error("Não é possível excluir esta movimentação porque o saldo atual não permite desfazer seu efeito.");
-  }
+  if (revertedOrigin < 0) throw new Error("Não é possível excluir esta movimentação porque o saldo atual não permite desfazer seu efeito.");
 
   let destination: any = null;
   let revertedDestination = 0;
@@ -169,33 +169,24 @@ export async function deleteMovement(id: string) {
     if (!move.conta_destino_id) throw new Error("Transferência sem conta de destino vinculada.");
     destination = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: move.conta_destino_id });
     revertedDestination = Number(destination.saldo_atual || 0) - value;
-    if (revertedDestination < 0) {
-      throw new Error("Não é possível excluir esta transferência porque a conta de destino não possui saldo suficiente para desfazer a operação.");
-    }
+    if (revertedDestination < 0) throw new Error("Não é possível excluir esta transferência porque a conta de destino não possui saldo suficiente para desfazer a operação.");
   }
 
   const now = new Date().toISOString();
   await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: origin.$id,
     data: { saldo_atual: revertedOrigin, updated_at: now } });
-
   try {
-    if (destination) {
-      await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: destination.$id,
-        data: { saldo_atual: revertedDestination, updated_at: now } });
-    }
+    if (destination) await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: destination.$id,
+      data: { saldo_atual: revertedDestination, updated_at: now } });
     await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
   } catch (error) {
     await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: origin.$id,
       data: { saldo_atual: originBalance, updated_at: now } }).catch(() => undefined);
-    if (destination) {
-      await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: destination.$id,
-        data: { saldo_atual: Number(destination.saldo_atual || 0), updated_at: now } }).catch(() => undefined);
-    }
+    if (destination) await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: destination.$id,
+      data: { saldo_atual: Number(destination.saldo_atual || 0), updated_at: now } }).catch(() => undefined);
     throw error;
   }
-
-  invalidateMovementsCache();
-  invalidateAccountsCache();
+  invalidateMovementsCache(); invalidateAccountsCache();
 }
 
 export const updateExpense = (id: string, values: Record<string, unknown>) => execute("updateExpense", { despesa_id: id, ...values });
