@@ -85,8 +85,8 @@ export async function getAccounts(force = false) {
   accountsCacheAt = Date.now();
   writeFastCache("accounts", rows);
 
-  // A conferência completa é importante, mas não deve bloquear a tela.
-  if (force) return reconcileBalances(rows);
+  // A conferência completa continua existindo, mas nunca bloqueia a interface.
+  // Isso é especialmente importante após salvar/excluir, quando várias telas usam getAccounts(true).
   void reconcileAccountsInBackground();
   return rows;
 }
