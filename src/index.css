@@ -63,6 +63,58 @@ main table tbody td {
 main table tbody tr:nth-child(even) { background: #f6f8fb; }
 main table tbody tr:hover { background: #eef4fb !important; }
 
+/* Identificação financeira por tipo de movimentação */
+main table tbody tr:has(span.text-emerald-700) > td:first-child {
+  border-left: 5px solid #16a34a;
+}
+main table tbody tr:has(span.text-rose-700) > td:first-child {
+  border-left: 5px solid #e11d48;
+}
+main table tbody tr:has(span.text-amber-700) > td:first-child {
+  border-left: 5px solid #f59e0b;
+}
+main table tbody tr:has(span.text-blue-700) > td:first-child {
+  border-left: 5px solid #2563eb;
+}
+
+main table tbody td span.rounded-full.border {
+  min-width: 92px;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+main table tbody td span.rounded-full.border::before {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+}
+main table tbody td span.text-emerald-700::before { content: "↗"; }
+main table tbody td span.text-rose-700::before { content: "↘"; }
+main table tbody td span.text-amber-700::before { content: "↶"; }
+main table tbody td span.text-blue-700::before { content: "⇄"; }
+
+main table tbody tr:has(span.text-emerald-700) > td:nth-child(6) {
+  color: #15803d !important;
+  font-weight: 900 !important;
+}
+main table tbody tr:has(span.text-rose-700) > td:nth-child(6) {
+  color: #be123c !important;
+  font-weight: 900 !important;
+}
+main table tbody tr:has(span.text-amber-700) > td:nth-child(6) {
+  color: #b45309 !important;
+  font-weight: 900 !important;
+}
+main table tbody tr:has(span.text-blue-700) > td:nth-child(6) {
+  color: #1d4ed8 !important;
+  font-weight: 900 !important;
+}
+
 .input {
   margin-top: 0.45rem;
   min-height: 53px;
