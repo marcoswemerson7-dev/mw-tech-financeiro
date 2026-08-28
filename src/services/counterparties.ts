@@ -20,8 +20,63 @@ type CounterpartyInput = {
   ativo?: boolean;
 };
 
+let legacyReconciliation: Promise<void> | null = null;
+
 function map(row: any) {
   return { ...row, id: row.$id } as Counterparty;
+}
+
+function onlyDigits(value: unknown) {
+  return String(value || "").replace(/\D/g, "");
+}
+
+function replaceMovementParty(description: string, newName: string) {
+  const separator = " — ";
+  const index = description.indexOf(separator);
+  if (index < 0) return description;
+  const prefix = description.slice(0, index);
+  if (/^Recebido de /i.test(prefix)) return `Recebido de ${newName}${description.slice(index)}`;
+  if (/^Pago para /i.test(prefix)) return `Pago para ${newName}${description.slice(index)}`;
+  return description;
+}
+
+async function reconcileLegacyReferences(parties: Counterparty[]) {
+  const byDocument = new Map(
+    parties
+      .map((party) => [onlyDigits(party.documento), party] as const)
+      .filter(([document]) => document.length >= 8),
+  );
+  if (!byDocument.size) return;
+
+  const result = await tables.listRows({
+    databaseId: appwriteConfig.databaseId,
+    tableId: TABLES.transactions,
+    queries: [Query.limit(500)],
+  });
+
+  await Promise.all(
+    result.rows.map(async (row: any) => {
+      const note = String(row.observacao || "");
+      const description = String(row.descricao || "");
+      const noteDigits = onlyDigits(note);
+      const party = [...byDocument.entries()].find(([document]) => noteDigits.includes(document))?.[1];
+      if (!party) return;
+
+      const currentDescription = replaceMovementParty(description, party.nome);
+      let currentNote = note;
+      const firstLineEnd = currentNote.indexOf("\n");
+      const suffix = firstLineEnd >= 0 ? currentNote.slice(firstLineEnd) : "";
+      currentNote = `Parte financeira ID: ${party.id}\nParte financeira: ${party.nome}${party.documento ? ` (${party.documento})` : ""}${suffix}`;
+
+      if (currentDescription === description && currentNote === note) return;
+      await tables.updateRow({
+        databaseId: appwriteConfig.databaseId,
+        tableId: TABLES.transactions,
+        rowId: row.$id,
+        data: { descricao: currentDescription, observacao: currentNote },
+      });
+    }),
+  );
 }
 
 export async function getCounterparties(includeInactive = false) {
@@ -32,7 +87,15 @@ export async function getCounterparties(includeInactive = false) {
     tableId: TABLES.counterparties,
     queries,
   });
-  return result.rows.map(map);
+  const rows = result.rows.map(map);
+
+  if (!legacyReconciliation) {
+    legacyReconciliation = reconcileLegacyReferences(rows).catch((error) => {
+      console.warn("Não foi possível reconciliar referências antigas de cadastros.", error);
+    });
+  }
+  await legacyReconciliation;
+  return rows;
 }
 
 async function syncCounterpartyReferences(before: Counterparty, after: Counterparty) {
@@ -40,8 +103,6 @@ async function syncCounterpartyReferences(before: Counterparty, after: Counterpa
   const newName = String(after.nome || "").trim();
   const oldDocument = String(before.documento || "").trim();
   const newDocument = String(after.documento || "").trim();
-
-  if (!oldName || (oldName === newName && oldDocument === newDocument)) return;
 
   const [movementResult, expenseResult] = await Promise.all([
     tables.listRows({
@@ -56,22 +117,29 @@ async function syncCounterpartyReferences(before: Counterparty, after: Counterpa
     }),
   ]);
 
+  const oldDigits = onlyDigits(oldDocument);
   await Promise.all(
     movementResult.rows.map(async (row: any) => {
       const description = String(row.descricao || "");
       const note = String(row.observacao || "");
       const linkedById = note.includes(`Parte financeira ID: ${before.id}`);
-      const linkedByName = description.includes(oldName) || note.includes(oldName);
-      if (!linkedById && !linkedByName) return;
+      const linkedByDocument = oldDigits.length >= 8 && onlyDigits(note).includes(oldDigits);
+      const linkedByName = Boolean(oldName) && (description.includes(oldName) || note.includes(oldName));
+      if (!linkedById && !linkedByDocument && !linkedByName) return;
 
       let nextDescription = description;
       let nextNote = note;
-      if (oldName !== newName) {
+      if (oldName && oldName !== newName) {
         nextDescription = nextDescription.split(oldName).join(newName);
         nextNote = nextNote.split(oldName).join(newName);
       }
+      nextDescription = replaceMovementParty(nextDescription, newName);
+
       if (oldDocument && oldDocument !== newDocument) {
         nextNote = nextNote.split(oldDocument).join(newDocument);
+      }
+      if (!nextNote.includes(`Parte financeira ID: ${after.id}`)) {
+        nextNote = `Parte financeira ID: ${after.id}\n${nextNote}`;
       }
 
       await tables.updateRow({
@@ -86,7 +154,7 @@ async function syncCounterpartyReferences(before: Counterparty, after: Counterpa
   await Promise.all(
     expenseResult.rows.map(async (row: any) => {
       const supplier = String(row.fornecedor || "").trim();
-      if (!supplier || supplier !== oldName) return;
+      if (!supplier || (supplier !== oldName && supplier !== newName)) return;
       await tables.updateRow({
         databaseId: appwriteConfig.databaseId,
         tableId: TABLES.expenses,
@@ -97,6 +165,7 @@ async function syncCounterpartyReferences(before: Counterparty, after: Counterpa
   );
 
   syncMovementCounterpartyCache(oldName, newName, oldDocument, newDocument);
+  legacyReconciliation = null;
 }
 
 export async function saveCounterparty(values: CounterpartyInput) {
