@@ -9,95 +9,87 @@
   --mw-navy: #07182d;
   --mw-blue: #0b2b66;
   --mw-gold: #d9a443;
-  --mw-bg: #eef2f7;
-  --mw-border: #d7dee8;
+  --mw-bg: #edf1f6;
+  --mw-border: #cfd8e5;
 }
 
 * { box-sizing: border-box; }
-
 html { background: var(--mw-bg); }
-
 body {
   margin: 0;
   background: var(--mw-bg);
   color: #101828;
-  font-size: 16.5px;
-  line-height: 1.55;
+  font-size: 17px;
+  line-height: 1.58;
 }
-
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 input, select, textarea { color: #172033; }
-::placeholder { color: #8b98aa; }
+::placeholder { color: #8492a6; }
 ::selection { background: #d9a44338; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb {
-  background: #bcc6d3;
+  background: #b8c3d1;
   border: 2px solid transparent;
   border-radius: 99px;
   background-clip: padding-box;
 }
 
-/* Leitura mais forte em todas as telas administrativas */
-main h2 {
-  letter-spacing: -0.025em;
-}
+main h2 { letter-spacing: -0.03em; }
+main h3 { letter-spacing: -0.02em; }
 
 main table {
   border-collapse: separate;
   border-spacing: 0;
+  background: white;
 }
-
 main table thead th {
-  background: #eef2f6;
-  color: #43536a;
+  background: #0d3159 !important;
+  color: #fff !important;
   font-size: 13.5px !important;
   font-weight: 800 !important;
-  letter-spacing: .045em;
-  border-bottom: 1px solid #d9e0e9;
+  letter-spacing: .055em;
+  border-bottom: 1px solid #0a2748 !important;
+  text-transform: uppercase;
 }
-
 main table tbody td {
-  color: #172033;
-  font-size: 15.5px !important;
-  line-height: 1.45;
+  color: #142238;
+  font-size: 16px !important;
+  line-height: 1.5;
   vertical-align: middle;
+  border-bottom: 1px solid #e3e8ef;
 }
-
-main table tbody tr {
-  transition: background-color .12s ease, box-shadow .12s ease;
-}
-
-main table tbody tr:hover {
-  background: #f5f8fc !important;
-}
+main table tbody tr:nth-child(even) { background: #f6f8fb; }
+main table tbody tr:hover { background: #eef4fb !important; }
 
 .input {
   margin-top: 0.45rem;
-  min-height: 51px;
+  min-height: 53px;
   width: 100%;
-  border: 1px solid #c5cfdd;
-  border-radius: 0.75rem;
+  border: 1px solid #bfcbd9;
+  border-radius: 0.6rem;
   background: #fff;
-  padding: 0.78rem 0.95rem;
+  padding: 0.82rem 1rem;
   font-size: 16px;
   line-height: 1.45;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-
-textarea.input { min-height: 110px; resize: vertical; }
-
+textarea.input { min-height: 116px; resize: vertical; }
 .input:focus {
-  border-color: #1f5daf;
-  box-shadow: 0 0 0 4px #1f5daf16;
+  border-color: #1b5aa3;
+  box-shadow: 0 0 0 4px #1f5daf17;
 }
 
-/* Cards mais sólidos e próximos de um sistema administrativo tradicional */
 main .rounded-2xl.border.bg-white,
 main .rounded-xl.border.bg-white {
   border-color: var(--mw-border);
+  box-shadow: 0 10px 24px rgba(15, 35, 70, .065);
+}
+
+main button {
+  font-weight: 700;
 }
 
 .report-table th,
@@ -117,7 +109,7 @@ main .rounded-xl.border.bg-white {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .lg\:pl-\[224px\], .lg\:pl-\[248px\], .lg\:pl-\[270px\], .lg\:pl-\[292px\] { padding-left: 0 !important; }
+  .lg\:pl-\[224px\], .lg\:pl-\[248px\], .lg\:pl-\[270px\], .lg\:pl-\[292px\], .lg\:pl-\[300px\] { padding-left: 0 !important; }
   main { max-width: none !important; padding: 0 !important; }
   .report-sheet {
     width: 100% !important;
