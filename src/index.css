@@ -227,23 +227,67 @@ textarea.input {
   }
 
   .report-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 6mm !important;
     margin-bottom: 4mm !important;
     padding-bottom: 3mm !important;
+    border-bottom: 0 !important;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
+  .report-company-block {
+    align-items: center !important;
+    gap: 3mm !important;
+  }
+
   .report-header img {
-    width: 34mm !important;
-    height: 15mm !important;
+    width: 30mm !important;
+    height: 13mm !important;
+  }
+
+  .report-company-details {
+    padding-top: 0 !important;
+  }
+
+  .report-company-name {
+    margin-top: 0 !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+  }
+
+  .report-company-details p {
+    margin-top: 0.5mm !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
   }
 
   .report-meta {
+    min-width: 66mm !important;
     padding: 2.5mm 4mm !important;
+    border-radius: 2mm !important;
+    border-color: #d8dee8 !important;
+    border-top: 1mm solid #0b2b66 !important;
+    background: #f8fafc !important;
+  }
+
+  .report-meta p:first-child {
+    font-size: 7px !important;
+    letter-spacing: 0.14em !important;
   }
 
   .report-meta h2 {
+    margin-top: 0.5mm !important;
     font-size: 15px !important;
+    line-height: 1.1 !important;
+  }
+
+  .report-meta p:not(:first-child) {
+    margin-top: 0.5mm !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
   }
 
   .report-header::after {

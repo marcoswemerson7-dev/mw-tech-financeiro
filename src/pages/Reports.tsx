@@ -342,17 +342,17 @@ function PrintHeader({
 }) {
   return (
     <div className="report-header mb-6 flex items-start justify-between gap-8 border-b-0 pb-5">
-      <div className="flex min-w-0 items-start gap-4">
+      <div className="report-company-block flex min-w-0 items-start gap-4">
         <img
           src={company.logo_url || "/mw-tech-logo-horizontal.png"}
           alt="Logo MW TECH"
-          className="h-[68px] w-[156px] shrink-0 object-contain object-left"
+          className="report-logo h-[68px] w-[156px] shrink-0 object-contain object-left"
         />
-        <div className="min-w-0 pt-0.5">
-          <p className="mt-1 max-w-[500px] text-[11px] font-semibold leading-snug text-slate-700">{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"}</p>
+        <div className="report-company-details min-w-0 pt-0.5">
+          <p className="report-company-name mt-1 max-w-[500px] text-[11px] font-semibold leading-snug text-slate-700">{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"}</p>
           <p className="mt-1 text-[10px] font-semibold text-slate-500">CNPJ: {company.cnpj || "62.308.511/0001-12"}</p>
-          <p className="mt-0.5 max-w-[520px] text-[10px] leading-snug text-slate-500">Endereço: {[company.endereco, company.cidade && `${company.cidade}${company.estado ? `/${company.estado}` : ""}`, company.cep].filter(Boolean).join(" · ") || "não cadastrado"}</p>
-          {(company.telefone || company.email) && <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{[company.telefone, company.email].filter(Boolean).join(" · ")}</p>}
+          <p className="mt-0.5 max-w-[520px] text-[10px] leading-snug text-slate-500">Endereço: {[company.endereco || "R. Antônio Pinto de Mesquita, 345", company.cidade ? `${company.cidade}${company.estado ? `/${company.estado}` : ""}` : "Bela Vista/PI", company.cep].filter(Boolean).join(" · ")}</p>
+          <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{[company.telefone, company.email || "marcoswemerson7@gmail.com"].filter(Boolean).join(" · ")}</p>
         </div>
       </div>
       <div className="report-meta shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-right">
