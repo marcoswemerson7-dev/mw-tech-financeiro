@@ -49,8 +49,14 @@ export default async ({req,res,error})=>{
       await update(T.moves,move.$id,{tipo:next.tipo,data:next.data,descricao:next.descricao,conta_id:next.conta_id,conta_destino_id:next.conta_destino_id||"",valor:next.valor,observacao:next.observacao||"",comprovante_id:next.comprovante_id||"",updated_at:now});
     }else if(action==="deleteMovement"){
       const move=await get(T.moves,input.movimentacao_id);
-      if(move.despesa_id||move.pagamento_id)throw new Error("Movimentações geradas por despesas/pagamentos não podem ser excluídas aqui.");
+      if(move.pagamento_id){
+        const payment=await get(T.payments,move.pagamento_id);
+        if(!payment.estornado)throw new Error("Estorne o pagamento antes de excluir esta movimentação.");
+        resultId=move.$id;await remove(T.moves,move.$id);
+      }else if(move.despesa_id)throw new Error("Movimentações geradas por despesas devem ser estornadas pela tela de Despesas.");
+      else{
       await applyEffect(move,-1);resultId=move.$id;await remove(T.moves,move.$id);
+      }
     }else if(action==="updateExpense"){
       const expense=await get(T.expenses,input.despesa_id);
       if(expense.status==="pago")throw new Error("Estorne o pagamento antes de editar uma despesa paga.");

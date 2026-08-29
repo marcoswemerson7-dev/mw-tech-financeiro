@@ -11,6 +11,7 @@ import {
   UserRoundPlus,
   Pencil,
   Trash2,
+  Undo2,
   CalendarDays,
   Filter,
   Eye,
@@ -141,25 +142,36 @@ export default function Transactions() {
   }
 
   async function removeMovement(row: Movement) {
-    const isPaymentMovement = Boolean(row.pagamento_id);
-    const message = isPaymentMovement
-      ? "Estornar automaticamente este pagamento? O saldo volta para a conta e a despesa ficará pendente."
-      : "Excluir esta movimentação? O saldo será estornado em segurança e o histórico ficará cancelado.";
-    if (!confirm(message)) return;
+    if (!confirm("Excluir esta movimentação? O sistema só permite remover pagamento vinculado depois do estorno.")) return;
     setBusy(true);
     setError("");
     try {
-      if (isPaymentMovement) {
-        await reverseExpensePayment({ pagamento_id: row.pagamento_id, observacao: "Estorno pela tela de entradas e saídas." });
-        await load();
-      } else {
-        await deleteMovement(row.id);
-        setRows((current) => current.filter((item) => item.id !== row.id));
-      }
-      setToast(isPaymentMovement ? "Pagamento estornado com sucesso." : "Movimentação excluída com sucesso.");
+      await deleteMovement(row.id);
+      setRows((current) => current.filter((item) => item.id !== row.id));
+      setToast("Movimentação excluída com sucesso.");
       setTimeout(() => setToast(""), 2600);
     } catch (e: any) {
       const message = e.message || "Não foi possível excluir esta movimentação.";
+      setError(message);
+      setToast(message);
+      setTimeout(() => setToast(""), 4200);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reverseMovement(row: Movement) {
+    if (!row.pagamento_id) return;
+    if (!confirm("Estornar este pagamento? O saldo volta para a conta e a despesa ficará pendente.")) return;
+    setBusy(true);
+    setError("");
+    try {
+      await reverseExpensePayment({ pagamento_id: row.pagamento_id, observacao: "Estorno pela tela de entradas e saídas." });
+      await load();
+      setToast("Pagamento estornado com sucesso.");
+      setTimeout(() => setToast(""), 2600);
+    } catch (e: any) {
+      const message = e.message || "Não foi possível estornar este pagamento.";
       setError(message);
       setToast(message);
       setTimeout(() => setToast(""), 4200);
@@ -243,7 +255,7 @@ export default function Transactions() {
         </ActionButton>
       </FilterBar>
 
-      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} view={setView} />
+      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} reverse={reverseMovement} view={setView} />
 
       {view && <MovementDetails movement={view} close={() => setView(null)} />}
 
@@ -360,7 +372,7 @@ function Field({ label, children, wide }: { label: string; children: any; wide?:
   return <label className={`text-[15px] font-semibold text-slate-700 ${wide ? "sm:col-span-2" : ""}`}>{label}{children}</label>;
 }
 
-function MovementTable({ rows, edit, remove, view }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; view: (row: Movement) => void }) {
+function MovementTable({ rows, edit, remove, reverse, view }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; reverse: (row: Movement) => void; view: (row: Movement) => void }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {rows.length ? (
@@ -386,7 +398,10 @@ function MovementTable({ rows, edit, remove, view }: { rows: Movement[]; edit: (
                       <div className="flex gap-2">
                         <IconAction onClick={() => view(x)} title="Visualizar movimentação" tone="slate"><Eye size={18} /></IconAction>
                         <IconAction onClick={() => edit(x)} title="Editar" tone="blue"><Pencil size={18} /></IconAction>
-                        <IconAction onClick={() => remove(x)} title={x.pagamento_id ? "Estornar pagamento" : "Excluir"} tone="red"><Trash2 size={18} /></IconAction>
+                        {x.pagamento_id && x.tipo !== "estorno" ? (
+                          <IconAction onClick={() => reverse(x)} title="Estornar pagamento" tone="amber"><Undo2 size={18} /></IconAction>
+                        ) : null}
+                        <IconAction onClick={() => remove(x)} title="Excluir" tone="red"><Trash2 size={18} /></IconAction>
                       </div>
                     </td>
                   </tr>
