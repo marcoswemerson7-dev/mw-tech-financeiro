@@ -254,44 +254,40 @@ textarea.input {
 
   .report-company-name {
     margin-top: 0 !important;
-    font-size: 9px !important;
-    line-height: 1.15 !important;
+    font-size: 11px !important;
+    line-height: 1.1 !important;
   }
 
   .report-company-details p {
     margin-top: 0.5mm !important;
-    font-size: 7px !important;
+    font-size: 7.5px !important;
     line-height: 1.15 !important;
   }
 
   .report-meta {
-    min-width: 66mm !important;
-    padding: 2.5mm 4mm !important;
-    border-radius: 2mm !important;
-    border-color: #d8dee8 !important;
-    border-top: 1mm solid #0b2b66 !important;
-    background: #f8fafc !important;
+    min-width: 30mm !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
   }
 
-  .report-meta p:first-child {
-    font-size: 7px !important;
-    letter-spacing: 0.14em !important;
+  .report-meta h2,
+  .report-meta p:not(:last-child) {
+    display: none !important;
   }
 
-  .report-meta h2 {
-    margin-top: 0.5mm !important;
-    font-size: 15px !important;
-    line-height: 1.1 !important;
-  }
-
-  .report-meta p:not(:first-child) {
-    margin-top: 0.5mm !important;
-    font-size: 7px !important;
+  .report-meta p:last-child {
+    margin: 0 !important;
+    font-size: 7.5px !important;
     line-height: 1.15 !important;
+    color: #64748b !important;
   }
 
   .report-header::after {
-    background: linear-gradient(90deg, #0b2b66 0%, #0b2b66 76%, #c78b35 76%, #c78b35 100%) !important;
+    height: 0.4mm !important;
+    border-radius: 0 !important;
+    background: #dbe2ea !important;
   }
 
   .no-break {
