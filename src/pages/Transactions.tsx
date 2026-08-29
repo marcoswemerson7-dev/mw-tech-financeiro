@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Filter,
   Eye,
+  MoreVertical,
   Copy,
 } from "lucide-react";
 import {
@@ -51,6 +52,7 @@ export default function Transactions() {
     [from, setFrom] = useState(new Date().toISOString().slice(0, 8) + "01"),
     [to, setTo] = useState(new Date().toISOString().slice(0, 10)),
     [busyRow, setBusyRow] = useState(""),
+    [menuRow, setMenuRow] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
@@ -283,7 +285,7 @@ export default function Transactions() {
         </ActionButton>
       </FilterBar>
 
-      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} reverse={reverseMovement} duplicate={duplicateMovement} view={setView} busyRow={busyRow} />
+      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} reverse={reverseMovement} duplicate={duplicateMovement} view={setView} busyRow={busyRow} menuRow={menuRow} setMenuRow={setMenuRow} />
 
       {view && <MovementDetails movement={view} close={() => setView(null)} />}
 
@@ -400,7 +402,7 @@ function Field({ label, children, wide }: { label: string; children: any; wide?:
   return <label className={`text-[15px] font-semibold text-slate-700 ${wide ? "sm:col-span-2" : ""}`}>{label}{children}</label>;
 }
 
-function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; reverse: (row: Movement) => void; duplicate: (row: Movement) => void; view: (row: Movement) => void; busyRow: string }) {
+function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow, menuRow, setMenuRow }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; reverse: (row: Movement) => void; duplicate: (row: Movement) => void; view: (row: Movement) => void; busyRow: string; menuRow: string; setMenuRow: (id: string) => void }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {rows.length ? (
@@ -426,11 +428,22 @@ function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow }
                       <div className="flex gap-2">
                         <IconAction onClick={() => view(x)} title="Visualizar movimentação" tone="slate"><Eye size={18} /></IconAction>
                         <IconAction onClick={() => edit(x)} title="Editar" tone="blue"><Pencil size={18} /></IconAction>
-                        <IconAction onClick={() => duplicate(x)} title="Duplicar lançamento" tone="green"><Copy size={18} /></IconAction>
                         {x.pagamento_id && x.tipo !== "estorno" ? (
                           <IconAction onClick={() => reverse(x)} title="Estornar pagamento" tone="amber"><Undo2 size={18} /></IconAction>
                         ) : null}
                         <IconAction onClick={() => remove(x)} title="Excluir" tone="red"><Trash2 size={18} /></IconAction>
+                        <div className="relative">
+                          <IconAction onClick={() => setMenuRow(menuRow === x.id ? "" : x.id)} title="Mais ações" tone="slate"><MoreVertical size={18} /></IconAction>
+                          {menuRow === x.id ? (
+                            <div className="absolute right-0 top-12 z-20 w-56 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 text-sm font-semibold text-slate-700 shadow-xl">
+                              <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50" onClick={() => { setMenuRow(""); view(x); }}><Eye size={16} /> Visualizar</button>
+                              <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50" onClick={() => { setMenuRow(""); edit(x); }}><Pencil size={16} /> Editar</button>
+                              <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50" onClick={() => { setMenuRow(""); duplicate(x); }}><Copy size={16} /> Duplicar lançamento</button>
+                              {x.pagamento_id && x.tipo !== "estorno" ? <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-amber-700 hover:bg-amber-50" onClick={() => { setMenuRow(""); reverse(x); }}><Undo2 size={16} /> Estornar pagamento</button> : null}
+                              <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-rose-700 hover:bg-rose-50" onClick={() => { setMenuRow(""); remove(x); }}><Trash2 size={16} /> Excluir</button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
                   </tr>

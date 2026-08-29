@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CircleDollarSign,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -21,11 +22,13 @@ import { useAuth } from "../lib/auth";
 const items = [
   ["/", "Visão geral", House],
   ["/caixa", "Caixa", Wallet],
-  ["/movimentacoes", "Entradas e saídas", ArrowLeftRight],
-  ["/contas", "Contas", Landmark],
-  ["/despesas", "Despesas", Receipt],
-  ["/relatorios", "Relatórios", FileChartColumn],
   ["/configuracoes", "Configurações", Settings],
+] as const;
+const financeItems = [
+  ["/movimentacoes", "Entradas e saídas", ArrowLeftRight],
+  ["/contas", "Contas bancárias", Landmark],
+  ["/despesas", "Contas a pagar", Receipt],
+  ["/relatorios", "Relatórios", FileChartColumn],
 ] as const;
 
 export default function Layout() {
@@ -34,9 +37,10 @@ export default function Layout() {
     loc = useLocation(),
     { logout } = useAuth();
 
-  const title = items.find(([p]) =>
+  const title = [...items, ...financeItems].find(([p]) =>
     p === "/" ? loc.pathname === "/" : loc.pathname.startsWith(p),
   )?.[1];
+  const financeActive = financeItems.some(([path]) => loc.pathname.startsWith(path));
 
   return (
     <div className="min-h-screen bg-[#f2f5f9] text-slate-900">
@@ -92,6 +96,31 @@ export default function Layout() {
               <span className={collapsed ? "lg:sr-only" : ""}>{label}</span>
             </NavLink>
           ))}
+          <div>
+            <div
+              className={`flex min-h-[56px] items-center gap-4 rounded-xl border-l-[4px] px-4 py-3 text-[15px] font-bold transition-all ${collapsed ? "lg:justify-center lg:px-2" : ""} ${financeActive ? "border-l-[#e8ac35] bg-white/[.075] text-[#f5c75b]" : "border-l-transparent text-slate-200"}`}
+              title="Financeiro"
+            >
+              <CircleDollarSign size={21} strokeWidth={2} />
+              <span className={collapsed ? "lg:sr-only" : ""}>Financeiro</span>
+              <ChevronDown size={15} className={`ml-auto ${collapsed ? "lg:hidden" : ""}`} />
+            </div>
+            <div className={`mt-1 space-y-1 ${collapsed ? "lg:hidden" : ""}`}>
+              {financeItems.map(([to, label, I]) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    `ml-7 flex min-h-[40px] items-center gap-3 rounded-lg px-3 text-[13px] font-semibold transition ${isActive ? "bg-white/[.075] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.055] hover:text-white"}`
+                  }
+                >
+                  <I size={16} />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         </nav>
 
         <div className={`border-t border-white/10 p-4 ${collapsed ? "lg:px-3" : ""}`}>

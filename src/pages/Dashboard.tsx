@@ -19,28 +19,33 @@ import {
   CalendarDays,
   ChevronRight,
   CheckCircle2,
-  Clock3,
   Crown,
   MoreHorizontal,
+  ReceiptText,
+  TrendingUp,
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
+import { getExpenses } from "../services/expenses";
 import { money, Empty, Badge, dateOnly, formatDate, SectionCard, StatCard, FinancialAmount } from "../components/UI";
 
 export default function Dashboard() {
   const [rows, setRows] = useState<Movement[]>([]),
-    [account, setAccount] = useState(0);
+    [account, setAccount] = useState(0),
+    [expenses, setExpenses] = useState<any[]>([]);
 
   useEffect(() => {
     if (isConfigured)
-      Promise.all([getMovements(8), getAccounts()]).then(([m, a]) => {
+      Promise.all([getMovements(500), getAccounts(), getExpenses().catch(() => [])]).then(([m, a, e]) => {
         setRows(m);
         setAccount(a.reduce((s, x) => s + Number(x.saldo_atual), 0));
+        setExpenses(e);
       });
   }, []);
 
   const now = new Date(),
     month = now.toISOString().slice(0, 7),
+    today = now.toISOString().slice(0, 10),
     current = rows.filter((x) => dateOnly(x.data).startsWith(month)),
     ins = current
       .filter((x) => x.tipo.includes("entrada"))
@@ -48,48 +53,64 @@ export default function Dashboard() {
     outs = current
       .filter((x) => x.tipo.includes("saida"))
       .reduce((a, x) => a + Number(x.valor), 0),
+    receivedToday = current
+      .filter((x) => x.tipo.includes("entrada") && dateOnly(x.data) === today)
+      .reduce((a, x) => a + Number(x.valor), 0),
+    paidToday = current
+      .filter((x) => x.tipo.includes("saida") && dateOnly(x.data) === today)
+      .reduce((a, x) => a + Number(x.valor), 0),
+    pendingExpenses = expenses
+      .filter((x) => x.status === "pendente" && dateOnly(x.data_vencimento || x.vencimento).startsWith(month)),
+    pendingTotal = pendingExpenses.reduce((a, x) => a + Number(x.valor), 0),
+    paidExpensesTotal = expenses
+      .filter((x) => x.status === "pago" && dateOnly(x.data_pagamento || x.vencimento).startsWith(month))
+      .reduce((a, x) => a + Number(x.valor), 0),
     cash = account;
 
-  const chart = ["Jan", "Fev", "Mar", "Abr", "Mai", "Atual"].map((mes, i) => ({
-    mes,
-    entradas: i === 5 ? ins : 0,
-    saidas: i === 5 ? outs : 0,
-  }));
+  const chart = buildMonthlyChart(rows);
 
   return (
     <div className="space-y-7 lg:space-y-8">
-      <section className="relative overflow-hidden rounded-2xl border border-[#17375f] bg-[#061426] p-7 text-white shadow-[0_18px_45px_rgba(6,20,38,.18)] sm:p-8">
-        <div className="absolute inset-y-0 right-0 hidden w-1/2 opacity-80 lg:block">
-          <div className="absolute right-16 top-12 h-24 w-[420px] rounded-[50%] border border-blue-500/35" />
-          <div className="absolute right-4 top-16 h-28 w-[440px] rounded-[50%] border border-[#e8ac35]/45" />
-          <div className="absolute right-28 top-28 h-20 w-[360px] rounded-[50%] border border-blue-400/25" />
-        </div>
-        <div className="relative flex flex-wrap items-center justify-between gap-6">
+      <section className="rounded-2xl border border-[#17375f] bg-[#061426] p-7 text-white shadow-[0_18px_45px_rgba(6,20,38,.18)] sm:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-6">
           <div>
-            <h2 className="text-[31px] font-black tracking-[-0.01em] sm:text-[38px]">
-              Resumo financeiro
+            <p className="text-[13px] font-black uppercase tracking-[.24em] text-[#f5c75b]">Bom dia, Marcos</p>
+            <h2 className="mt-2 text-[31px] font-black tracking-[-0.01em] sm:text-[38px]">
+              Painel financeiro
             </h2>
             <p className="mt-3 max-w-xl text-[16px] leading-7 text-blue-100">
-              Acompanhe de forma clara e inteligente a saúde financeira da sua empresa.
+              Fluxo de caixa, pagamentos, recebimentos e atalhos para trabalhar sem demora.
             </p>
           </div>
-          <span className="inline-flex min-h-[54px] items-center gap-3 rounded-xl border border-[#e8ac35]/50 bg-white/[.06] px-5 text-[14px] font-black text-white">
+          <span className="inline-flex min-h-[54px] items-center gap-3 rounded-lg border border-[#e8ac35]/50 bg-white/[.06] px-5 text-[14px] font-black text-white">
             <CalendarDays size={18} className="text-[#f5c75b]" />
             Atualização do mês atual
           </span>
         </div>
       </section>
 
+      <div className="grid gap-5 lg:grid-cols-[1fr_1fr_2.1fr]">
+        <QuickCard title="A receber hoje" value={receivedToday} tone="green" href="/movimentacoes" cta="Ir para entradas" icon={<ArrowUpRight size={24} />} />
+        <QuickCard title="A pagar hoje" value={paidToday} tone="orange" href="/despesas" cta="Ir para despesas" icon={<ArrowDownRight size={24} />} />
+        <section className="grid gap-4 rounded-lg bg-cyan-500 p-5 text-white shadow-sm md:grid-cols-2">
+          <MonthProgress title="Recebimentos do mês" realized={ins} planned={ins + pendingTotal} tone="green" />
+          <MonthProgress title="Pagamentos do mês" realized={paidExpensesTotal || outs} planned={(paidExpensesTotal || outs) + pendingTotal} tone="white" />
+          <a href="/movimentacoes" className="md:col-span-2 flex min-h-[42px] items-center justify-center gap-2 rounded-md bg-cyan-600/45 text-[14px] font-black transition hover:bg-cyan-700/45">
+            Ir para fluxo de caixa <ArrowRight size={16} />
+          </a>
+        </section>
+      </div>
+
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Saldo em caixa" value={money(cash)} icon={<Wallet size={26} />} tone="gold" hint="Atualizado agora" />
-        <StatCard title="Entradas do mês" value={money(ins)} icon={<ArrowUpRight size={26} />} tone="green" hint="↑ 100% vs mês anterior" />
-        <StatCard title="Saídas do mês" value={<FinancialAmount value={outs} kind="saida" />} icon={<ArrowDownRight size={26} />} tone="red" hint="— 0% vs mês anterior" />
-        <StatCard title="Valor em conta" value={money(account)} icon={<Landmark size={26} />} tone="blue" hint="Atualizado agora" />
+        <StatCard title="Entradas do mês" value={money(ins)} icon={<ArrowUpRight size={26} />} tone="green" hint="Recebimentos confirmados" />
+        <StatCard title="Saídas do mês" value={<FinancialAmount value={outs} kind="saida" />} icon={<ArrowDownRight size={26} />} tone="red" hint="Pagamentos lançados" />
+        <StatCard title="A pagar no mês" value={<FinancialAmount value={pendingTotal} kind="pendente" />} icon={<ReceiptText size={26} />} tone="orange" hint={`${pendingExpenses.length} pendência${pendingExpenses.length === 1 ? "" : "s"}`} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
         <SectionCard
-          title="Entradas x Saídas"
+          title="Fluxo de caixa"
           subtitle="Fluxo financeiro dos últimos 6 meses"
           action={<select className="h-10 rounded-lg border border-slate-200 px-3 text-[13px] font-semibold text-slate-600 outline-none"><option>Últimos 6 meses</option></select>}
         >
@@ -108,9 +129,9 @@ export default function Dashboard() {
 
         <SectionCard title="Contas do mês" subtitle="Situação dos compromissos financeiros">
           <div className="overflow-hidden rounded-xl border border-slate-200">
-            <Status label="A pagar" value={outs} count={current.filter((x) => x.tipo.includes("saida")).length} color="amber" icon={<Wallet size={22} />} />
-            <Status label="Pagas" value={outs} count={current.filter((x) => x.tipo.includes("saida")).length} color="green" icon={<CheckCircle2 size={22} />} />
-            <Status label="Pendentes" value={0} count={0} color="red" icon={<Clock3 size={22} />} />
+            <Status label="A pagar" value={pendingTotal} count={pendingExpenses.length} color="amber" icon={<Wallet size={22} />} href="/despesas" />
+            <Status label="Pagas" value={paidExpensesTotal || outs} count={expenses.filter((x) => x.status === "pago").length} color="green" icon={<CheckCircle2 size={22} />} href="/despesas" />
+            <Status label="Recebidas" value={ins} count={current.filter((x) => x.tipo.includes("entrada")).length} color="green" icon={<TrendingUp size={22} />} href="/movimentacoes" />
           </div>
         </SectionCard>
       </div>
@@ -175,12 +196,14 @@ function Status({
   count,
   color,
   icon,
+  href,
 }: {
   label: string;
   value: number;
   count: number;
   color: string;
   icon: ReactNode;
+  href: string;
 }) {
   const cls =
     color === "green"
@@ -189,7 +212,7 @@ function Status({
         ? "bg-rose-50 text-rose-600"
         : "bg-amber-50 text-[#d09116]";
   return (
-    <div className="flex min-h-[86px] items-center justify-between gap-4 border-b border-slate-200 px-4 py-3 last:border-b-0">
+    <a href={href} className="flex min-h-[86px] items-center justify-between gap-4 border-b border-slate-200 px-4 py-3 transition hover:bg-slate-50 last:border-b-0">
       <div className="flex min-w-0 items-center gap-4">
         <span className={`grid size-12 shrink-0 place-items-center rounded-full ${cls}`}>{icon}</span>
         <div className="min-w-0">
@@ -199,8 +222,74 @@ function Status({
       </div>
       <strong className="whitespace-nowrap text-[17px] font-black text-[#061426]">{money(value)}</strong>
       <ChevronRight size={18} className="shrink-0 text-slate-400" />
+    </a>
+  );
+}
+
+function QuickCard({
+  title,
+  value,
+  tone,
+  href,
+  cta,
+  icon,
+}: {
+  title: string;
+  value: number;
+  tone: "green" | "orange";
+  href: string;
+  cta: string;
+  icon: ReactNode;
+}) {
+  const cls = tone === "green" ? "bg-emerald-400 text-white" : "bg-orange-300 text-white";
+  const footer = tone === "green" ? "bg-emerald-500/35" : "bg-orange-400/35";
+  return (
+    <a href={href} className={`flex min-h-[186px] flex-col justify-between overflow-hidden rounded-lg ${cls} shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}>
+      <div className="flex items-start justify-between gap-4 p-5">
+        <div>
+          <p className="text-[16px] font-bold">{title}</p>
+          <strong className="mt-8 block text-[34px] font-black tracking-tight">{money(value)}</strong>
+        </div>
+        <span className="mt-10 grid size-14 place-items-center rounded-lg bg-white/18">{icon}</span>
+      </div>
+      <span className={`flex min-h-[34px] items-center justify-end gap-2 px-5 text-[14px] font-black ${footer}`}>
+        {cta} <ArrowRight size={16} />
+      </span>
+    </a>
+  );
+}
+
+function MonthProgress({ title, realized, planned, tone }: { title: string; realized: number; planned: number; tone: "green" | "white" }) {
+  const percent = planned > 0 ? Math.min(100, Math.round((realized / planned) * 100)) : 0;
+  const ring = tone === "green" ? "border-lime-300 text-white" : "border-white text-white";
+  return (
+    <div className="flex items-center gap-5">
+      <span className={`grid size-20 shrink-0 place-items-center rounded-full border-[8px] ${ring}`}>
+        <b>{percent}%</b>
+      </span>
+      <div className="min-w-0">
+        <h3 className="text-[16px] font-black">{title}</h3>
+        <p className="mt-3 text-[14px] font-semibold">Realizado: {money(realized)}</p>
+        <p className="text-[14px] font-semibold">Falta: {money(Math.max(planned - realized, 0))}</p>
+        <p className="text-[14px] font-semibold">Previsto: {money(planned)}</p>
+      </div>
     </div>
   );
+}
+
+function buildMonthlyChart(rows: Movement[]) {
+  const formatter = new Intl.DateTimeFormat("pt-BR", { month: "short" });
+  const base = new Date();
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(base.getFullYear(), base.getMonth() - (5 - index), 1);
+    const key = date.toISOString().slice(0, 7);
+    const monthRows = rows.filter((row) => dateOnly(row.data).startsWith(key));
+    return {
+      mes: formatter.format(date).replace(".", ""),
+      entradas: monthRows.filter((row) => row.tipo.includes("entrada")).reduce((sum, row) => sum + Number(row.valor), 0),
+      saidas: monthRows.filter((row) => row.tipo.includes("saida")).reduce((sum, row) => sum + Number(row.valor), 0),
+    };
+  });
 }
 
 function BottomStat({
