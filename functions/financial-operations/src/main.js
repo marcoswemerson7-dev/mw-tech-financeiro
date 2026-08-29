@@ -1,4 +1,4 @@
-import { Client, ID, TablesDB } from "node-appwrite";
+import { Client, ID, Query, TablesDB } from "node-appwrite";
 const T={accounts:"contas_financeiras",moves:"movimentacoes_financeiras",expenses:"despesas",payments:"pagamentos_despesas",ops:"operacoes_idempotentes"};
 export default async ({req,res,error})=>{
   const userId=req.headers["x-appwrite-user-id"];
@@ -53,7 +53,14 @@ export default async ({req,res,error})=>{
         const payment=await get(T.payments,move.pagamento_id);
         if(!payment.estornado)throw new Error("Estorne o pagamento antes de excluir esta movimentação.");
         resultId=move.$id;await remove(T.moves,move.$id);
-      }else if(move.despesa_id)throw new Error("Movimentações geradas por despesas devem ser estornadas pela tela de Despesas.");
+      }else if(move.despesa_id){
+        const linkedMoves=await db.listRows({databaseId,tableId:T.moves,queries:[Query.equal("despesa_id",move.despesa_id)],transactionId:tid});
+        const linkedPayments=await db.listRows({databaseId,tableId:T.payments,queries:[Query.equal("despesa_id",move.despesa_id)],transactionId:tid});
+        if(linkedPayments.rows.some(payment=>!payment.estornado))throw new Error("Estorne o pagamento antes de excluir esta movimentação.");
+        resultId=move.$id;
+        for(const linked of linkedMoves.rows)await remove(T.moves,linked.$id);
+        for(const payment of linkedPayments.rows)await remove(T.payments,payment.$id);
+      }
       else{
       await applyEffect(move,-1);resultId=move.$id;await remove(T.moves,move.$id);
       }

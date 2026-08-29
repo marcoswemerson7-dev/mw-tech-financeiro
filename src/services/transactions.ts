@@ -147,7 +147,16 @@ async function cleanupLinkedMovement(move: any) {
   }
 }
 
-export const deleteMovement = (id: string) => execute("deleteMovement", { movimentacao_id: id });
+export async function deleteMovement(id: string) {
+  try {
+    return await execute("deleteMovement", { movimentacao_id: id });
+  } catch (error: any) {
+    const message = String(error?.message || "");
+    const normalized = message.toLowerCase();
+    if (!normalized.includes("vinculada") && !normalized.includes("despesa")) throw error;
+    return deleteMovementDirect(id);
+  }
+}
 
 export async function deleteMovementDirect(id: string) {
   const move: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });

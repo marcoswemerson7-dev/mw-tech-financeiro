@@ -385,11 +385,11 @@ function MovementTable({ rows, edit, remove, reverse, view }: { rows: Movement[]
               {rows.map((x) => {
                 const parsed = parseDescription(x.descricao);
                 return (
-                  <tr key={x.id} className={`border-t border-slate-100 hover:bg-slate-50/60 ${x.tipo.includes("entrada") ? "border-l-4 border-l-emerald-500" : x.tipo.includes("saida") ? "border-l-4 border-l-rose-500" : "border-l-4 border-l-blue-500"}`}>
+                  <tr key={x.id} className={`border-t border-slate-100 hover:bg-slate-50/60 ${x.tipo.includes("entrada") ? "border-l-4 border-l-emerald-500" : x.tipo.includes("saida") ? "border-l-4 border-l-rose-500" : x.tipo.includes("estorno") ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-blue-500"}`}>
                     <td className="whitespace-nowrap px-6 py-6 font-semibold text-slate-700">{formatDate(x.data)}</td>
                     <td className="px-6 py-5"><div className="flex items-center gap-3 font-black text-[#0b1d3a]"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600"><Building2 size={18} /></span><span className="max-w-[210px] break-words">{parsed.party}</span></div></td>
                     <td className="max-w-[260px] px-6 py-5 font-bold text-[#061426]">{parsed.description}</td>
-                    <td className="px-6 py-5"><Badge status={x.tipo.includes("entrada") ? "entrada" : x.tipo.includes("saida") ? "saída" : "transferência"} /></td>
+                    <td className="px-6 py-5"><Badge status={x.tipo.includes("entrada") ? "entrada" : x.tipo.includes("saida") ? "saída" : x.tipo.includes("estorno") ? "estorno" : "transferência"} /></td>
                     <td className="max-w-[220px] px-6 py-5 text-slate-600">{x.contas_bancarias?.nome || "—"}</td>
                     <td className="whitespace-nowrap px-6 py-5 text-right text-lg font-black">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
