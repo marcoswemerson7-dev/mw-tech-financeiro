@@ -147,7 +147,9 @@ async function cleanupLinkedMovement(move: any) {
   }
 }
 
-export async function deleteMovement(id: string) {
+export const deleteMovement = (id: string) => execute("deleteMovement", { movimentacao_id: id });
+
+export async function deleteMovementDirect(id: string) {
   const move: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
   if (move.despesa_id || move.pagamento_id) {
     await cleanupLinkedMovement(move);

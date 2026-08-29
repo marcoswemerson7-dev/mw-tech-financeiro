@@ -149,7 +149,10 @@ export default function Transactions() {
       setToast("Movimentação excluída com sucesso.");
       setTimeout(() => setToast(""), 2600);
     } catch (e: any) {
-      setError(e.message);
+      const message = e.message || "Não foi possível excluir esta movimentação.";
+      setError(message);
+      setToast(message);
+      setTimeout(() => setToast(""), 4200);
     } finally {
       setBusy(false);
     }
@@ -181,7 +184,7 @@ export default function Transactions() {
 
   return (
     <div className="space-y-7">
-      <Toast message={toast} />
+      <Toast message={toast} tone={error && toast === error ? "error" : "success"} />
       <PageHeader
         title="Entradas e saídas"
         subtitle="Consulte por período e mantenha as movimentações organizadas."
