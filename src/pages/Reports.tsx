@@ -346,8 +346,14 @@ function PrintHeader({
         <img
           src={company.logo_url || "/mw-tech-logo-horizontal.png"}
           alt="Logo MW TECH"
-          className="report-logo h-[68px] w-[156px] shrink-0 object-contain object-left"
+          className="report-screen-logo report-logo h-[68px] w-[156px] shrink-0 object-contain object-left"
         />
+        <div className="report-print-brand" aria-label="MW TECH">
+          <span className="report-symbol" aria-hidden="true">
+            <img src={company.logo_url || "/mw-tech-logo-horizontal.png"} alt="" />
+          </span>
+          <span className="report-wordmark">MW TECH</span>
+        </div>
         <div className="report-company-details min-w-0 pt-0.5">
           <p className="report-company-name mt-1 max-w-[500px] text-[11px] font-semibold leading-snug text-slate-700">{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"}</p>
           <p className="mt-1 text-[10px] font-semibold text-slate-500">CNPJ: {company.cnpj || "62.308.511/0001-12"}</p>
