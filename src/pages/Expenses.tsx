@@ -25,6 +25,19 @@ type Expense = {
 };
 type ReceiptCompany = { razao_social?: string; cnpj?: string; endereco?: string; cidade?: string; estado?: string; cep?: string; telefone?: string; email?: string; logo_url?: string };
 const month = new Date().toISOString().slice(0, 7);
+function formatCompetenceInput(value?: string) {
+  const date = dateOnly(value);
+  if (!date) return "";
+  const [year, monthValue] = date.split("-");
+  return year && monthValue ? `${monthValue}/${year}` : value || "";
+}
+function normalizeCompetenceInput(value: string, fallbackDueDate: string) {
+  const clean = value.trim();
+  if (!clean) return `${fallbackDueDate.slice(0, 7)}-01`;
+  const match = clean.match(/^(0[1-9]|1[0-2])\/(\d{4})$/);
+  if (!match) throw new Error("Informe a competência no formato MM/AAAA. Exemplo: 08/2026.");
+  return `${match[2]}-${match[1]}-01`;
+}
 export default function Expenses() {
   const [rows, setRows] = useState<Expense[]>([]),
     [accounts, setAccounts] = useState<Account[]>([]),
@@ -77,19 +90,20 @@ export default function Expenses() {
     setError("");
     setBusy(true);
     const d: any = Object.fromEntries(new FormData(e.currentTarget));
-    d.valor = Number(d.valor);
-    d.recorrente = d.repetir === "on";
-    delete d.repetir;
-    const months = Number(d.quantidade_meses || 1);
-    delete d.quantidade_meses;
     try {
+      d.valor = Number(d.valor);
+      d.competencia = normalizeCompetenceInput(String(d.competencia || ""), String(d.data_vencimento || ""));
+      d.recorrente = d.repetir === "on";
+      delete d.repetir;
+      const months = Number(d.quantidade_meses || 1);
+      delete d.quantidade_meses;
       if (editExpense) {
         await updateExpense(editExpense.id, {
           descricao: d.descricao,
           categoria: d.categoria || "",
           categoria_id: d.categoria_id || "",
           fornecedor: d.fornecedor || "",
-          competencia: d.competencia || `${d.data_vencimento.slice(0, 7)}-01`,
+          competencia: d.competencia,
           vencimento: d.data_vencimento,
           valor: d.valor,
           conta_id: d.conta_bancaria_id || "",
@@ -102,7 +116,7 @@ export default function Expenses() {
           descricao: d.descricao,
           categoria: d.categoria || "",
           fornecedor: d.fornecedor || "",
-          competencia: d.competencia || `${d.data_vencimento.slice(0, 7)}-01`,
+          competencia: d.competencia,
           data_vencimento: d.data_vencimento,
           valor: d.valor,
           conta_bancaria_id: d.conta_bancaria_id || "",
@@ -474,8 +488,13 @@ export default function Expenses() {
               <F label="Competência">
                 <input
                   name="competencia"
-                  type="date"
-                  defaultValue={editExpense?.competencia?.slice(0, 10) || ""}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={7}
+                  pattern="(0[1-9]|1[0-2])\/[0-9]{4}"
+                  placeholder="08/2026"
+                  title="Informe no formato MM/AAAA. Exemplo: 08/2026"
+                  defaultValue={formatCompetenceInput(editExpense?.competencia)}
                   className="input"
                 />
               </F>
