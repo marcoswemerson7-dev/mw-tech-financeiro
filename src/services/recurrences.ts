@@ -60,6 +60,25 @@ export async function setRecurrenceActive(id: string, ativo: boolean) {
   });
 }
 
+export async function updateRecurrence(id: string, values: Partial<Pick<Recurrence, "descricao" | "valor" | "dia_vencimento" | "data_inicio" | "data_fim">>) {
+  return tables.updateRow({
+    databaseId: appwriteConfig.databaseId,
+    tableId: TABLES.recurrences,
+    rowId: id,
+    data: {
+      ...(values.descricao === undefined ? {} : { descricao: values.descricao.trim() }),
+      ...(values.valor === undefined ? {} : { valor: Number(values.valor) }),
+      ...(values.dia_vencimento === undefined ? {} : { dia_vencimento: Number(values.dia_vencimento) }),
+      ...(values.data_inicio === undefined ? {} : { data_inicio: new Date(`${values.data_inicio}T12:00:00`).toISOString() }),
+      ...(values.data_fim === undefined ? {} : { data_fim: values.data_fim ? new Date(`${values.data_fim}T12:00:00`).toISOString() : "" }),
+    },
+  });
+}
+
+export async function deleteRecurrence(id: string) {
+  return tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.recurrences, rowId: id });
+}
+
 export async function generateRecurringExpenses() {
   if (!appwriteConfig.recurringFunctionId) {
     throw new Error("Configure VITE_APPWRITE_RECURRING_FUNCTION_ID para gerar recorrências.");

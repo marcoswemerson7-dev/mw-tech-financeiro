@@ -4,7 +4,7 @@ import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getAccounts, uploadReceipt, type Account } from "../lib/finance";
 import { createExpenseWithOptionalRecurrence, deleteExpenseDirect, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
 import { updateExpense } from "../services/transactions";
-import { generateRecurringExpenses, getRecurrences, setRecurrenceActive, type Recurrence } from "../services/recurrences";
+import { deleteRecurrence, generateRecurringExpenses, getRecurrences, setRecurrenceActive, type Recurrence, updateRecurrence } from "../services/recurrences";
 import { money, Badge, Empty, dateOnly, formatDate, formatMonth, ActionButton, FilterBar, IconAction, PageHeader, StatCard, FinancialAmount, Toast } from "../components/UI";
 type Expense = {
   id: string;
@@ -26,6 +26,7 @@ export default function Expenses() {
   const [rows, setRows] = useState<Expense[]>([]),
     [accounts, setAccounts] = useState<Account[]>([]),
     [recurrences, setRecurrences] = useState<Recurrence[]>([]),
+    [editRecurrence, setEditRecurrence] = useState<Recurrence | null>(null),
     [form, setForm] = useState(false),
     [editExpense, setEditExpense] = useState<Expense | null>(null),
     [pay, setPay] = useState<Expense | null>(null),
@@ -191,6 +192,37 @@ export default function Expenses() {
   async function toggleRecurrence(x: Recurrence) {
     await setRecurrenceActive(x.id, !x.ativo);
     await load();
+  }
+  async function saveRecurrence(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editRecurrence) return;
+    setBusy(true);
+    try {
+      const d: any = Object.fromEntries(new FormData(e.currentTarget));
+      await updateRecurrence(editRecurrence.id, d);
+      setEditRecurrence(null);
+      await load();
+      setToast("Recorrência atualizada com sucesso.");
+      setTimeout(() => setToast(""), 2600);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function removeRecurrence(x: Recurrence) {
+    if (!confirm(`Excluir a recorrência “${x.descricao}”? As despesas já geradas não serão apagadas.`)) return;
+    setBusy(true);
+    try {
+      await deleteRecurrence(x.id);
+      setRecurrences((current) => current.filter((row) => row.id !== x.id));
+      setToast("Recorrência excluída com sucesso.");
+      setTimeout(() => setToast(""), 2600);
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setBusy(false);
+    }
   }
   function printPaymentReceipt(x: Expense) {
     setReceiptExpense(x);
@@ -360,9 +392,13 @@ export default function Expenses() {
                     <td className="px-4">{formatDate(x.data_inicio)}</td>
                     <td className="px-4"><Badge status={x.ativo ? "ativo" : "inativo"} /></td>
                     <td className="px-4">
-                      <button onClick={() => toggleRecurrence(x)} className="rounded-lg border px-3 py-1.5 text-xs font-semibold text-[#0b2b66]">
-                        {x.ativo ? "Pausar" : "Reativar"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => toggleRecurrence(x)} disabled={busy} className="rounded-lg border px-3 py-1.5 text-xs font-semibold text-[#0b2b66] disabled:opacity-50">
+                          {x.ativo ? "Pausar" : "Reativar"}
+                        </button>
+                        <IconAction onClick={() => setEditRecurrence(x)} title="Editar recorrência" tone="blue"><Pencil size={16} /></IconAction>
+                        <IconAction onClick={() => removeRecurrence(x)} title="Excluir recorrência" tone="red"><Trash2 size={16} /></IconAction>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -371,6 +407,17 @@ export default function Expenses() {
           </div>
         ) : <Empty />}
       </section>
+      {editRecurrence && (
+        <Modal title="Editar recorrência" close={() => setEditRecurrence(null)}>
+          <form onSubmit={saveRecurrence} className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold sm:col-span-2">Descrição<input name="descricao" required defaultValue={editRecurrence.descricao} className="input" /></label>
+            <label className="text-sm font-semibold">Dia de vencimento<input name="dia_vencimento" type="number" min="1" max="31" required defaultValue={editRecurrence.dia_vencimento} className="input" /></label>
+            <label className="text-sm font-semibold">Valor<input name="valor" type="number" min="0.01" step="0.01" required defaultValue={editRecurrence.valor} className="input" /></label>
+            <label className="text-sm font-semibold">Data de início<input name="data_inicio" type="date" required defaultValue={editRecurrence.data_inicio?.slice(0, 10)} className="input" /></label>
+            <div className="flex items-end justify-end gap-2 sm:col-span-2"><button type="button" onClick={() => setEditRecurrence(null)} className="rounded-xl border px-4 py-2">Cancelar</button><button disabled={busy} className="rounded-xl bg-[#0b2b66] px-5 py-2 font-semibold text-white">Salvar</button></div>
+          </form>
+        </Modal>
+      )}
       {receiptExpense && (
         <section className="expense-receipt-sheet hidden bg-white print:block">
           <div className="expense-receipt-header">
