@@ -118,7 +118,6 @@ async function cleanupLinkedMovement(move: any) {
   ]);
   const linkedMovements = movementResult.rows as any[];
   const linkedPayments = paymentResult.rows as any[];
-  if (linkedPayments.some((payment) => !payment.estornado)) throw new Error("Existe pagamento ativo nesta despesa. Estorne o pagamento antes de excluir definitivamente.");
 
   const effects = new Map<string, number>();
   linkedMovements.forEach((linked) => movementEffect(linked, effects));
@@ -128,7 +127,6 @@ async function cleanupLinkedMovement(move: any) {
     const account: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: accountId });
     const current = Number(account.saldo_atual || 0);
     const next = current - effect;
-    if (next < 0) throw new Error("Não é possível excluir porque o saldo atual não permite desfazer todo o histórico vinculado.");
     accountSnapshots.set(accountId, current);
     await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: accountId,
       data: { saldo_atual: next, updated_at: now } });
@@ -153,7 +151,7 @@ export async function deleteMovement(id: string) {
   } catch (error: any) {
     const message = String(error?.message || "");
     const normalized = message.toLowerCase();
-    if (!normalized.includes("vinculada") && !normalized.includes("despesa")) throw error;
+    if (!normalized.includes("vinculada") && !normalized.includes("despesa") && !normalized.includes("saldo insuficiente")) throw error;
     return deleteMovementDirect(id);
   }
 }
@@ -172,7 +170,6 @@ export async function deleteMovementDirect(id: string) {
   const transfer = move.tipo === "transferencia";
   const out = move.tipo === "saida" || transfer;
   const revertedOrigin = originBalance + (out ? value : -value);
-  if (revertedOrigin < 0) throw new Error("Não é possível excluir esta movimentação porque o saldo atual não permite desfazer seu efeito.");
 
   let destination: any = null;
   let revertedDestination = 0;
@@ -180,7 +177,6 @@ export async function deleteMovementDirect(id: string) {
     if (!move.conta_destino_id) throw new Error("Transferência sem conta de destino vinculada.");
     destination = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: move.conta_destino_id });
     revertedDestination = Number(destination.saldo_atual || 0) - value;
-    if (revertedDestination < 0) throw new Error("Não é possível excluir esta transferência porque a conta de destino não possui saldo suficiente para desfazer a operação.");
   }
 
   const now = new Date().toISOString();

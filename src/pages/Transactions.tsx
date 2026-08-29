@@ -142,12 +142,16 @@ export default function Transactions() {
   }
 
   async function removeMovement(row: Movement) {
-    if (!confirm("Excluir esta movimentação? O sistema só permite remover pagamento vinculado depois do estorno.")) return;
+    if (!confirm("Excluir esta movimentação? Se houver vínculo com pagamento, o saldo será ajustado automaticamente.")) return;
     setBusy(true);
     setError("");
     try {
       await deleteMovement(row.id);
-      setRows((current) => current.filter((item) => item.id !== row.id));
+      if (row.despesa_id || row.pagamento_id) {
+        await load();
+      } else {
+        setRows((current) => current.filter((item) => item.id !== row.id));
+      }
       setToast("Movimentação excluída com sucesso.");
       setTimeout(() => setToast(""), 2600);
     } catch (e: any) {

@@ -16,18 +16,18 @@ export default async ({req,res,error})=>{
     const create=(tableId,rowId,data)=>db.createRow({databaseId,tableId,rowId,data,transactionId:tid});
     const remove=(tableId,rowId)=>db.deleteRow({databaseId,tableId,rowId,transactionId:tid});
     const positive=v=>{v=Number(v);if(!Number.isFinite(v)||v<=0)throw new Error("O valor deve ser maior que zero.");return v};
-    const applyEffect=async(move,sign=1)=>{
+    const applyEffect=async(move,sign=1,allowNegative=false)=>{
       const value=positive(move.valor),origin=await get(T.accounts,move.conta_id);
       const transfer=move.tipo==="transferencia",out=move.tipo==="saida"||transfer;
       const delta=(out?-value:value)*sign;
       const next=Number(origin.saldo_atual)+delta;
-      if(next<0)throw new Error("Saldo insuficiente para concluir a alteração.");
+      if(next<0&&!allowNegative)throw new Error("Saldo insuficiente para concluir a alteração.");
       await update(T.accounts,origin.$id,{saldo_atual:next,updated_at:now});
       if(transfer){
         if(!move.conta_destino_id||move.conta_destino_id===origin.$id)throw new Error("Informe uma conta de destino diferente.");
         const dest=await get(T.accounts,move.conta_destino_id);
         const destNext=Number(dest.saldo_atual)+(value*sign);
-        if(destNext<0)throw new Error("Saldo insuficiente na conta de destino para desfazer a transferência.");
+        if(destNext<0&&!allowNegative)throw new Error("Saldo insuficiente na conta de destino para desfazer a transferência.");
         await update(T.accounts,dest.$id,{saldo_atual:destNext,updated_at:now});
       }
     };
@@ -50,19 +50,23 @@ export default async ({req,res,error})=>{
     }else if(action==="deleteMovement"){
       const move=await get(T.moves,input.movimentacao_id);
       if(move.pagamento_id){
-        const payment=await get(T.payments,move.pagamento_id);
-        if(!payment.estornado)throw new Error("Estorne o pagamento antes de excluir esta movimentação.");
+        let payment=null;try{payment=await get(T.payments,move.pagamento_id)}catch(e){if(e.code!==404)throw e}
+        if(payment){
+          if(!payment.estornado)await applyEffect(move,-1,true);
+          if(move.despesa_id){try{const expense=await get(T.expenses,move.despesa_id);await update(T.expenses,expense.$id,{status:"pendente",data_pagamento:"",updated_at:now});}catch(e){if(e.code!==404)throw e}}
+          await remove(T.payments,payment.$id);
+        }
         resultId=move.$id;await remove(T.moves,move.$id);
       }else if(move.despesa_id){
         const linkedMoves=await db.listRows({databaseId,tableId:T.moves,queries:[Query.equal("despesa_id",move.despesa_id)],transactionId:tid});
         const linkedPayments=await db.listRows({databaseId,tableId:T.payments,queries:[Query.equal("despesa_id",move.despesa_id)],transactionId:tid});
-        if(linkedPayments.rows.some(payment=>!payment.estornado))throw new Error("Estorne o pagamento antes de excluir esta movimentação.");
+        for(const linked of linkedMoves.rows)if(linked.pagamento_id&&linked.tipo!=="estorno")await applyEffect(linked,-1,true);
         resultId=move.$id;
         for(const linked of linkedMoves.rows)await remove(T.moves,linked.$id);
         for(const payment of linkedPayments.rows)await remove(T.payments,payment.$id);
       }
       else{
-      await applyEffect(move,-1);resultId=move.$id;await remove(T.moves,move.$id);
+      await applyEffect(move,-1,true);resultId=move.$id;await remove(T.moves,move.$id);
       }
     }else if(action==="updateExpense"){
       const expense=await get(T.expenses,input.despesa_id);
