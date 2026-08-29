@@ -4,6 +4,7 @@ import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getAccounts, uploadReceipt, type Account } from "../lib/finance";
 import { createExpenseWithOptionalRecurrence, deleteExpenseDirect, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
 import { updateExpense } from "../services/transactions";
+import { getCompanySettings } from "../services/reports";
 import { deleteRecurrence, generateRecurringExpenses, getRecurrences, setRecurrenceActive, type Recurrence, updateRecurrence } from "../services/recurrences";
 import { money, Badge, Empty, dateOnly, formatDate, formatMonth, ActionButton, FilterBar, IconAction, PageHeader, StatCard, FinancialAmount, Toast } from "../components/UI";
 type Expense = {
@@ -20,11 +21,14 @@ type Expense = {
   recorrencia_id?: string;
   contas_bancarias?: { nome: string; banco?: string; codigo_banco?: string } | null;
   recorrente: boolean;
+  data_pagamento?: string;
 };
+type ReceiptCompany = { razao_social?: string; cnpj?: string; endereco?: string; cidade?: string; estado?: string; cep?: string; telefone?: string; email?: string; logo_url?: string };
 const month = new Date().toISOString().slice(0, 7);
 export default function Expenses() {
   const [rows, setRows] = useState<Expense[]>([]),
     [accounts, setAccounts] = useState<Account[]>([]),
+    [company, setCompany] = useState<ReceiptCompany>({}),
     [recurrences, setRecurrences] = useState<Recurrence[]>([]),
     [editRecurrence, setEditRecurrence] = useState<Recurrence | null>(null),
     [form, setForm] = useState(false),
@@ -39,10 +43,11 @@ export default function Expenses() {
     [receiptExpense, setReceiptExpense] = useState<Expense | null>(null);
   async function load() {
     if (!isConfigured) return;
-    const [data, a, recurrenceRows] = await Promise.all([getExpenses(), getAccounts(), getRecurrences().catch(() => [])]);
+    const [data, a, recurrenceRows, companyData] = await Promise.all([getExpenses(), getAccounts(), getRecurrences().catch(() => []), getCompanySettings().catch(() => ({}))]);
     const accountName = new Map(a.map((x) => [x.id, x]));
     setRows(data.map((x: any) => ({ ...x, contas_bancarias: x.conta_id && accountName.get(x.conta_id) ? { nome: accountName.get(x.conta_id)!.nome, banco: accountName.get(x.conta_id)!.banco, codigo_banco: accountName.get(x.conta_id)!.codigo_banco } : null })) as Expense[]);
     setAccounts(a);
+    setCompany(companyData);
     setRecurrences(recurrenceRows);
   }
   useEffect(() => {
@@ -421,24 +426,39 @@ export default function Expenses() {
       {receiptExpense && (
         <section className="expense-receipt-sheet hidden bg-white print:block">
           <div className="expense-receipt-header">
-            <div>
-              <span className="expense-receipt-kicker">MW TECH FINANCEIRO</span>
-              <h2>Recibo de pagamento</h2>
-              <p>Comprovante de quitação de despesa</p>
+            <div className="expense-receipt-company">
+              <div className="expense-receipt-brand"><span className="expense-receipt-symbol"><img src={company.logo_url || "/mw-tech-logo-horizontal.png"} alt="" /></span><span>MW TECH</span></div>
+              <strong>{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"}</strong>
+              <span>CNPJ: {company.cnpj || "62.308.511/0001-12"}</span>
+              <span>Endereço: {[company.endereco || "R. Antônio Pinto de Mesquita, 345", company.cidade ? `${company.cidade}${company.estado ? `/${company.estado}` : ""}` : "Bela Vista/PI", company.cep].filter(Boolean).join(" · ")}</span>
+              <span>Contato: {[company.telefone, company.email || "marcoswemerson7@gmail.com"].filter(Boolean).join(" · ")}</span>
             </div>
-            <span className="expense-receipt-date">Emitido em {formatDate(new Date().toISOString())}</span>
+            <div className="expense-receipt-meta">
+              <span className="expense-receipt-kicker">DOCUMENTO</span>
+              <h2>RECIBO DE PAGAMENTO</h2>
+              <span>Recibo nº: {receiptExpense.id.slice(0, 8).toUpperCase()}</span>
+              <span>Emitido em: {formatDate(new Date().toISOString())}</span>
+            </div>
+          </div>
+          <div className="expense-receipt-title">
+            <h3>Recibo de pagamento</h3>
+            <p>Comprovante de quitação de despesa</p>
           </div>
           <div className="expense-receipt-body">
-            <p>Declaramos o pagamento da despesa abaixo:</p>
+            <p className="expense-receipt-declaration">Declaramos, para os devidos fins, que a despesa abaixo descrita foi devidamente quitada por meio do sistema MW TECH Financeiro.</p>
             <dl>
               <div><dt>Descrição</dt><dd>{receiptExpense.descricao}</dd></div>
               <div><dt>Categoria</dt><dd>{receiptExpense.categoria || "Sem categoria"}</dd></div>
               <div><dt>Vencimento</dt><dd>{formatDate(receiptExpense.data_vencimento)}</dd></div>
-              <div><dt>Valor pago</dt><dd>{money(receiptExpense.valor)}</dd></div>
+              <div><dt>Data do pagamento</dt><dd>{formatDate(receiptExpense.data_pagamento || new Date().toISOString())}</dd></div>
+              <div><dt>Conta utilizada</dt><dd>{accounts.find((account) => account.id === receiptExpense.conta_bancaria_id)?.nome || "Não informada"}</dd></div>
+              <div><dt>Favorecido</dt><dd>{receiptExpense.fornecedor || "Não informado"}</dd></div>
+              <div><dt>Status</dt><dd><span className="expense-receipt-paid">Pago</span></dd></div>
             </dl>
-            <p className="expense-receipt-confirmation">Pagamento registrado no sistema MW TECH Financeiro.</p>
+            <div className="expense-receipt-value"><span>VALOR PAGO</span><strong>{money(receiptExpense.valor)}</strong></div>
+            <div className="expense-receipt-authenticity"><strong>Pagamento registrado no sistema MW TECH Financeiro.</strong><span>Código interno: {receiptExpense.id}</span><span>Documento gerado automaticamente após a confirmação da quitação.</span></div>
           </div>
-          <div className="expense-receipt-signature">Documento gerado automaticamente</div>
+          <footer className="expense-receipt-footer">{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"} · CNPJ: {company.cnpj || "62.308.511/0001-12"}<br />Documento gerado automaticamente pelo sistema MW TECH Financeiro.</footer>
         </section>
       )}
       {form && (
