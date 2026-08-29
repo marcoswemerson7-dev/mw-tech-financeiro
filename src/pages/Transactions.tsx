@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Filter,
   Eye,
+  Copy,
 } from "lucide-react";
 import {
   getAccounts,
@@ -33,7 +34,7 @@ import {
   type Counterparty,
 } from "../services/counterparties";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
-import { money, Empty, formatDate, ActionButton, FilterBar, IconAction, PageHeader, StatCard, Badge, FinancialAmount, Toast } from "../components/UI";
+import { money, Empty, dateOnly, formatDate, ActionButton, FilterBar, IconAction, PageHeader, StatCard, Badge, FinancialAmount, Toast } from "../components/UI";
 
 export default function Transactions() {
   const [rows, setRows] = useState<Movement[]>([]),
@@ -43,9 +44,13 @@ export default function Transactions() {
     [partyOpen, setPartyOpen] = useState(false),
     [edit, setEdit] = useState<Movement | null>(null),
     [view, setView] = useState<Movement | null>(null),
+    [draft, setDraft] = useState<Movement | null>(null),
     [launchType, setLaunchType] = useState("entrada"),
     [search, setSearch] = useState(""),
     [type, setType] = useState(""),
+    [from, setFrom] = useState(new Date().toISOString().slice(0, 8) + "01"),
+    [to, setTo] = useState(new Date().toISOString().slice(0, 10)),
+    [busyRow, setBusyRow] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [toast, setToast] = useState("");
@@ -75,10 +80,17 @@ export default function Transactions() {
       rows.filter(
         (x) =>
           (!type || x.tipo.includes(type)) &&
+          dateOnly(x.data) >= from &&
+          dateOnly(x.data) <= to &&
           JSON.stringify(x).toLowerCase().includes(search.toLowerCase()),
       ),
-    [rows, search, type],
+    [rows, search, type, from, to],
   );
+  const periodTotals = useMemo(() => ({
+    entradas: visible.filter((x) => x.tipo.includes("entrada")).reduce((a, x) => a + Number(x.valor), 0),
+    saidas: visible.filter((x) => x.tipo.includes("saida")).reduce((a, x) => a + Number(x.valor), 0),
+    estornos: visible.filter((x) => x.tipo.includes("estorno")).reduce((a, x) => a + Number(x.valor), 0),
+  }), [visible]);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -92,9 +104,10 @@ export default function Transactions() {
 
       if (d.tipo !== "transferencia") {
         const party = counterparties.find((x) => x.id === d.parte_id);
-        if (!party && !edit) throw new Error(d.tipo === "entrada" ? "Informe de quem o valor foi recebido." : "Informe para quem o valor foi pago.");
+        const source = edit || draft;
+        if (!party && !source) throw new Error(d.tipo === "entrada" ? "Informe de quem o valor foi recebido." : "Informe para quem o valor foi pago.");
         const originalDescription = String(d.descricao || "").trim();
-        const fallbackParty = edit ? parseDescription(edit.descricao).party : "";
+        const fallbackParty = source ? parseDescription(source.descricao).party : "";
         const partyName = party?.nome || fallbackParty || "parte financeira";
         const prefix = d.tipo === "entrada" ? `Recebido de ${partyName}` : `Pago para ${partyName}`;
         d.descricao = originalDescription ? `${prefix} — ${originalDescription}` : prefix;
@@ -131,6 +144,7 @@ export default function Transactions() {
       );
       setOpen(false);
       setEdit(null);
+      setDraft(null);
       setLaunchType("entrada");
       setToast(edit ? "Alterações salvas com sucesso." : "Lançamento salvo com sucesso.");
       setTimeout(() => setToast(""), 2600);
@@ -143,31 +157,32 @@ export default function Transactions() {
 
   async function removeMovement(row: Movement) {
     if (!confirm("Excluir esta movimentação? Se houver vínculo com pagamento, o saldo será ajustado automaticamente.")) return;
-    setBusy(true);
+    const previousRows = rows;
+    setBusyRow(row.id);
     setError("");
+    setRows((current) => current.filter((item) => item.id !== row.id));
     try {
       await deleteMovement(row.id);
       if (row.despesa_id || row.pagamento_id) {
         await load();
-      } else {
-        setRows((current) => current.filter((item) => item.id !== row.id));
       }
       setToast("Movimentação excluída com sucesso.");
       setTimeout(() => setToast(""), 2600);
     } catch (e: any) {
+      setRows(previousRows);
       const message = e.message || "Não foi possível excluir esta movimentação.";
       setError(message);
       setToast(message);
       setTimeout(() => setToast(""), 4200);
     } finally {
-      setBusy(false);
+      setBusyRow("");
     }
   }
 
   async function reverseMovement(row: Movement) {
     if (!row.pagamento_id) return;
     if (!confirm("Estornar este pagamento? O saldo volta para a conta e a despesa ficará pendente.")) return;
-    setBusy(true);
+    setBusyRow(row.id);
     setError("");
     try {
       await reverseExpensePayment({ pagamento_id: row.pagamento_id, observacao: "Estorno pela tela de entradas e saídas." });
@@ -180,12 +195,20 @@ export default function Transactions() {
       setToast(message);
       setTimeout(() => setToast(""), 4200);
     } finally {
-      setBusy(false);
+      setBusyRow("");
     }
   }
 
   function openEdit(row: Movement) {
     setEdit(row);
+    setDraft(null);
+    setLaunchType(row.tipo);
+    setOpen(true);
+  }
+
+  function duplicateMovement(row: Movement) {
+    setEdit(null);
+    setDraft(row);
     setLaunchType(row.tipo);
     setOpen(true);
   }
@@ -219,7 +242,7 @@ export default function Transactions() {
             <ActionButton onClick={() => setPartyOpen(true)} tone="outline">
               <UserRoundPlus size={18} /> Cadastros
             </ActionButton>
-            <ActionButton onClick={() => { setEdit(null); setLaunchType("entrada"); setOpen(true); }}>
+            <ActionButton onClick={() => { setEdit(null); setDraft(null); setLaunchType("entrada"); setOpen(true); }}>
               <Plus size={18} /> Novo lançamento
             </ActionButton>
           </>
@@ -227,9 +250,9 @@ export default function Transactions() {
       />
 
       <div className="grid gap-5 md:grid-cols-3">
-        <StatCard title="Entradas no período" value={money(rows.filter((x) => x.tipo.includes("entrada")).reduce((a, x) => a + Number(x.valor), 0))} icon={<ArrowUpRight size={27} />} tone="green" hint="↑ 100% vs mês anterior" />
-        <StatCard title="Saídas no período" value={<FinancialAmount value={rows.filter((x) => x.tipo.includes("saida")).reduce((a, x) => a + Number(x.valor), 0)} kind="saida" />} icon={<ArrowDownRight size={27} />} tone="red" hint="— 0% vs mês anterior" />
-        <StatCard title="Movimentações" value={rows.length} icon={<ArrowLeftRight size={27} />} tone="blue" hint="Total de lançamentos no período" />
+        <StatCard title="Entradas no período" value={money(periodTotals.entradas)} icon={<ArrowUpRight size={27} />} tone="green" hint="Recebimentos filtrados" />
+        <StatCard title="Saídas no período" value={<FinancialAmount value={periodTotals.saidas} kind="saida" />} icon={<ArrowDownRight size={27} />} tone="red" hint="Pagamentos filtrados" />
+        <StatCard title="Movimentações" value={visible.length} icon={<ArrowLeftRight size={27} />} tone="blue" hint={`Estornos: ${money(periodTotals.estornos)}`} />
       </div>
 
       <FilterBar>
@@ -239,11 +262,11 @@ export default function Transactions() {
         </div>
         <label className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-500">
           Data inicial
-          <input type="date" className="mt-1 w-full bg-transparent text-[15px] font-semibold text-[#061426] outline-none" defaultValue={new Date().toISOString().slice(0, 8) + "01"} />
+          <input type="date" className="mt-1 w-full bg-transparent text-[15px] font-semibold text-[#061426] outline-none" value={from} onChange={(e) => setFrom(e.target.value)} />
         </label>
         <label className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-500">
           Data final
-          <input type="date" className="mt-1 w-full bg-transparent text-[15px] font-semibold text-[#061426] outline-none" defaultValue={new Date().toISOString().slice(0, 10)} />
+          <input type="date" className="mt-1 w-full bg-transparent text-[15px] font-semibold text-[#061426] outline-none" value={to} onChange={(e) => setTo(e.target.value)} />
         </label>
         <div className="relative min-w-[220px]">
           <CalendarDays className="pointer-events-none absolute left-4 top-4 text-slate-400" size={18} />
@@ -252,6 +275,7 @@ export default function Transactions() {
             <option value="entrada">Entradas</option>
             <option value="saida">Saídas</option>
             <option value="transferencia">Transferências</option>
+            <option value="estorno">Estornos</option>
           </select>
         </div>
         <ActionButton>
@@ -259,7 +283,7 @@ export default function Transactions() {
         </ActionButton>
       </FilterBar>
 
-      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} reverse={reverseMovement} view={setView} />
+      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} reverse={reverseMovement} duplicate={duplicateMovement} view={setView} busyRow={busyRow} />
 
       {view && <MovementDetails movement={view} close={() => setView(null)} />}
 
@@ -268,10 +292,10 @@ export default function Transactions() {
           <form onSubmit={save} className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b px-7 py-6">
               <div>
-                <h3 className="text-2xl font-bold text-[#0b1d3a]">{edit ? "Editar lançamento" : "Novo lançamento"}</h3>
+                <h3 className="text-2xl font-bold text-[#0b1d3a]">{edit ? "Editar lançamento" : draft ? "Duplicar lançamento" : "Novo lançamento"}</h3>
                 <p className="mt-1 text-sm text-slate-500">Informe a origem/destino do dinheiro e a conta utilizada.</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="rounded-xl p-2 hover:bg-slate-100"><X /></button>
+              <button type="button" onClick={() => { setOpen(false); setEdit(null); setDraft(null); }} className="rounded-xl p-2 hover:bg-slate-100"><X /></button>
             </div>
             <div className="grid gap-5 p-7 sm:grid-cols-2">
               <Field label="Tipo">
@@ -282,13 +306,13 @@ export default function Transactions() {
                 </select>
               </Field>
               <Field label="Data">
-                <input name="data" type="date" required defaultValue={edit?.data?.slice(0, 10) || new Date().toISOString().slice(0, 10)} className="input" />
+                <input name="data" type="date" required defaultValue={(edit || draft)?.data?.slice(0, 10) || new Date().toISOString().slice(0, 10)} className="input" />
               </Field>
 
               {launchType !== "transferencia" && (
                 <Field label={launchType === "entrada" ? "Recebido de" : "Pago para"} wide>
                   <div className="flex gap-2">
-                    <select name="parte_id" required={!edit} className="input">
+                    <select name="parte_id" required={!edit && !draft} className="input">
                       <option value="">Selecione um cadastro</option>
                       {counterparties.map((party) => (
                         <option value={party.id} key={party.id}>{party.nome}{party.documento ? ` · ${party.documento}` : ""}</option>
@@ -301,11 +325,11 @@ export default function Transactions() {
               )}
 
               <Field label="Descrição" wide>
-                <input name="descricao" required defaultValue={edit ? parseDescription(edit.descricao).description : ""} className="input" placeholder={launchType === "entrada" ? "Ex.: Mensalidade do sistema - agosto/2026" : "Ex.: Pagamento de serviço / compra"} />
+                <input name="descricao" required defaultValue={(edit || draft) ? parseDescription((edit || draft)!.descricao).description : ""} className="input" placeholder={launchType === "entrada" ? "Ex.: Mensalidade do sistema - agosto/2026" : "Ex.: Pagamento de serviço / compra"} />
               </Field>
 
               <Field label={launchType === "entrada" ? "Entrar na conta" : launchType === "saida" ? "Sair da conta" : "Conta de origem"}>
-                <select name="conta_id" required defaultValue={edit?.conta_id || ""} className="input">
+                <select name="conta_id" required defaultValue={(edit || draft)?.conta_id || ""} className="input">
                   <option value="">Selecione</option>
                   {accounts.map((a) => <option value={a.id} key={a.id}>{a.nome} · {money(a.saldo_atual)}</option>)}
                 </select>
@@ -313,7 +337,7 @@ export default function Transactions() {
 
               {launchType === "transferencia" && (
                 <Field label="Conta de destino">
-                  <select name="conta_destino_id" required defaultValue={edit?.conta_destino_id || ""} className="input">
+                  <select name="conta_destino_id" required defaultValue={(edit || draft)?.conta_destino_id || ""} className="input">
                     <option value="">Selecione</option>
                     {accounts.map((a) => <option value={a.id} key={a.id}>{a.nome} · {money(a.saldo_atual)}</option>)}
                   </select>
@@ -321,16 +345,16 @@ export default function Transactions() {
               )}
 
               <Field label="Valor">
-                <input name="valor" type="number" min="0.01" step="0.01" required defaultValue={edit?.valor || ""} className="input" placeholder="0,00" />
+                <input name="valor" type="number" min="0.01" step="0.01" required defaultValue={(edit || draft)?.valor || ""} className="input" placeholder="0,00" />
               </Field>
               <Field label="Comprovante">
                 <label className="input flex cursor-pointer items-center gap-2"><Paperclip size={17} /> Selecionar arquivo<input name="arquivo" type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" /></label>
               </Field>
-              <Field label="Observação" wide><textarea name="observacao" defaultValue={edit?.observacao || ""} className="input min-h-24" /></Field>
+              <Field label="Observação" wide><textarea name="observacao" defaultValue={(edit || draft)?.observacao || ""} className="input min-h-24" /></Field>
               {error && <p className="text-sm text-red-600 sm:col-span-2">{error}</p>}
             </div>
             <div className="flex justify-end gap-3 border-t px-7 py-5">
-              <button type="button" onClick={() => { setOpen(false); setEdit(null); }} className="rounded-xl border px-5 py-3">Cancelar</button>
+              <button type="button" onClick={() => { setOpen(false); setEdit(null); setDraft(null); }} className="rounded-xl border px-5 py-3">Cancelar</button>
               <button disabled={busy || !isConfigured} className="rounded-xl bg-[#0b2b66] px-6 py-3 font-semibold text-white disabled:opacity-50">{busy ? "Salvando..." : edit ? "Salvar alterações" : "Salvar lançamento"}</button>
             </div>
           </form>
@@ -376,7 +400,7 @@ function Field({ label, children, wide }: { label: string; children: any; wide?:
   return <label className={`text-[15px] font-semibold text-slate-700 ${wide ? "sm:col-span-2" : ""}`}>{label}{children}</label>;
 }
 
-function MovementTable({ rows, edit, remove, reverse, view }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; reverse: (row: Movement) => void; view: (row: Movement) => void }) {
+function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; reverse: (row: Movement) => void; duplicate: (row: Movement) => void; view: (row: Movement) => void; busyRow: string }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {rows.length ? (
@@ -389,7 +413,7 @@ function MovementTable({ rows, edit, remove, reverse, view }: { rows: Movement[]
               {rows.map((x) => {
                 const parsed = parseDescription(x.descricao);
                 return (
-                  <tr key={x.id} className={`border-t border-slate-100 hover:bg-slate-50/60 ${x.tipo.includes("entrada") ? "border-l-4 border-l-emerald-500" : x.tipo.includes("saida") ? "border-l-4 border-l-rose-500" : x.tipo.includes("estorno") ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-blue-500"}`}>
+                  <tr key={x.id} className={`border-t border-slate-100 transition hover:bg-slate-50/60 ${busyRow === x.id ? "opacity-45" : ""} ${x.tipo.includes("entrada") ? "border-l-4 border-l-emerald-500" : x.tipo.includes("saida") ? "border-l-4 border-l-rose-500" : x.tipo.includes("estorno") ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-blue-500"}`}>
                     <td className="whitespace-nowrap px-6 py-6 font-semibold text-slate-700">{formatDate(x.data)}</td>
                     <td className="px-6 py-5"><div className="flex items-center gap-3 font-black text-[#0b1d3a]"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600"><Building2 size={18} /></span><span className="max-w-[210px] break-words">{parsed.party}</span></div></td>
                     <td className="max-w-[260px] px-6 py-5 font-bold text-[#061426]">{parsed.description}</td>
@@ -402,6 +426,7 @@ function MovementTable({ rows, edit, remove, reverse, view }: { rows: Movement[]
                       <div className="flex gap-2">
                         <IconAction onClick={() => view(x)} title="Visualizar movimentação" tone="slate"><Eye size={18} /></IconAction>
                         <IconAction onClick={() => edit(x)} title="Editar" tone="blue"><Pencil size={18} /></IconAction>
+                        <IconAction onClick={() => duplicate(x)} title="Duplicar lançamento" tone="green"><Copy size={18} /></IconAction>
                         {x.pagamento_id && x.tipo !== "estorno" ? (
                           <IconAction onClick={() => reverse(x)} title="Estornar pagamento" tone="amber"><Undo2 size={18} /></IconAction>
                         ) : null}
@@ -441,7 +466,7 @@ function MovementDetails({ movement, close }: { movement: Movement; close: () =>
         </div>
         <dl className="grid gap-4 p-7 sm:grid-cols-2">
           <Detail label="Data" value={formatDate(movement.data)} />
-          <Detail label="Tipo" value={movement.tipo === "entrada" ? "Entrada" : movement.tipo === "saida" ? "Saída" : "Transferência"} />
+          <Detail label="Tipo" value={movement.tipo === "entrada" ? "Entrada" : movement.tipo === "saida" ? "Saída" : movement.tipo === "estorno" ? "Estorno" : "Transferência"} />
           <Detail label="Origem / Destino" value={parsed.party} />
           <Detail label="Conta" value={movement.contas_bancarias?.nome || "Não informada"} />
           <Detail label="Valor" value={money(movement.valor)} accent />
