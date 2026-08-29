@@ -197,6 +197,11 @@ textarea.input {
     background: #fff !important;
   }
 
+  #root > div {
+    min-height: 0 !important;
+    background: #fff !important;
+  }
+
   aside,
   header,
   .no-print {
@@ -229,7 +234,7 @@ textarea.input {
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    padding: 5mm !important;
+    padding: 4mm 5mm !important;
     overflow: visible !important;
     break-inside: avoid;
     page-break-inside: avoid;
@@ -249,7 +254,7 @@ textarea.input {
 
   .report-company-block {
     align-items: center !important;
-    gap: 5mm !important;
+    gap: 4mm !important;
   }
 
   .report-screen-logo {
@@ -260,7 +265,7 @@ textarea.input {
     display: flex !important;
     align-items: center !important;
     gap: 2.5mm !important;
-    min-width: 42mm !important;
+    min-width: 34mm !important;
   }
 
   .report-symbol {
@@ -292,23 +297,20 @@ textarea.input {
   }
 
   .report-company-details {
-    display: none !important;
-  }
-
-  .report-company-details {
+    display: block !important;
     padding-top: 0 !important;
   }
 
   .report-company-name {
     margin-top: 0 !important;
-    font-size: 14px !important;
+    font-size: 9px !important;
     font-weight: 800 !important;
     line-height: 1.15 !important;
   }
 
   .report-company-details p {
-    margin-top: 0.8mm !important;
-    font-size: 8.5px !important;
+    margin-top: 0.6mm !important;
+    font-size: 7px !important;
     line-height: 1.2 !important;
   }
 
@@ -380,7 +382,7 @@ textarea.input {
   }
 
   .report-charts .recharts-responsive-container {
-    height: 42mm !important;
+    height: 34mm !important;
   }
 
   .report-table-wrapper {
@@ -388,6 +390,28 @@ textarea.input {
     overflow: visible !important;
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  .report-empty-state {
+    margin-top: 3mm !important;
+    padding: 6mm !important;
+    border: 0.3mm dashed #cbd5e1 !important;
+    border-radius: 2mm !important;
+    background: #f8fafc !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-empty-state p:first-child {
+    color: #0b2b66 !important;
+    font-size: 9px !important;
+    letter-spacing: 0.12em !important;
+  }
+
+  .report-empty-state p:last-child {
+    margin-top: 1.2mm !important;
+    color: #64748b !important;
+    font-size: 8px !important;
   }
 
   .report-table {

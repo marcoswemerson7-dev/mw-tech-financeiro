@@ -77,6 +77,8 @@ export default function Reports() {
   };
   const chartData = [{ nome: "Entradas", valor: sums.r }, { nome: "Saídas", valor: sums.d }];
   const expenseByStatus = ["pendente", "pago", "cancelado"].map((status) => ({ status, valor: expenses.filter((x) => x.status === status).reduce((a, x) => a + Number(x.valor), 0) })).filter((x) => x.valor > 0);
+  const hasChartData = chartData.some((x) => x.valor > 0);
+  const hasExpenseStatusData = expenseByStatus.length > 0;
   function print(r?: Mov) {
     setReceipt(r || null);
     setTimeout(() => window.print(), 100);
@@ -193,8 +195,8 @@ export default function Reports() {
             </div>
           ))}
         </div>
-        <div className="report-charts no-break mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 p-4">
+        {(hasChartData || hasExpenseStatusData) && <div className="report-charts no-break mt-5 grid gap-4 lg:grid-cols-2">
+          {hasChartData && <div className="rounded-xl border border-slate-200 p-4">
             <h4 className="text-xs font-black uppercase text-slate-500">Entradas x Saídas</h4>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={chartData}>
@@ -208,19 +210,19 @@ export default function Reports() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-          <div className="rounded-xl border border-slate-200 p-4">
+          </div>}
+          {hasExpenseStatusData && <div className="rounded-xl border border-slate-200 p-4">
             <h4 className="text-xs font-black uppercase text-slate-500">Despesas por status</h4>
             <ResponsiveContainer width="100%" height={150}>
               <PieChart>
-                <Pie data={expenseByStatus.length ? expenseByStatus : [{ status: "sem dados", valor: 1 }]} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58}>
-                  {(expenseByStatus.length ? expenseByStatus : [{ status: "sem dados" }]).map((x, i) => <Cell key={x.status} fill={["#f59e0b", "#16a34a", "#dc2626", "#94a3b8"][i]} />)}
+                <Pie data={expenseByStatus} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58}>
+                  {expenseByStatus.map((x, i) => <Cell key={x.status} fill={["#f59e0b", "#16a34a", "#dc2626"][i]} />)}
                 </Pie>
-                <Tooltip formatter={(v) => expenseByStatus.length ? money(v) : "Sem dados"} />
+                <Tooltip formatter={(v) => money(v)} />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        </div>
+          </div>}
+        </div>}
         <div className="report-table-wrapper mt-6 overflow-x-auto">
           {filtered.length ? (
             <table className="report-table w-full border-collapse text-left text-xs">
@@ -263,39 +265,10 @@ export default function Reports() {
                 ))}
               </tbody>
             </table>
-          ) : (
-            <table className="report-table w-full border-collapse text-left text-xs">
-              <thead className="bg-[#061426] text-white">
-                <tr>
-                  {[
-                    "Data",
-                    "Descrição",
-                    "Conta bancária",
-                    "Tipo",
-                    "Valor",
-                    "Status",
-                  ].map((x) => (
-                    <th
-                      key={x}
-                      className="border border-slate-300 bg-[#0b2b66] px-3 py-3 text-[10px] uppercase text-white"
-                    >
-                      {x}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="border border-slate-300 py-12 text-center text-slate-400"
-                  >
-                    Nenhuma movimentação encontrada no período selecionado.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          )}
+          ) : <div className="report-empty-state rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
+            <p className="text-sm font-black uppercase tracking-[0.16em] text-[#0b2b66]">Sem movimentações no período</p>
+            <p className="mt-2 text-sm text-slate-500">Não foram encontrados lançamentos entre {format(from)} e {format(to)} para os filtros selecionados.</p>
+          </div>}
         </div>
         <ReportFooter company={company} />
       </section>
