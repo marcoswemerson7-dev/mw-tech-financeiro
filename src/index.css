@@ -230,9 +230,9 @@ textarea.input {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
     align-items: center !important;
-    gap: 6mm !important;
-    margin-bottom: 4mm !important;
-    padding-bottom: 3mm !important;
+    gap: 8mm !important;
+    margin-bottom: 5mm !important;
+    padding-bottom: 4mm !important;
     border-bottom: 0 !important;
     break-inside: avoid;
     page-break-inside: avoid;
@@ -240,12 +240,12 @@ textarea.input {
 
   .report-company-block {
     align-items: center !important;
-    gap: 3mm !important;
+    gap: 5mm !important;
   }
 
   .report-header img {
-    width: 30mm !important;
-    height: 13mm !important;
+    width: 40mm !important;
+    height: 17mm !important;
   }
 
   .report-company-details {
@@ -254,14 +254,15 @@ textarea.input {
 
   .report-company-name {
     margin-top: 0 !important;
-    font-size: 11px !important;
-    line-height: 1.1 !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
   }
 
   .report-company-details p {
-    margin-top: 0.5mm !important;
-    font-size: 7.5px !important;
-    line-height: 1.15 !important;
+    margin-top: 0.8mm !important;
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
   }
 
   .report-meta {
@@ -279,7 +280,7 @@ textarea.input {
 
   .report-meta p:last-child {
     margin: 0 !important;
-    font-size: 7.5px !important;
+    font-size: 8.5px !important;
     line-height: 1.15 !important;
     color: #64748b !important;
   }
@@ -365,7 +366,12 @@ textarea.input {
   }
 
   .report-page-number::after {
-    content: counter(page) " / " counter(pages);
+    content: "Página 1/1";
+    font-size: 7.5px;
+  }
+
+  .report-page-number {
+    font-size: 0 !important;
   }
 
   .receipt-sheet {
