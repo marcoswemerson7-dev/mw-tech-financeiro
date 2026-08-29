@@ -21,6 +21,7 @@ import {
   registerMovement,
   updateMovement,
   deleteMovement,
+  reverseExpensePayment,
   uploadReceipt,
   type Account,
   type Movement,
@@ -140,13 +141,22 @@ export default function Transactions() {
   }
 
   async function removeMovement(row: Movement) {
-    if (!confirm("Excluir esta movimentação? O saldo será estornado em segurança e o histórico ficará cancelado.")) return;
+    const isPaymentMovement = Boolean(row.pagamento_id);
+    const message = isPaymentMovement
+      ? "Estornar automaticamente este pagamento? O saldo volta para a conta e a despesa ficará pendente."
+      : "Excluir esta movimentação? O saldo será estornado em segurança e o histórico ficará cancelado.";
+    if (!confirm(message)) return;
     setBusy(true);
     setError("");
     try {
-      await deleteMovement(row.id);
-      setRows((current) => current.filter((item) => item.id !== row.id));
-      setToast("Movimentação excluída com sucesso.");
+      if (isPaymentMovement) {
+        await reverseExpensePayment({ pagamento_id: row.pagamento_id, observacao: "Estorno pela tela de entradas e saídas." });
+        await load();
+      } else {
+        await deleteMovement(row.id);
+        setRows((current) => current.filter((item) => item.id !== row.id));
+      }
+      setToast(isPaymentMovement ? "Pagamento estornado com sucesso." : "Movimentação excluída com sucesso.");
       setTimeout(() => setToast(""), 2600);
     } catch (e: any) {
       const message = e.message || "Não foi possível excluir esta movimentação.";
@@ -376,7 +386,7 @@ function MovementTable({ rows, edit, remove, view }: { rows: Movement[]; edit: (
                       <div className="flex gap-2">
                         <IconAction onClick={() => view(x)} title="Visualizar movimentação" tone="slate"><Eye size={18} /></IconAction>
                         <IconAction onClick={() => edit(x)} title="Editar" tone="blue"><Pencil size={18} /></IconAction>
-                        <IconAction onClick={() => remove(x)} title="Excluir" tone="red"><Trash2 size={18} /></IconAction>
+                        <IconAction onClick={() => remove(x)} title={x.pagamento_id ? "Estornar pagamento" : "Excluir"} tone="red"><Trash2 size={18} /></IconAction>
                       </div>
                     </td>
                   </tr>

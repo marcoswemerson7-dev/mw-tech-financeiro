@@ -6,6 +6,7 @@ export {
   registerMovement,
   updateMovement,
   deleteMovement,
+  reverseExpensePayment,
   updateExpense,
   cancelExpense,
   type Movement,
