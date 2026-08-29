@@ -1,14 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import {
-  Banknote,
-  Landmark,
-  Wallet,
-  ArrowUpRight,
   ArrowDownRight,
-  CalendarDays,
-  Layers3,
-  Trophy,
+  ArrowRight,
+  ArrowUpRight,
+  Banknote,
+  Clock3,
+  Landmark,
+  LayoutGrid,
+  Plus,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   getAccounts,
   getMovements,
@@ -16,118 +29,310 @@ import {
   type Movement,
 } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
-import { money, Empty, dateOnly, formatDate, PageHeader, SectionCard, StatCard, FinancialAmount } from "../components/UI";
+import { getExpenses } from "../services/expenses";
+import {
+  Badge,
+  Empty,
+  FinancialAmount,
+  dateOnly,
+  formatDate,
+  money,
+  PageHeader,
+  SectionCard,
+  StatCard,
+} from "../components/UI";
+
+type ExpenseRow = {
+  id: string;
+  descricao?: string;
+  valor?: number | string;
+  status?: string;
+  data_vencimento?: string;
+  vencimento?: string;
+  data_pagamento?: string;
+};
+
+const monthLabel = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+});
 
 export default function Cash() {
-  const [accounts, setAccounts] = useState<Account[]>([]),
-    [mov, setMov] = useState<Movement[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
 
   useEffect(() => {
-    if (isConfigured)
-      Promise.all([getAccounts(), getMovements(30)]).then(([a, m]) => {
-        setAccounts(a);
-        setMov(m);
-      });
+    if (!isConfigured) return;
+    Promise.all([
+      getAccounts().catch(() => []),
+      getMovements(500).catch(() => []),
+      getExpenses().catch(() => []),
+    ]).then(([accountRows, movementRows, expenseRows]) => {
+      setAccounts(accountRows);
+      setMovements(movementRows);
+      setExpenses(expenseRows);
+    });
   }, []);
 
-  const cash = accounts
-      .filter((x) => x.tipo_conta === "caixa")
-      .reduce((a, x) => a + Number(x.saldo_atual), 0),
-    bank = accounts
-      .filter((x) => x.tipo_conta !== "caixa")
-      .reduce((a, x) => a + Number(x.saldo_atual), 0),
-    today = new Date().toISOString().slice(0, 10),
-    daily = mov.filter((x) => dateOnly(x.data) === today),
-    ins = daily
-      .filter((x) => x.tipo.includes("entrada"))
-      .reduce((a, x) => a + Number(x.valor), 0),
-    outs = daily
-      .filter((x) => x.tipo.includes("saida"))
-      .reduce((a, x) => a + Number(x.valor), 0);
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const month = today.slice(0, 7);
+
+  const totals = useMemo(() => {
+    const monthMovements = movements.filter((row) => dateOnly(row.data).startsWith(month));
+    const todayMovements = movements.filter((row) => dateOnly(row.data) === today);
+    const pendingExpenses = expenses.filter(
+      (row) =>
+        row.status === "pendente" &&
+        dateOnly(row.data_vencimento || row.vencimento).startsWith(month),
+    );
+    const paidExpenses = expenses.filter(
+      (row) =>
+        row.status === "pago" &&
+        dateOnly(row.data_pagamento || row.data_vencimento || row.vencimento).startsWith(month),
+    );
+
+    const sumMovements = (rows: Movement[], kind: "entrada" | "saida") =>
+      rows
+        .filter((row) => row.tipo.toLowerCase().includes(kind))
+        .reduce((sum, row) => sum + Number(row.valor || 0), 0);
+
+    return {
+      cash: accounts
+        .filter((row) => row.tipo_conta === "caixa")
+        .reduce((sum, row) => sum + Number(row.saldo_atual || 0), 0),
+      bank: accounts
+        .filter((row) => row.tipo_conta !== "caixa")
+        .reduce((sum, row) => sum + Number(row.saldo_atual || 0), 0),
+      todayIn: sumMovements(todayMovements, "entrada"),
+      todayOut: sumMovements(todayMovements, "saida"),
+      monthIn: sumMovements(monthMovements, "entrada"),
+      monthOut: sumMovements(monthMovements, "saida"),
+      pendingCount: pendingExpenses.length,
+      pendingAmount: pendingExpenses.reduce((sum, row) => sum + Number(row.valor || 0), 0),
+      paidAmount: paidExpenses.reduce((sum, row) => sum + Number(row.valor || 0), 0),
+      monthCount: monthMovements.length,
+    };
+  }, [accounts, expenses, month, movements, today]);
+
+  const available = totals.cash + totals.bank;
+  const monthResult = totals.monthIn - totals.monthOut;
+  const chart = useMemo(() => buildMonthlyChart(movements), [movements]);
+  const recent = movements.slice(0, 6);
 
   return (
     <div className="space-y-7 lg:space-y-8">
       <PageHeader
         title="Caixa"
-        subtitle="Acompanhe o dinheiro disponível e consulte os lançamentos por período."
+        subtitle="Central financeira para receber, pagar, acompanhar entradas e saídas e enxergar o saldo em tempo real."
         actions={
-          <select className="min-h-[56px] rounded-xl border border-slate-200 bg-white px-5 text-[15px] font-semibold text-[#061426] shadow-sm outline-none">
-            <option>{new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</option>
-          </select>
+          <Link
+            to="/movimentacoes"
+            className="inline-flex min-h-[52px] items-center gap-2 rounded-xl bg-[#061426] px-5 text-[14px] font-black text-white shadow-[0_12px_28px_rgba(6,20,38,.18)] transition hover:bg-[#0b2b50]"
+          >
+            <Plus size={18} />
+            Novo lançamento
+          </Link>
         }
       />
 
-      <div className="grid gap-5 md:grid-cols-3">
-        <StatCard title="Saldo em caixa" value={money(cash)} icon={<Banknote size={27} />} tone="gold" hint="Atualizado agora" />
-        <StatCard title="Saldo bancário" value={money(bank)} icon={<Landmark size={27} />} tone="green" hint="Atualizado agora" />
-        <StatCard title="Saldo total" value={money(cash + bank)} icon={<Wallet size={27} />} tone="gold" hint="Atualizado agora" featured />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
-        <SectionCard title="Movimentação do período" subtitle="Resumo das entradas e saídas selecionadas." icon={ArrowUpRight}>
-          <div className="grid gap-5 rounded-2xl border border-slate-200 p-5 sm:grid-cols-2">
-            <Daily label="Entradas" value={ins} icon={<ArrowUpRight size={24} />} green />
-            <Daily label="Saídas" value={outs} icon={<ArrowDownRight size={24} />} />
-          </div>
-          <div className="mt-6 flex min-h-[120px] items-center justify-between gap-5 rounded-2xl border border-slate-200 bg-slate-50/70 p-6">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-600">
-              <Trophy size={30} />
-            </span>
-            <div className="text-right">
-              <p className="text-[16px] font-black text-[#061426]">Resultado do período</p>
-            <strong className="mt-1 block text-[34px] font-black tracking-[-0.02em]">
-              <FinancialAmount value={ins - outs} kind="resultado" />
-            </strong>
+      <section className="overflow-hidden rounded-3xl border border-[#17375f] bg-[#061426] text-white shadow-[0_22px_55px_rgba(6,20,38,.2)]">
+        <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1.1fr_.9fr]">
+          <div className="flex min-h-[230px] flex-col justify-between rounded-2xl border border-white/10 bg-white/[.05] p-6">
+            <div>
+              <p className="text-[12px] font-black uppercase tracking-[.28em] text-[#f5c75b]">
+                MW TECH Financeiro
+              </p>
+              <h3 className="mt-4 text-[30px] font-black leading-tight tracking-[-0.03em] sm:text-[42px]">
+                Controle rápido de entradas e saídas
+              </h3>
+              <p className="mt-3 max-w-2xl text-[15px] leading-7 text-blue-100">
+                Clique nos blocos para ir direto ao recebimento, pagamento ou fluxo de caixa.
+                Tudo pensado para lançar, consultar e decidir sem travar a rotina.
+              </p>
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <MiniMetric label="Disponível" value={money(available)} />
+              <MiniMetric label="Resultado do mês" value={<FinancialAmount value={monthResult} kind="resultado" />} />
+              <MiniMetric label="Movimentações" value={String(totals.monthCount)} />
             </div>
           </div>
-        </SectionCard>
 
-        <SectionCard title="Saldo consolidado" subtitle="Posição atual das contas." icon={Layers3}>
-          <div className="grid min-h-[315px] place-items-center">
-            <div className="relative grid size-[260px] place-items-center rounded-full border-[8px] border-amber-100">
-              <div className="absolute inset-[-8px] rounded-full border-[8px] border-transparent border-r-[#e8ac35] border-t-[#e8ac35]" />
-              <div className="text-center">
-                <span className="mx-auto grid size-20 place-items-center rounded-2xl bg-amber-50 text-[#d09116]">
-                  <Wallet size={34} />
-                </span>
-                <p className="mt-5 text-[16px] text-slate-500">Disponível agora</p>
-                <strong className="mt-1 block text-[36px] font-black tracking-[-0.02em] text-[#061426]">{money(cash + bank)}</strong>
-                <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[13px] font-bold text-emerald-700">
-                  <CalendarDays size={15} />
-                  Atualizado
-                </p>
-              </div>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FlowShortcut
+              title="Receber"
+              subtitle="Entradas e recebimentos"
+              value={totals.todayIn}
+              href="/receitas"
+              cta="Ir para receber"
+              icon={<ArrowUpRight size={25} />}
+              tone="green"
+            />
+            <FlowShortcut
+              title="Pagar"
+              subtitle="Contas e despesas"
+              value={totals.pendingAmount || totals.todayOut}
+              href="/despesas"
+              cta="Ir para pagar"
+              icon={<ArrowDownRight size={25} />}
+              tone="orange"
+            />
+            <FlowShortcut
+              title="Fluxo"
+              subtitle="Entradas e saídas"
+              value={monthResult}
+              href="/movimentacoes"
+              cta="Ver fluxo"
+              icon={<TrendingUp size={25} />}
+              tone="blue"
+            />
+            <FlowShortcut
+              title="Contas"
+              subtitle="Saldos bancários"
+              value={available}
+              href="/contas"
+              cta="Ver contas"
+              icon={<Landmark size={25} />}
+              tone="gold"
+            />
           </div>
-        </SectionCard>
-      </div>
-
-      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_10px_32px_rgba(15,35,70,.05)]">
-        <div className="border-b border-slate-200 px-6 py-5 sm:px-7 sm:py-6">
-          <h3 className="text-[20px] font-bold text-[#0b1d3a]">Lançamentos de caixa</h3>
-          <p className="mt-1 text-[13px] text-slate-500">Entradas e saídas registradas recentemente</p>
         </div>
-        {mov.length ? (
+      </section>
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Entradas hoje"
+          value={money(totals.todayIn)}
+          icon={<ArrowUpRight size={27} />}
+          tone="green"
+          hint="Recebimentos lançados na data atual"
+        />
+        <StatCard
+          title="Saídas hoje"
+          value={<FinancialAmount value={totals.todayOut} kind="saida" />}
+          icon={<ArrowDownRight size={27} />}
+          tone="red"
+          hint="Pagamentos e retiradas de hoje"
+        />
+        <StatCard
+          title="A pagar no mês"
+          value={<FinancialAmount value={totals.pendingAmount} kind="pendente" />}
+          icon={<Clock3 size={27} />}
+          tone="orange"
+          hint={`${totals.pendingCount} pendência${totals.pendingCount === 1 ? "" : "s"} em aberto`}
+        />
+        <StatCard
+          title="Saldo disponível"
+          value={money(available)}
+          icon={<Wallet size={27} />}
+          tone="gold"
+          hint="Soma do caixa e contas bancárias"
+          featured
+        />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1.18fr_.82fr]">
+        <SectionCard
+          title="Fluxo de caixa"
+          subtitle={`Entradas e saídas de ${monthLabel.format(now)}`}
+          icon={LayoutGrid}
+          action={
+            <Link
+              to="/movimentacoes"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-3 text-[13px] font-black text-[#061426] transition hover:border-[#e8ac35] hover:bg-amber-50"
+            >
+              Ver completo <ArrowRight size={16} />
+            </Link>
+          }
+        >
+          <div className="grid gap-5 lg:grid-cols-[1fr_230px]">
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={chart} barGap={10}>
+                <CartesianGrid stroke="#edf0f4" vertical={false} />
+                <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} width={70} />
+                <Tooltip formatter={(value) => money(value)} cursor={{ fill: "#f8fafc" }} />
+                <Bar name="Entradas" dataKey="entradas" fill="#059669" radius={[8, 8, 0, 0]} maxBarSize={38} />
+                <Bar name="Saídas" dataKey="saidas" fill="#e11d48" radius={[8, 8, 0, 0]} maxBarSize={38} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="grid content-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <BalanceLine label="Entradas" value={totals.monthIn} kind="entrada" />
+              <BalanceLine label="Saídas" value={totals.monthOut} kind="saida" />
+              <div className="my-1 h-px bg-slate-200" />
+              <BalanceLine label="Resultado" value={monthResult} kind="resultado" strong />
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Posição das contas" subtitle="Dinheiro disponível agora" icon={Banknote}>
+          <div className="space-y-4">
+            <AccountSummary
+              title="Caixa físico"
+              value={totals.cash}
+              icon={<Banknote size={22} />}
+              href="/contas"
+            />
+            <AccountSummary
+              title="Bancos"
+              value={totals.bank}
+              icon={<Landmark size={22} />}
+              href="/contas"
+            />
+            <AccountSummary
+              title="Total disponível"
+              value={available}
+              icon={<Wallet size={22} />}
+              href="/contas"
+              featured
+            />
+          </div>
+        </SectionCard>
+      </div>
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)]">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 sm:px-7 sm:py-6">
+          <div>
+            <h3 className="text-[21px] font-black text-[#061426]">Últimos lançamentos</h3>
+            <p className="mt-1 text-[13px] text-slate-500">
+              Visual rápido das movimentações mais recentes do caixa.
+            </p>
+          </div>
+          <Link
+            to="/movimentacoes"
+            className="inline-flex min-h-[42px] items-center gap-2 rounded-xl px-3 text-[14px] font-black text-[#061426] transition hover:bg-blue-50"
+          >
+            Abrir entradas e saídas <ArrowRight size={17} />
+          </Link>
+        </div>
+
+        {recent.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-[14px]">
+            <table className="w-full min-w-[860px] text-left text-[14px]">
               <thead className="bg-[#061426] text-[12px] font-black uppercase tracking-wide text-white">
                 <tr>
-                  {["Data", "Descrição", "Tipo", "Conta", "Valor"].map((x) => (
-                    <th className="px-6 py-4" key={x}>{x}</th>
+                  {["Data", "Descrição", "Tipo", "Conta", "Valor", "Status"].map((item) => (
+                    <th className="px-6 py-4" key={item}>
+                      {item}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {mov.map((x) => (
-                  <tr className="border-t border-slate-100 transition hover:bg-slate-50/70" key={x.id}>
-                    <td className="whitespace-nowrap px-6 py-5 text-slate-600">
-                      {formatDate(x.data)}
+                {recent.map((row) => (
+                  <tr className="border-t border-slate-100 transition hover:bg-slate-50/70" key={row.id}>
+                    <td className="whitespace-nowrap px-6 py-5 text-slate-600">{formatDate(row.data)}</td>
+                    <td className="max-w-[360px] break-words px-6 py-5 font-black text-[#061426]">
+                      {row.descricao}
                     </td>
-                    <td className="px-6 py-5 font-semibold text-slate-800">{x.descricao}</td>
-                    <td className="px-6 py-5 capitalize text-slate-600">{x.tipo.replace("_", " ")}</td>
-                    <td className="px-6 py-5 text-slate-600">{x.contas_bancarias?.nome || "—"}</td>
-                    <td className="whitespace-nowrap px-6 py-5 text-right text-[15px] font-bold">
-                      <FinancialAmount value={x.valor} kind={x.tipo} />
+                    <td className="px-6 py-5 capitalize text-slate-600">{row.tipo.replace("_", " ")}</td>
+                    <td className="px-6 py-5 text-slate-600">{row.contas_bancarias?.nome || "—"}</td>
+                    <td className="whitespace-nowrap px-6 py-5 text-right text-[15px] font-black">
+                      <FinancialAmount value={row.valor} kind={row.tipo} />
+                    </td>
+                    <td className="px-6 py-5">
+                      <Badge status={row.tipo.includes("estorno") ? "estornado" : "pago"} />
                     </td>
                   </tr>
                 ))}
@@ -142,16 +347,146 @@ export default function Cash() {
   );
 }
 
-function Daily({ label, value, icon, green }: { label: string; value: number; icon: any; green?: boolean }) {
+function FlowShortcut({
+  title,
+  subtitle,
+  value,
+  href,
+  cta,
+  icon,
+  tone,
+}: {
+  title: string;
+  subtitle: string;
+  value: number;
+  href: string;
+  cta: string;
+  icon: ReactNode;
+  tone: "green" | "orange" | "blue" | "gold";
+}) {
+  const styles = {
+    green: "from-emerald-500 to-emerald-400 text-white",
+    orange: "from-orange-400 to-amber-300 text-white",
+    blue: "from-cyan-500 to-blue-500 text-white",
+    gold: "from-[#e8ac35] to-[#f6cc68] text-[#061426]",
+  }[tone];
+
   return (
-    <div className="flex min-h-[102px] items-center justify-between gap-4 rounded-xl bg-white p-4">
-      <div className="flex items-center gap-3.5">
-        <span className={`grid size-14 place-items-center rounded-2xl ${green ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>{icon}</span>
-        <span className="text-[16px] font-black text-[#061426]">{label}</span>
+    <Link
+      to={href}
+      className={`group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br ${styles} p-5 shadow-[0_14px_30px_rgba(6,20,38,.18)] transition hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(6,20,38,.25)]`}
+    >
+      <span className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full bg-white/18" />
+      <span className="pointer-events-none absolute -bottom-12 right-8 size-24 rounded-full bg-white/12" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[19px] font-black">{title}</p>
+          <p className="mt-1 text-[13px] font-bold opacity-85">{subtitle}</p>
+        </div>
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/18">
+          {icon}
+        </span>
       </div>
-      <b className="whitespace-nowrap text-[22px] font-black">
-        <FinancialAmount value={value} kind={green ? "entrada" : "saida"} />
+      <div className="relative">
+        <strong className="block text-[31px] font-black tracking-[-0.03em]">
+          <FinancialAmount value={value} kind={tone === "orange" ? "saida" : "resultado"} className={tone === "gold" ? "text-[#061426]" : "text-white"} />
+        </strong>
+        <span className="mt-4 inline-flex items-center gap-2 text-[14px] font-black">
+          {cta}
+          <ArrowRight size={16} className="transition group-hover:translate-x-1" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3">
+      <p className="text-[12px] font-bold uppercase tracking-[.16em] text-blue-100">{label}</p>
+      <b className="mt-1 block truncate text-[18px] font-black text-white">{value}</b>
+    </div>
+  );
+}
+
+function BalanceLine({
+  label,
+  value,
+  kind,
+  strong,
+}: {
+  label: string;
+  value: number;
+  kind: string;
+  strong?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className={`text-[14px] ${strong ? "font-black text-[#061426]" : "font-bold text-slate-500"}`}>
+        {label}
+      </span>
+      <b className={`${strong ? "text-[22px]" : "text-[17px]"} whitespace-nowrap font-black`}>
+        <FinancialAmount value={value} kind={kind} />
       </b>
     </div>
   );
+}
+
+function AccountSummary({
+  title,
+  value,
+  icon,
+  href,
+  featured,
+}: {
+  title: string;
+  value: number;
+  icon: ReactNode;
+  href: string;
+  featured?: boolean;
+}) {
+  return (
+    <Link
+      to={href}
+      className={`flex min-h-[86px] items-center justify-between gap-4 rounded-2xl border p-4 transition hover:-translate-y-0.5 ${
+        featured
+          ? "border-[#17375f] bg-[#061426] text-white shadow-[0_14px_30px_rgba(6,20,38,.18)]"
+          : "border-slate-200 bg-slate-50/70 hover:bg-white"
+      }`}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${featured ? "bg-white/10 text-[#f5c75b]" : "bg-white text-[#061426]"}`}>
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <p className={`text-[13px] font-bold ${featured ? "text-blue-100" : "text-slate-500"}`}>
+            {title}
+          </p>
+          <b className={`mt-1 block truncate text-[22px] font-black ${featured ? "text-[#f5c75b]" : "text-[#061426]"}`}>
+            {money(value)}
+          </b>
+        </div>
+      </div>
+      <ArrowRight size={17} className={featured ? "text-[#f5c75b]" : "text-slate-400"} />
+    </Link>
+  );
+}
+
+function buildMonthlyChart(rows: Movement[]) {
+  const formatter = new Intl.DateTimeFormat("pt-BR", { month: "short" });
+  const base = new Date();
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(base.getFullYear(), base.getMonth() - (5 - index), 1);
+    const key = date.toISOString().slice(0, 7);
+    const monthRows = rows.filter((row) => dateOnly(row.data).startsWith(key));
+    return {
+      mes: formatter.format(date).replace(".", ""),
+      entradas: monthRows
+        .filter((row) => row.tipo.toLowerCase().includes("entrada"))
+        .reduce((sum, row) => sum + Number(row.valor || 0), 0),
+      saidas: monthRows
+        .filter((row) => row.tipo.toLowerCase().includes("saida"))
+        .reduce((sum, row) => sum + Number(row.valor || 0), 0),
+    };
+  });
 }
