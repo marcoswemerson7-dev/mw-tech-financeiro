@@ -22,13 +22,15 @@ import { useAuth } from "../lib/auth";
 const items = [
   ["/", "Visão geral", House],
   ["/caixa", "Caixa", Wallet],
-  ["/configuracoes", "Configurações", Settings],
 ] as const;
 const financeItems = [
   ["/movimentacoes", "Entradas e saídas", ArrowLeftRight],
   ["/contas", "Contas bancárias", Landmark],
   ["/despesas", "Contas a pagar", Receipt],
   ["/relatorios", "Relatórios", FileChartColumn],
+] as const;
+const bottomItems = [
+  ["/configuracoes", "Configurações", Settings],
 ] as const;
 
 export default function Layout() {
@@ -37,7 +39,7 @@ export default function Layout() {
     loc = useLocation(),
     { logout } = useAuth();
 
-  const title = [...items, ...financeItems].find(([p]) =>
+  const title = [...items, ...financeItems, ...bottomItems].find(([p]) =>
     p === "/" ? loc.pathname === "/" : loc.pathname.startsWith(p),
   )?.[1];
   const financeActive = financeItems.some(([path]) => loc.pathname.startsWith(path));
@@ -121,6 +123,20 @@ export default function Layout() {
               ))}
             </div>
           </div>
+          {bottomItems.map(([to, label, I]) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `flex min-h-[56px] items-center gap-4 rounded-xl border-l-[4px] px-4 py-3 text-[15px] font-bold transition-all ${collapsed ? "lg:justify-center lg:px-2" : ""} ${isActive ? "border-l-[#e8ac35] bg-white/[.075] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.04)]" : "border-l-transparent text-slate-200 hover:bg-white/[.055] hover:text-white"}`
+              }
+              title={label}
+            >
+              <I size={21} strokeWidth={2} />
+              <span className={collapsed ? "lg:sr-only" : ""}>{label}</span>
+            </NavLink>
+          ))}
         </nav>
 
         <div className={`border-t border-white/10 p-4 ${collapsed ? "lg:px-3" : ""}`}>
