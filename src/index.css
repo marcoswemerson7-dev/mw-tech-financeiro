@@ -447,4 +447,102 @@ textarea.input {
   .receipt-sheet {
     display: block !important;
   }
+
+  .print-receipt > *:not(.expense-receipt-sheet) {
+    display: none !important;
+  }
+
+  .expense-receipt-sheet {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 8mm !important;
+    color: #0b1d3a !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .expense-receipt-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 8mm !important;
+    padding-bottom: 5mm !important;
+    border-bottom: 0.4mm solid #dbe2ea !important;
+  }
+
+  .expense-receipt-kicker {
+    color: #c78b35 !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .expense-receipt-header h2 {
+    margin: 1mm 0 0 !important;
+    color: #0b2b66 !important;
+    font-size: 21px !important;
+    font-weight: 900 !important;
+  }
+
+  .expense-receipt-header p,
+  .expense-receipt-date {
+    margin-top: 1mm !important;
+    color: #64748b !important;
+    font-size: 9px !important;
+  }
+
+  .expense-receipt-body {
+    max-width: 180mm !important;
+    margin: 12mm auto 0 !important;
+    font-size: 11px !important;
+  }
+
+  .expense-receipt-body dl {
+    margin: 8mm 0 !important;
+    border: 0.3mm solid #dbe2ea !important;
+    border-radius: 2mm !important;
+  }
+
+  .expense-receipt-body dl > div {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 10mm !important;
+    padding: 4mm !important;
+    border-bottom: 0.2mm solid #e5e7eb !important;
+  }
+
+  .expense-receipt-body dl > div:last-child {
+    border-bottom: 0 !important;
+  }
+
+  .expense-receipt-body dt {
+    color: #64748b !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+  }
+
+  .expense-receipt-body dd {
+    margin: 0 !important;
+    font-weight: 800 !important;
+    text-align: right !important;
+  }
+
+  .expense-receipt-confirmation {
+    color: #15803d !important;
+    font-weight: 700 !important;
+  }
+
+  .expense-receipt-signature {
+    margin-top: 38mm !important;
+    padding-top: 3mm !important;
+    border-top: 0.2mm solid #94a3b8 !important;
+    color: #64748b !important;
+    font-size: 9px !important;
+  }
+}
+
+.recurrence-paused td:not(:last-child) {
+  text-decoration: line-through;
+  color: #94a3b8;
 }

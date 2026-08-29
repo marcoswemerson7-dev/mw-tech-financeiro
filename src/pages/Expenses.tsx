@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, X, CheckCircle2, Undo2, Paperclip, Pencil, Trash2, RefreshCw, Wallet, Clock3, Building2, Zap, Wifi, CreditCard, UsersRound, FileText } from "lucide-react";
+import { Plus, Search, X, CheckCircle2, Undo2, Paperclip, Pencil, Trash2, RefreshCw, Wallet, Clock3, Building2, Zap, Wifi, CreditCard, UsersRound, FileText, ReceiptText } from "lucide-react";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getAccounts, uploadReceipt, type Account } from "../lib/finance";
 import { createExpenseWithOptionalRecurrence, deleteExpenseDirect, findActivePayment, getExpenses, payExpense, reverseExpensePayment } from "../services/expenses";
@@ -34,7 +34,8 @@ export default function Expenses() {
     [filterMonth, setFilterMonth] = useState(month),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [toast, setToast] = useState("");
+    [toast, setToast] = useState(""),
+    [receiptExpense, setReceiptExpense] = useState<Expense | null>(null);
   async function load() {
     if (!isConfigured) return;
     const [data, a, recurrenceRows] = await Promise.all([getExpenses(), getAccounts(), getRecurrences().catch(() => [])]);
@@ -191,8 +192,12 @@ export default function Expenses() {
     await setRecurrenceActive(x.id, !x.ativo);
     await load();
   }
+  function printPaymentReceipt(x: Expense) {
+    setReceiptExpense(x);
+    setTimeout(() => window.print(), 100);
+  }
   return (
-    <div className="space-y-7">
+    <div className={`space-y-7 ${receiptExpense ? "print-receipt" : ""}`}>
       <Toast message={toast} />
       <PageHeader
         title="Despesas"
@@ -311,6 +316,11 @@ export default function Expenses() {
                             <Undo2 size={17} />
                           </IconAction>
                         )}
+                        {x.status === "pago" ? (
+                          <IconAction onClick={() => printPaymentReceipt(x)} title="Gerar recibo de pagamento" tone="slate">
+                            <ReceiptText size={17} />
+                          </IconAction>
+                        ) : null}
                         <IconAction onClick={() => removeExpense(x)} title="Excluir/cancelar despesa" tone="red">
                           <Trash2 size={17} />
                         </IconAction>
@@ -343,7 +353,7 @@ export default function Expenses() {
               </thead>
               <tbody>
                 {recurrences.map((x) => (
-                  <tr key={x.id} className="border-t">
+                  <tr key={x.id} className={`border-t ${x.ativo ? "" : "recurrence-paused"}`}>
                     <td className="px-4 py-3 font-medium">{x.descricao}</td>
                     <td className="px-4">{x.dia_vencimento}</td>
                     <td className="px-4 font-semibold"><FinancialAmount value={x.valor} kind="despesa" /></td>
@@ -361,6 +371,29 @@ export default function Expenses() {
           </div>
         ) : <Empty />}
       </section>
+      {receiptExpense && (
+        <section className="expense-receipt-sheet hidden bg-white print:block">
+          <div className="expense-receipt-header">
+            <div>
+              <span className="expense-receipt-kicker">MW TECH FINANCEIRO</span>
+              <h2>Recibo de pagamento</h2>
+              <p>Comprovante de quitação de despesa</p>
+            </div>
+            <span className="expense-receipt-date">Emitido em {formatDate(new Date().toISOString())}</span>
+          </div>
+          <div className="expense-receipt-body">
+            <p>Declaramos o pagamento da despesa abaixo:</p>
+            <dl>
+              <div><dt>Descrição</dt><dd>{receiptExpense.descricao}</dd></div>
+              <div><dt>Categoria</dt><dd>{receiptExpense.categoria || "Sem categoria"}</dd></div>
+              <div><dt>Vencimento</dt><dd>{formatDate(receiptExpense.data_vencimento)}</dd></div>
+              <div><dt>Valor pago</dt><dd>{money(receiptExpense.valor)}</dd></div>
+            </dl>
+            <p className="expense-receipt-confirmation">Pagamento registrado no sistema MW TECH Financeiro.</p>
+          </div>
+          <div className="expense-receipt-signature">Documento gerado automaticamente</div>
+        </section>
+      )}
       {form && (
         <Modal title={editExpense ? "Editar despesa" : "Cadastrar despesa"} close={() => { setForm(false); setEditExpense(null); }}>
           <form onSubmit={create}>
