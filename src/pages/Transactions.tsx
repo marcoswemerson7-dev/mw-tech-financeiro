@@ -40,6 +40,7 @@ export default function Transactions() {
     [open, setOpen] = useState(false),
     [partyOpen, setPartyOpen] = useState(false),
     [edit, setEdit] = useState<Movement | null>(null),
+    [view, setView] = useState<Movement | null>(null),
     [launchType, setLaunchType] = useState("entrada"),
     [search, setSearch] = useState(""),
     [type, setType] = useState(""),
@@ -229,7 +230,9 @@ export default function Transactions() {
         </ActionButton>
       </FilterBar>
 
-      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} />
+      <MovementTable rows={visible} edit={openEdit} remove={removeMovement} view={setView} />
+
+      {view && <MovementDetails movement={view} close={() => setView(null)} />}
 
       {open && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4">
@@ -344,7 +347,7 @@ function Field({ label, children, wide }: { label: string; children: any; wide?:
   return <label className={`text-[15px] font-semibold text-slate-700 ${wide ? "sm:col-span-2" : ""}`}>{label}{children}</label>;
 }
 
-function MovementTable({ rows, edit, remove }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void }) {
+function MovementTable({ rows, edit, remove, view }: { rows: Movement[]; edit: (row: Movement) => void; remove: (row: Movement) => void; view: (row: Movement) => void }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {rows.length ? (
@@ -368,7 +371,7 @@ function MovementTable({ rows, edit, remove }: { rows: Movement[]; edit: (row: M
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex gap-2">
-                        <IconAction title="Visualizar" tone="slate"><Eye size={18} /></IconAction>
+                        <IconAction onClick={() => view(x)} title="Visualizar movimentação" tone="slate"><Eye size={18} /></IconAction>
                         <IconAction onClick={() => edit(x)} title="Editar" tone="blue"><Pencil size={18} /></IconAction>
                         <IconAction onClick={() => remove(x)} title="Excluir" tone="red"><Trash2 size={18} /></IconAction>
                       </div>
@@ -390,6 +393,39 @@ function MovementTable({ rows, edit, remove }: { rows: Movement[]; edit: (row: M
       </div>
     </div>
   );
+}
+
+function MovementDetails({ movement, close }: { movement: Movement; close: () => void }) {
+  const parsed = parseDescription(movement.descricao);
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="movement-details-title">
+      <section className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b px-7 py-6">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#c78b35]">Detalhes da movimentação</p>
+            <h3 id="movement-details-title" className="mt-1 text-2xl font-bold text-[#0b1d3a]">{parsed.description}</h3>
+          </div>
+          <button type="button" onClick={close} className="rounded-xl p-2 hover:bg-slate-100" aria-label="Fechar detalhes"><X /></button>
+        </div>
+        <dl className="grid gap-4 p-7 sm:grid-cols-2">
+          <Detail label="Data" value={formatDate(movement.data)} />
+          <Detail label="Tipo" value={movement.tipo === "entrada" ? "Entrada" : movement.tipo === "saida" ? "Saída" : "Transferência"} />
+          <Detail label="Origem / Destino" value={parsed.party} />
+          <Detail label="Conta" value={movement.contas_bancarias?.nome || "Não informada"} />
+          <Detail label="Valor" value={money(movement.valor)} accent />
+          <Detail label="Status" value="Ativo" />
+          {movement.observacao ? <div className="sm:col-span-2"><Detail label="Observação" value={movement.observacao} /></div> : null}
+        </dl>
+        <div className="flex justify-end border-t px-7 py-5">
+          <button type="button" onClick={close} className="rounded-xl bg-[#0b2b66] px-5 py-3 font-semibold text-white">Fechar</button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Detail({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return <div><dt className="text-xs font-bold uppercase tracking-wide text-slate-400">{label}</dt><dd className={`mt-1 whitespace-pre-line font-semibold ${accent ? "text-lg text-[#0b2b66]" : "text-slate-700"}`}>{value}</dd></div>;
 }
 
 function parseDescription(value: string) {
