@@ -423,6 +423,28 @@ textarea.input {
   }
 
   .receipt-sheet {
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 5mm !important;
+    overflow: visible !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .receipt-sheet .report-header {
+    margin-bottom: 8mm !important;
+  }
+
+  .receipt-sheet .my-10 {
+    margin-top: 8mm !important;
+    margin-bottom: 8mm !important;
+  }
+
+  .receipt-sheet .mt-20 {
+    margin-top: 18mm !important;
+  }
+
+  .receipt-sheet {
     display: block !important;
   }
 }
