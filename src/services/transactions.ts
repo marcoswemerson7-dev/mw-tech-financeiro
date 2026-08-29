@@ -108,8 +108,6 @@ async function cleanupLinkedMovement(move: any) {
   } catch (error: any) {
     if (error?.code !== 404) throw error;
   }
-  if (expense?.status === "pago") throw new Error("Estorne o pagamento da despesa antes de excluir estes registros.");
-
   const [movementResult, paymentResult] = await Promise.all([
     tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions,
       queries: [Query.equal("despesa_id", expenseId), Query.limit(200)] }),
@@ -151,13 +149,28 @@ export async function deleteMovement(id: string) {
   } catch (error: any) {
     const message = String(error?.message || "");
     const normalized = message.toLowerCase();
-    if (!normalized.includes("vinculada") && !normalized.includes("despesa") && !normalized.includes("saldo insuficiente")) throw error;
+    if (!normalized.includes("vinculada") && !normalized.includes("despesa") && !normalized.includes("saldo insuficiente") && !normalized.includes("cancelad") && !normalized.includes("estornad")) throw error;
     return deleteMovementDirect(id);
   }
 }
 
 export async function deleteMovementDirect(id: string) {
   const move: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
+  if (move.pagamento_id && !move.despesa_id) {
+    const value = Number(move.valor);
+    if (!Number.isFinite(value) || value <= 0) throw new Error("Valor inválido na movimentação.");
+    const now = new Date().toISOString();
+    if (move.tipo !== "estorno" && move.conta_id) {
+      const account: any = await tables.getRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: move.conta_id });
+      await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: account.$id,
+        data: { saldo_atual: Number(account.saldo_atual || 0) + value, updated_at: now } });
+    }
+    await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.payments, rowId: move.pagamento_id }).catch((error: any) => {
+      if (error?.code !== 404) throw error;
+    });
+    await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, rowId: id });
+    invalidateMovementsCache(); invalidateAccountsCache(); return;
+  }
   if (move.despesa_id || move.pagamento_id) {
     await cleanupLinkedMovement(move);
     invalidateMovementsCache(); invalidateAccountsCache(); return;
