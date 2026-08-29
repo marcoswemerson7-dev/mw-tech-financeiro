@@ -6,6 +6,7 @@ export type Account = {
   id: string; nome: string; tipo_conta: string; banco?: string; codigo_banco?: string;
   agencia?: string; conta?: string; saldo_inicial: number; saldo_atual: number;
   cor?: string; ativo: boolean;
+  logo_url?: string;
 };
 
 const map = (row: any): Account => ({ ...row, id: row.$id, tipo_conta: row.tipo, conta: row.numero_conta });

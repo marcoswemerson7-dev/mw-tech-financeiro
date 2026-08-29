@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Grid2X2, Landmark, List, Plus, Search, TrendingUp, WalletCards, X, Pencil, Trash2, UserRound } from "lucide-react";
+import { Grid2X2, Landmark, List, Plus, Search, TrendingUp, WalletCards, X, Pencil, Trash2, UserRound, ImagePlus } from "lucide-react";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { deleteAccount, getAccounts, saveAccount } from "../services/accounts";
 import { money, Empty, ActionButton, FilterBar, IconAction, PageHeader, StatCard, Badge, Toast } from "../components/UI";
 import { BankLogo } from "../components/BankLogo";
+import { getBankLogoView, uploadBankLogo } from "../services/storage";
 type Account = {
   id: string;
   nome: string;
@@ -18,6 +19,7 @@ type Account = {
   cor: string;
   observacao?: string;
   ativo: boolean;
+  logo_url?: string;
 };
 const demo: Account = {
   id: "demo-bb",
@@ -58,6 +60,8 @@ export default function Accounts() {
     e.preventDefault();
     setBusy(true);
     const d: any = Object.fromEntries(new FormData(e.currentTarget));
+    const logoFile = (e.currentTarget.elements.namedItem("logo") as HTMLInputElement)?.files?.[0];
+    delete d.logo;
     d.saldo_inicial = Number(d.saldo_inicial || 0);
     if (!edit?.id) d.saldo_atual = d.saldo_inicial;
     d.ativo = true;
@@ -73,6 +77,8 @@ export default function Accounts() {
         setRows(next);
       } else {
         const row: any = await saveAccount({ ...edit, ...d }, edit?.id);
+        const accountId = row.$id || edit?.id;
+        if (logoFile && accountId) await uploadBankLogo(accountId, logoFile);
         saved = {
           ...edit,
           ...d,
@@ -81,6 +87,7 @@ export default function Accounts() {
           conta: row.numero_conta || d.conta || "",
           saldo_atual: Number(row.saldo_atual ?? d.saldo_atual ?? d.saldo_inicial ?? 0),
           ativo: row.ativo ?? true,
+          logo_url: accountId ? getBankLogoView(accountId) : edit?.logo_url,
         } as Account;
         setRows((current) =>
           edit?.id
@@ -171,7 +178,7 @@ export default function Accounts() {
             <div className="p-6 sm:p-7">
               <div className="flex flex-wrap items-start justify-between gap-5">
                 <div className="flex min-w-0 gap-5">
-                  <BankLogo code={a.codigo_banco} name={a.banco} size="lg" />
+                  <BankLogo code={a.codigo_banco} name={a.banco} size="lg" imageUrl={a.logo_url || (isConfigured ? getBankLogoView(a.id) : undefined)} />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
                       <b className="block text-[24px] font-black leading-tight text-[#061426]">{a.banco || a.nome}</b>
@@ -246,6 +253,14 @@ export default function Accounts() {
                   />
                 </label>
               ))}
+              <label className="text-sm font-medium sm:col-span-2">
+                Imagem da conta bancária
+                <span className="mt-1.5 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 p-3 text-slate-600 hover:border-[#0b2b66] hover:bg-slate-50">
+                  <ImagePlus size={20} className="text-[#0b2b66]" />
+                  <span>Selecionar logomarca do banco (PNG ou JPG, até 2 MB)</span>
+                  <input name="logo" type="file" accept="image/png,image/jpeg" className="sr-only" />
+                </span>
+              </label>
               <label className="text-sm font-medium sm:col-span-2">
                 Observação
                 <textarea

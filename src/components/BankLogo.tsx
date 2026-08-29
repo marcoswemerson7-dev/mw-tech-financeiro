@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Landmark } from "lucide-react";
 
 const banks: Record<string, { label: string; className: string }> = {
@@ -18,9 +19,13 @@ const byName: Array<[RegExp, { label: string; className: string }]> = [
   [/santander/i, banks["033"]],
 ];
 
-export function BankLogo({ code, name, size = "md" }: { code?: string; name?: string; size?: "sm" | "md" | "lg" }) {
+export function BankLogo({ code, name, size = "md", imageUrl }: { code?: string; name?: string; size?: "sm" | "md" | "lg"; imageUrl?: string }) {
   const bank = banks[String(code || "").padStart(3, "0")] || byName.find(([rx]) => rx.test(name || ""))?.[1];
   const box = size === "lg" ? "size-16 rounded-2xl text-base" : size === "sm" ? "size-10 rounded-xl text-xs" : "size-12 rounded-xl text-sm";
+  const [imageFailed, setImageFailed] = useState(false);
+  if (imageUrl && !imageFailed) {
+    return <span className={`grid shrink-0 place-items-center overflow-hidden bg-white shadow-sm ${box}`}><img src={imageUrl} alt={name || "Logo do banco"} className="size-full object-contain" onError={() => setImageFailed(true)} /></span>;
+  }
   if (bank) {
     return <span className={`grid shrink-0 place-items-center font-black shadow-sm ${box} ${bank.className}`}>{bank.label}</span>;
   }
