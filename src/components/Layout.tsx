@@ -30,6 +30,7 @@ const financeItems = [
   ["/relatorios", "Relatórios", FileChartColumn],
 ] as const;
 const bottomItems = [
+  ["/suporte", "Central de Suporte", Bell],
   ["/configuracoes", "Configurações", Settings],
 ] as const;
 
