@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Building2, ExternalLink, Globe2, ImagePlus, Pencil, Plus, Server, Trash2, X } from "lucide-react";
 import { ActionButton, Empty, PageHeader, Toast } from "../components/UI";
-import { deleteManagedSystem, getManagedSystems, saveManagedSystem, type ManagedSystem, uploadSystemLogo } from "../services/managedSystems";
+import { deleteManagedSystem, getManagedSystems, getManagedSystemsCached, saveManagedSystem, type ManagedSystem, uploadSystemLogo } from "../services/managedSystems";
 
 type SystemTheme = {
   header: string;
@@ -74,14 +74,25 @@ function getSystemTheme(item: Partial<ManagedSystem>): SystemTheme {
 }
 
 export default function Systems() {
-  const [rows, setRows] = useState<ManagedSystem[]>([]);
+  const cachedRows = getManagedSystemsCached();
+  const [rows, setRows] = useState<ManagedSystem[]>(cachedRows || []);
+  const [loading, setLoading] = useState(!cachedRows);
   const [edit, setEdit] = useState<Partial<ManagedSystem> | null>(null);
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [busyRow, setBusyRow] = useState("");
-  useEffect(() => { getManagedSystems().then(setRows).catch((e) => setError(e.message)); }, []);
+
+  useEffect(() => {
+    let active = true;
+    getManagedSystems()
+      .then((data) => { if (active) setRows(data); })
+      .catch((e) => { if (active) setError(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+
   const visible = useMemo(() => rows.filter((x) => JSON.stringify(x).toLowerCase().includes(query.toLowerCase())), [rows, query]);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
@@ -123,7 +134,7 @@ export default function Systems() {
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prefeitura, Câmara, domínio ou sistema..." className="input !mt-0" />
     </div>
     {error && <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">{error}</p>}
-    {visible.length ? <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">{visible.map((item) => {
+    {loading ? <SystemsSkeleton /> : visible.length ? <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">{visible.map((item) => {
       const theme = getSystemTheme(item);
       return <article key={item.id} className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-0.5 ${theme.glow}`}>
         <div className={`h-1.5 w-full ${theme.accentBar}`} />
@@ -186,6 +197,7 @@ function statusLabel(status?: string) {
   if (status === "inativo") return "Inativo";
   return "Ativo";
 }
+function SystemsSkeleton(){return <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">{[0,1].map((item)=><div key={item} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="h-48 animate-pulse bg-gradient-to-br from-slate-200 to-slate-100"/><div className="space-y-3 p-5"><div className="h-5 w-1/3 animate-pulse rounded bg-slate-200"/><div className="h-14 animate-pulse rounded-xl bg-slate-100"/><div className="h-14 animate-pulse rounded-xl bg-slate-100"/><div className="h-12 animate-pulse rounded-xl bg-slate-200"/></div></div>)}</div>}
 function LinkRow({icon,label,url,theme}:{icon:any;label:string;url?:string;theme:SystemTheme}){return <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-[13px] ring-1 ring-inset ring-slate-100"><span className={`grid size-8 shrink-0 place-items-center rounded-lg ${theme.iconBox} ${theme.icon}`}>{icon}</span><div className="min-w-0"><span className="block font-bold text-slate-500">{label}</span>{url?<a href={safeUrl(url)} target="_blank" rel="noreferrer" className="block truncate font-bold text-[#061426] transition hover:opacity-70">{url}</a>:<span className="text-slate-400">Não informado</span>}</div></div>}
 function Modal({title,close,children}:{title:string;close:()=>void;children:any}){return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white"><div className="sticky top-0 z-10 flex justify-between border-b bg-white px-7 py-5"><h3 className="text-xl font-black">{title}</h3><button onClick={close}><X/></button></div><div className="p-7">{children}</div></div></div>}
 function Field({label,children,wide}:{label:string;children:any;wide?:boolean}){return <label className={`text-sm font-bold text-slate-600 ${wide?"sm:col-span-2":""}`}>{label}{children}</label>}
