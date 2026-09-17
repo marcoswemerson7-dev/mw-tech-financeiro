@@ -1,10 +1,33 @@
 import { Client, ID, Query, TablesDB } from "node-appwrite";
+
+const gb=value=>Math.round((Number(value||0)/1024/1024/1024)*100)/100;
+async function googleAccessToken(){
+  const clientId=process.env.GOOGLE_DRIVE_CLIENT_ID,clientSecret=process.env.GOOGLE_DRIVE_CLIENT_SECRET,refreshToken=process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
+  if(!clientId||!clientSecret||!refreshToken)throw new Error("Integração com o Google Drive ainda não configurada.");
+  const response=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:clientId,client_secret:clientSecret,refresh_token:refreshToken,grant_type:"refresh_token"})});
+  const data=await response.json();if(!response.ok||!data.access_token)throw new Error(data.error_description||"Não foi possível autenticar no Google Drive.");return data.access_token;
+}
+async function driveJson(token,url){const response=await fetch(url,{headers:{authorization:`Bearer ${token}`}});const data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Falha ao consultar o Google Drive.");return data}
+async function folderUsage(token,rootId){
+  let bytes=0,files=0,folders=0;const queue=[rootId],seen=new Set();
+  while(queue.length){const folderId=queue.shift();if(!folderId||seen.has(folderId))continue;seen.add(folderId);let pageToken="";
+    do{const params=new URLSearchParams({q:`'${folderId}' in parents and trashed = false`,fields:"nextPageToken,files(id,mimeType,size)",pageSize:"1000",supportsAllDrives:"true",includeItemsFromAllDrives:"true"});if(pageToken)params.set("pageToken",pageToken);const data=await driveJson(token,`https://www.googleapis.com/drive/v3/files?${params}`);for(const file of data.files||[]){if(file.mimeType==="application/vnd.google-apps.folder"){folders++;queue.push(file.id)}else{files++;bytes+=Number(file.size||0)}}pageToken=data.nextPageToken||""}while(pageToken);
+  }
+  return{bytes,usedGb:gb(bytes),files,folders};
+}
+async function getDriveStorage(){
+  const token=await googleAccessToken();const about=await driveJson(token,"https://www.googleapis.com/drive/v3/about?fields=storageQuota");const quota=about.storageQuota||{},limit=Number(quota.limit||0),usage=Number(quota.usage||0);let configuredFolders=[];
+  try{configuredFolders=JSON.parse(process.env.GOOGLE_DRIVE_FOLDERS||"[]")}catch{throw new Error("GOOGLE_DRIVE_FOLDERS possui JSON inválido.")}
+  const folders=[];for(const item of configuredFolders){if(!item?.id||!item?.name)continue;const stats=await folderUsage(token,item.id);folders.push({id:item.id,name:item.name,...stats,percentOfTotal:limit?Math.round((stats.bytes/limit)*1000)/10:0})}
+  return{ok:true,totalGb:gb(limit),usedGb:gb(usage),availableGb:gb(Math.max(limit-usage,0)),percent:limit?Math.round((usage/limit)*1000)/10:0,folders,updatedAt:new Date().toISOString()};
+}
 const T={accounts:"contas_financeiras",moves:"movimentacoes_financeiras",expenses:"despesas",payments:"pagamentos_despesas",ops:"operacoes_idempotentes"};
 export default async ({req,res,error})=>{
   const userId=req.headers["x-appwrite-user-id"];
   if(!userId)return res.json({error:"Usuário não autenticado."},401);
   let input;try{input=JSON.parse(req.body||"{}");}catch{return res.json({error:"JSON inválido."},400)}
   const {action,idempotencyKey}=input;
+  if(action==="getDriveStorage"){try{return res.json(await getDriveStorage())}catch(e){error(e.message);return res.json({error:e.message||"Erro ao consultar o Google Drive."},400)}}
   if(!idempotencyKey)return res.json({error:"Chave de idempotência obrigatória."},400);
   const client=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
   const db=new TablesDB(client),databaseId=process.env.APPWRITE_DATABASE_ID;
