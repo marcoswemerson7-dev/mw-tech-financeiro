@@ -26,7 +26,7 @@ async function requestFrom(source: SupportSource, path = "", init: RequestInit =
     },
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error || "Falha ao acessar a Central de Suporte");
+  if (!res.ok) throw new Error(data?.error || `Falha ao acessar a Central de Suporte (${source.toUpperCase()})`);
   return data;
 }
 
@@ -86,7 +86,7 @@ export type SupportMessage = {
 
 export const supportService = {
   async list(status = "todos") {
-    const results = await Promise.all(
+    const settled = await Promise.allSettled(
       (Object.keys(SOURCES) as SupportSource[]).map(async (source) => {
         const data = await requestFrom(source, `?status=${encodeURIComponent(status)}`) as { tickets: SupportTicket[] };
         (data.tickets || []).forEach((ticket) => ticketSources.set(ticket.id, source));
@@ -94,10 +94,21 @@ export const supportService = {
       }),
     );
 
+    const successes = settled
+      .filter((result): result is PromiseFulfilledResult<SupportTicket[]> => result.status === "fulfilled")
+      .flatMap((result) => result.value);
+
+    if (!successes.length && settled.some((result) => result.status === "rejected")) {
+      const firstFailure = settled.find((result): result is PromiseRejectedResult => result.status === "rejected");
+      throw firstFailure?.reason instanceof Error ? firstFailure.reason : new Error("Falha ao acessar a Central de Suporte");
+    }
+
     return {
-      tickets: results
-        .flat()
-        .sort((a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime()),
+      tickets: successes.sort(
+        (a, b) =>
+          new Date(b.last_message_at || b.updated_at || b.created_at).getTime() -
+          new Date(a.last_message_at || a.updated_at || a.created_at).getTime(),
+      ),
     };
   },
 
