@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   ArrowDownRight,
-  ArrowRight,
   ArrowUpRight,
   BarChart3,
   Building2,
@@ -10,11 +9,9 @@ import {
   Cloud,
   ExternalLink,
   FileChartColumn,
-  Folder,
   Headphones,
   Landmark,
   Link2,
-  MoreHorizontal,
   PanelsTopLeft,
   Plus,
   RefreshCw,
@@ -23,16 +20,17 @@ import {
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
+import { useAuth } from "../lib/auth";
 import { getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 import { getManagedSystems, type ManagedSystem } from "../services/managedSystems";
 import { getTeamAccess, type TeamAccess } from "../services/teamAccess";
 
-const brl = (value: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0));
+const brl = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0));
 const onlyDate = (value: unknown) => String(value || "").slice(0, 10);
 const driveAccountUrl = "https://drive.google.com/drive/u/0/my-drive?authuser=arquivoscplrg%40gmail.com";
 
 export default function Dashboard() {
+  const { session } = useAuth();
   const [rows, setRows] = useState<Movement[]>([]);
   const [account, setAccount] = useState(0);
   const [drive, setDrive] = useState<DriveStorageUsage | null>(null);
@@ -57,272 +55,142 @@ export default function Dashboard() {
     }).catch(() => undefined);
   }, []);
 
-  const loadDrive = () => {
+  const loadDrive = (force = false) => {
     if (!isConfigured) {
       setDriveLoading(false);
       return;
     }
     setDriveLoading(true);
     setDriveError("");
-    getDriveStorageUsage()
+    getDriveStorageUsage(force)
       .then(setDrive)
       .catch((e: Error) => setDriveError(e.message))
       .finally(() => setDriveLoading(false));
   };
 
-  useEffect(loadDrive, []);
+  useEffect(() => loadDrive(false), []);
 
   const now = new Date();
   const month = now.toISOString().slice(0, 7);
   const today = now.toISOString().slice(0, 10);
   const current = rows.filter((x) => onlyDate(x.data).startsWith(month));
-  const receberHoje = current
-    .filter((x) => x.tipo.includes("entrada") && onlyDate(x.data) === today)
-    .reduce((sum, x) => sum + Number(x.valor || 0), 0);
-  const pagarHoje = current
-    .filter((x) => x.tipo.includes("saida") && onlyDate(x.data) === today)
-    .reduce((sum, x) => sum + Number(x.valor || 0), 0);
+  const receberHoje = current.filter((x) => x.tipo.includes("entrada") && onlyDate(x.data) === today).reduce((sum, x) => sum + Number(x.valor || 0), 0);
+  const pagarHoje = current.filter((x) => x.tipo.includes("saida") && onlyDate(x.data) === today).reduce((sum, x) => sum + Number(x.valor || 0), 0);
   const recebimentosHoje = current.filter((x) => x.tipo.includes("entrada") && onlyDate(x.data) === today).length;
   const pagamentosHoje = current.filter((x) => x.tipo.includes("saida") && onlyDate(x.data) === today).length;
   const chart = useMemo(() => buildChart(rows), [rows]);
-  const recent = rows.slice(0, 4);
-  const dateLabel = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(now);
+  const recent = rows.slice(0, 5);
+  const displayName = String(session?.name || session?.email?.split("@")[0] || "Administrador").trim();
+  const firstName = displayName.split(/\s+/)[0] || "Administrador";
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(now);
 
   return (
-    <div className="mx-auto w-full max-w-[1510px] space-y-4 pb-8 xl:space-y-4">
-      <section className="grid min-h-[126px] gap-5 rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-[0_10px_34px_rgba(15,35,70,.06)] lg:grid-cols-[1.45fr_.72fr_.65fr] lg:items-center xl:px-8">
-        <div>
-          <p className="text-[12px] font-black uppercase tracking-[.24em] text-[#d49d24]">MW TECH CONTROL</p>
-          <h1 className="mt-1 text-[36px] font-black leading-none tracking-[-.035em] text-[#071d35] sm:text-[42px]">
-            Visão geral da empresa
-          </h1>
-          <p className="mt-3 text-[15px] text-slate-500">
-            Acompanhe em tempo real os principais indicadores, sistemas e informações da MW TECH.
-          </p>
-        </div>
-        <div className="border-slate-200 lg:border-l lg:pl-8">
-          <p className="flex items-center gap-2 text-[12px] font-semibold capitalize text-slate-500">
-            <CalendarDays size={16} />
-            {dateLabel}
-          </p>
-          <h2 className="mt-2 text-[23px] font-black text-[#071d35]">Olá, Administrador!</h2>
-          <p className="mt-1.5 flex items-center gap-2 text-[12px] text-slate-500">
-            <span className="size-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50" />
-            Tudo funcionando normalmente.
-          </p>
-        </div>
-        <div className="flex min-h-[92px] items-center gap-4 rounded-2xl border border-[#c99a38]/35 bg-gradient-to-br from-[#092440] via-[#0b2a48] to-[#182b37] px-5 text-white shadow-[0_12px_26px_rgba(7,29,53,.2)]">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#d5a336]/15 text-[#f5c75b]">
-            <BarChart3 size={25} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <b className="block text-[14px]">Gestão eficiente</b>
-            <span className="text-[12px] text-slate-300">para um futuro maior.</span>
+    <div className="mx-auto w-full max-w-[1510px] space-y-5 pb-8">
+      <section className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-[0_8px_24px_rgba(15,23,42,.045)] sm:px-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Control</p>
+            <h1 className="mt-1 text-[28px] font-semibold tracking-[-.02em] text-[#0b2239] sm:text-[32px]">Painel executivo</h1>
+            <p className="mt-1.5 text-sm text-slate-500">Indicadores essenciais da operação em um só lugar.</p>
           </div>
-          <ArrowRight size={18} className="text-[#f5c75b]" />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="flex items-center gap-2 text-[11px] font-medium capitalize text-slate-500"><CalendarDays size={14} />{dateLabel}</p>
+              <p className="mt-1 text-[15px] font-medium text-[#0b2239]">Olá, {firstName}</p>
+            </div>
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+              <p className="text-[11px] font-medium text-emerald-700">Status do ambiente</p>
+              <p className="mt-1 flex items-center gap-2 text-[13px] font-medium text-emerald-900"><span className="size-2 rounded-full bg-emerald-500" />Operação normal</p>
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={<ArrowUpRight size={26} />} title="A receber hoje" value={brl(receberHoje)} hint={`${recebimentosHoje} título${recebimentosHoje === 1 ? "" : "s"}`} action="Ver recebimentos" href="/movimentacoes" tone="green" />
-        <MetricCard icon={<ArrowDownRight size={26} />} title="A pagar hoje" value={brl(pagarHoje)} hint={`${pagamentosHoje} título${pagamentosHoje === 1 ? "" : "s"}`} action="Ver pagamentos" href="/despesas" tone="orange" />
-        <MetricCard icon={<BarChart3 size={26} />} title="Saldo em caixa" value={brl(account)} hint="Saldo total disponível" action="Ver fluxo de caixa" href="/caixa" tone="blue" />
-        <MetricCard icon={<UsersRound size={26} />} title="Usuários ativos" value={String(usersCount)} hint="Permissões por função" action="Gerenciar usuários" href="/usuarios" tone="slate" />
+        <MetricCard icon={<ArrowUpRight size={21} />} title="A receber hoje" value={brl(receberHoje)} hint={`${recebimentosHoje} lançamento${recebimentosHoje === 1 ? "" : "s"}`} href="/movimentacoes" tone="green" />
+        <MetricCard icon={<ArrowDownRight size={21} />} title="A pagar hoje" value={brl(pagarHoje)} hint={`${pagamentosHoje} lançamento${pagamentosHoje === 1 ? "" : "s"}`} href="/despesas" tone="orange" />
+        <MetricCard icon={<Landmark size={21} />} title="Saldo em caixa" value={brl(account)} hint="Saldo consolidado" href="/caixa" tone="blue" />
+        <MetricCard icon={<UsersRound size={21} />} title="Usuários ativos" value={String(usersCount)} hint="Acessos habilitados" href="/usuarios" tone="slate" />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[2.35fr_.85fr]">
-        <DriveCard data={drive} loading={driveLoading} error={driveError} refresh={loadDrive} />
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_34px_rgba(15,35,70,.06)] sm:p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="grid size-11 place-items-center rounded-xl bg-blue-50 text-blue-700"><Building2 size={22} /></span>
-              <h3 className="text-[18px] font-black text-[#071d35]">Sistemas e órgãos</h3>
-            </div>
-            <a href="/sistemas" className="text-[12px] font-black text-blue-700">Ver todos →</a>
+      <section className="grid gap-4 xl:grid-cols-[1.75fr_.8fr]">
+        <DriveCard data={drive} loading={driveLoading} error={driveError} refresh={() => loadDrive(true)} />
+        <Panel title="Sistemas e órgãos" icon={<Building2 size={19} />} actionHref="/sistemas">
+          <div className="space-y-2.5">
+            <InfoRow icon={<Building2 size={17} />} label="Órgãos gerenciados" value={String(systemsCount)} />
+            <InfoRow icon={<PanelsTopLeft size={17} />} label="Sistemas ativos" value={String(activeSystemsCount)} />
+            <InfoRow icon={<Link2 size={17} />} label="Integrações" value="Ativas" />
           </div>
-          <div className="space-y-3">
-            <SideItem icon={<Building2 size={19} />} title={`${systemsCount} órgão${systemsCount === 1 ? "" : "s"}`} subtitle="Órgãos gerenciados" />
-            <SideItem icon={<PanelsTopLeft size={19} />} title={`${activeSystemsCount} sistema${activeSystemsCount === 1 ? "" : "s"} ativo${activeSystemsCount === 1 ? "" : "s"}`} subtitle="Ambientes centralizados" />
-            <SideItem icon={<Link2 size={19} />} title="Integrações" subtitle="Serviços conectados" />
-          </div>
-        </section>
+        </Panel>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.12fr_.95fr_.9fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_34px_rgba(15,35,70,.06)] sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-amber-600"><BarChart3 size={20} /></span>
-              <h3 className="text-[17px] font-black text-[#071d35]">Fluxo financeiro do mês</h3>
-            </div>
-            <span className="rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-semibold text-slate-500">Últimos 6 meses</span>
-          </div>
-          <ResponsiveContainer width="100%" height={230}>
-            <BarChart data={chart} barGap={6}>
-              <CartesianGrid stroke="#edf2f7" vertical={false} />
+      <section className="grid gap-4 xl:grid-cols-[1.2fr_.95fr_.8fr]">
+        <Panel title="Fluxo financeiro" icon={<BarChart3 size={19} />} subtitle="Últimos 6 meses">
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={chart} barGap={5}>
+              <CartesianGrid stroke="#eef2f6" vertical={false} />
               <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#64748b" }} />
-              <YAxis axisLine={false} tickLine={false} width={58} tick={{ fontSize: 10, fill: "#64748b" }} tickFormatter={(v) => `R$ ${Math.round(v / 1000)}k`} />
+              <YAxis axisLine={false} tickLine={false} width={55} tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => `R$ ${Math.round(v / 1000)}k`} />
               <Tooltip formatter={(v) => brl(Number(v))} />
-              <Bar dataKey="entradas" name="Recebimentos" fill="#34c993" radius={[6, 6, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="saidas" name="Pagamentos" fill="#f49b45" radius={[6, 6, 0, 0]} maxBarSize={28} />
+              <Bar dataKey="entradas" name="Entradas" fill="#30b98a" radius={[5, 5, 0, 0]} maxBarSize={24} />
+              <Bar dataKey="saidas" name="Saídas" fill="#e9954f" radius={[5, 5, 0, 0]} maxBarSize={24} />
             </BarChart>
           </ResponsiveContainer>
-          <div className="mt-2 flex justify-center gap-6 text-[11px] font-semibold text-slate-500">
-            <span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-emerald-400" />Recebimentos</span>
-            <span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-orange-400" />Pagamentos</span>
-          </div>
-        </section>
+        </Panel>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_34px_rgba(15,35,70,.06)] sm:p-6">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><FileChartColumn size={20} /></span>
-              <h3 className="text-[17px] font-black text-[#071d35]">Últimos lançamentos</h3>
-            </div>
-            <a href="/movimentacoes" className="text-[12px] font-black text-blue-700">Ver todos →</a>
-          </div>
+        <Panel title="Últimos lançamentos" icon={<FileChartColumn size={19} />} actionHref="/movimentacoes">
           <div className="divide-y divide-slate-100">
             {recent.length ? recent.map((x) => {
               const entry = x.tipo.includes("entrada");
               return (
-                <div key={x.id} className="flex items-center gap-3 py-3.5">
-                  <span className={`grid size-9 shrink-0 place-items-center rounded-full ${entry ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
-                    {entry ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
-                  </span>
+                <div key={x.id} className="flex items-center gap-3 py-3">
+                  <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${entry ? "bg-emerald-50 text-emerald-600" : "bg-orange-50 text-orange-600"}`}>{entry ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}</span>
                   <div className="min-w-0 flex-1">
-                    <b className="block truncate text-[12px] text-[#071d35]">{x.descricao || (entry ? "Recebimento" : "Pagamento")}</b>
+                    <p className="truncate text-[12px] font-medium text-[#17324d]">{x.descricao || (entry ? "Recebimento" : "Pagamento")}</p>
                     <span className="text-[11px] text-slate-400">{new Date(x.data).toLocaleDateString("pt-BR")}</span>
                   </div>
-                  <b className={`text-[12px] ${entry ? "text-emerald-600" : "text-rose-600"}`}>{brl(Number(x.valor))}</b>
+                  <span className={`text-[12px] font-semibold ${entry ? "text-emerald-600" : "text-orange-700"}`}>{brl(Number(x.valor))}</span>
                 </div>
               );
-            }) : <div className="py-12 text-center text-[12px] text-slate-400">Nenhum lançamento recente.</div>}
+            }) : <div className="py-12 text-center text-xs text-slate-400">Nenhum lançamento recente.</div>}
           </div>
-        </section>
+        </Panel>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_34px_rgba(15,35,70,.06)] sm:p-6">
-          <div className="mb-5 flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-amber-50 text-lg text-amber-600">⚡</span>
-            <h3 className="text-[17px] font-black text-[#071d35]">Acesso rápido</h3>
+        <Panel title="Acesso rápido" icon={<Plus size={19} />}>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Quick href="/movimentacoes" icon={<Plus size={18} />} label="Lançamento" />
+            <Quick href="/contas" icon={<Landmark size={18} />} label="Contas" />
+            <Quick href="/relatorios" icon={<FileChartColumn size={18} />} label="Relatórios" />
+            <Quick href="/usuarios" icon={<UsersRound size={18} />} label="Usuários" />
+            <Quick href="/suporte" icon={<Headphones size={18} />} label="Suporte" />
+            <Quick href="/configuracoes" icon={<Settings2 size={18} />} label="Configurações" />
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <Quick href="/movimentacoes" icon={<Plus size={21} />} label="Novo lançamento" tone="green" />
-            <Quick href="/contas" icon={<Landmark size={21} />} label="Contas bancárias" tone="blue" />
-            <Quick href="/relatorios" icon={<FileChartColumn size={21} />} label="Relatórios" tone="purple" />
-            <Quick href="/usuarios" icon={<UsersRound size={21} />} label="Usuários" tone="orange" />
-            <Quick href="/suporte" icon={<Headphones size={21} />} label="Suporte" tone="blue" />
-            <Quick href="/configuracoes" icon={<Settings2 size={21} />} label="Configurações" tone="slate" />
-          </div>
-        </section>
+        </Panel>
       </section>
     </div>
   );
 }
 
-function MetricCard({ icon, title, value, hint, action, href, tone }: { icon: ReactNode; title: string; value: string; hint: string; action: string; href: string; tone: "green" | "orange" | "blue" | "slate" }) {
-  const iconStyle = {
-    green: "bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60",
-    orange: "bg-orange-50 text-orange-600 ring-8 ring-orange-50/60",
-    blue: "bg-blue-50 text-blue-600 ring-8 ring-blue-50/60",
-    slate: "bg-slate-100 text-slate-600 ring-8 ring-slate-50",
-  }[tone];
-  const valueStyle = tone === "orange" ? "text-rose-700" : "text-[#071d35]";
-  return (
-    <article className="min-h-[150px] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_34px_rgba(15,35,70,.06)] sm:p-6">
-      <div className="flex h-full items-start gap-5">
-        <span className={`mt-1 grid size-11 shrink-0 place-items-center rounded-full ${iconStyle}`}>{icon}</span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <p className="text-[14px] font-bold text-[#18324d]">{title}</p>
-          <strong className={`mt-1 block truncate text-[26px] font-black tracking-[-.025em] ${valueStyle}`}>{value}</strong>
-          <span className="mt-1 block text-[12px] text-slate-400">{hint}</span>
-          <a href={href} className="mt-auto flex items-center justify-end gap-1.5 pt-3 text-[12px] font-black text-blue-700">{action}<ArrowRight size={14} /></a>
-        </div>
-      </div>
-    </article>
-  );
+function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode; title: string; value: string; hint: string; href: string; tone: "green" | "orange" | "blue" | "slate" }) {
+  const style = { green: "bg-emerald-50 text-emerald-600", orange: "bg-orange-50 text-orange-600", blue: "bg-blue-50 text-blue-600", slate: "bg-slate-100 text-slate-600" }[tone];
+  return <a href={href} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_7px_20px_rgba(15,23,42,.04)] transition hover:-translate-y-0.5 hover:shadow-md"><div className="flex items-start gap-4"><span className={`grid size-10 shrink-0 place-items-center rounded-xl ${style}`}>{icon}</span><div className="min-w-0"><p className="text-[12px] font-medium text-slate-500">{title}</p><p className="mt-1 truncate text-[24px] font-semibold tracking-[-.02em] text-[#0b2239]">{value}</p><p className="mt-1 text-[11px] text-slate-400">{hint}</p></div></div></a>;
+}
+
+function Panel({ title, icon, subtitle, actionHref, children }: { title: string; icon: ReactNode; subtitle?: string; actionHref?: string; children: ReactNode }) {
+  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_7px_20px_rgba(15,23,42,.04)]"><div className="mb-4 flex items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-lg bg-slate-50 text-[#315a82]">{icon}</span><div><h2 className="text-[15px] font-semibold text-[#0b2239]">{title}</h2>{subtitle && <p className="text-[11px] text-slate-400">{subtitle}</p>}</div></div>{actionHref && <a href={actionHref} className="text-[11px] font-medium text-blue-700">Ver todos</a>}</div>{children}</section>;
 }
 
 function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage | null; loading: boolean; error: string; refresh: () => void }) {
   const pct = Math.max(0, Math.min(100, data?.percent || 0));
-  const folders = data?.folders || [];
-  return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_34px_rgba(15,35,70,.06)]">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
-        <div className="flex items-center gap-4">
-          <span className="relative grid size-12 place-items-center rounded-xl bg-white shadow-sm">
-            <span className="absolute left-[8px] top-[7px] size-0 border-x-[10px] border-b-[19px] border-x-transparent border-b-[#1fa463]" />
-            <span className="absolute bottom-[7px] left-[5px] h-[13px] w-[22px] skew-x-[-28deg] bg-[#1a73e8]" />
-            <span className="absolute bottom-[7px] right-[5px] h-[13px] w-[22px] skew-x-[28deg] bg-[#fbbc04]" />
-          </span>
-          <div>
-            <h3 className="text-[20px] font-black text-[#071d35]">Armazenamento Google Drive</h3>
-            <p className="mt-1 text-[13px] text-slate-500">Pastas organizadas por prefeitura/órgão</p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <a href={driveAccountUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-4 text-[13px] font-black text-[#071d35] transition hover:bg-slate-50">Abrir no Drive<ExternalLink size={15} /></a>
-          <button onClick={refresh} type="button" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Atualizar armazenamento"><RefreshCw size={16} className={loading ? "animate-spin" : ""} /></button>
-          <button type="button" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500" aria-label="Mais opções"><MoreHorizontal size={17} /></button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mx-5 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-[12px] font-semibold text-amber-800 sm:mx-6">
-          Google Drive aguardando configuração: {error}
-        </div>
-      )}
-
-      <div className="grid gap-0 lg:grid-cols-[1.05fr_1fr_1.35fr]">
-        <div className="flex min-h-[210px] items-center gap-5 border-b border-slate-200 p-5 sm:p-6 lg:border-b-0 lg:border-r">
-          <div className="relative grid size-[112px] shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(#1677ff ${pct * 3.6}deg, #e8eef5 0deg)` }}>
-            <div className="grid size-[82px] place-items-center rounded-full bg-white text-center shadow-inner"><b className="text-[25px] font-black text-[#071d35]">{Math.round(pct)}%</b></div>
-          </div>
-          <div>
-            <b className="block text-[18px] font-black text-[#071d35]">{Math.round(pct)}% utilizado</b>
-            <p className="mt-1 text-[13px] text-slate-500">{loading ? "Consultando..." : `${Number(data?.usedGb || 0).toFixed(1)} GB de ${Number(data?.totalGb || 0).toFixed(0)} GB`}</p>
-            <div className="mt-4 h-2.5 w-40 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} /></div>
-          </div>
-        </div>
-
-        <div className="grid min-h-[210px] content-center gap-4 border-b border-slate-200 p-5 sm:p-6 lg:border-b-0 lg:border-r">
-          <StorageLine label="Espaço utilizado" value={`${Number(data?.usedGb || 0).toFixed(1)} GB`} />
-          <StorageLine label="Espaço disponível" value={`${Number(data?.availableGb || 0).toFixed(1)} GB`} />
-          <StorageLine label="Total do plano" value={`${Number(data?.totalGb || 0).toFixed(0)} GB`} />
-        </div>
-
-        <div className="p-5 sm:p-6">
-          <div className="mb-3 flex items-center justify-between gap-3"><h4 className="text-[14px] font-black text-[#071d35]">Pastas por prefeitura/órgão</h4><span className="text-[11px] font-bold text-blue-700">Ver todas →</span></div>
-          <div className="space-y-2">
-            {(folders.length ? folders.slice(0, 5) : placeholderFolders).map((folder) => (
-              <div key={folder.id} className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                <Folder size={17} className="shrink-0 text-amber-500" />
-                <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-[#18324d]">{folder.name}</span>
-                <span className="text-[11px] font-bold text-slate-500">{folder.usedGb.toFixed(1)} GB</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_7px_20px_rgba(15,23,42,.04)]"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600"><Cloud size={20} /></span><div><h2 className="text-[15px] font-semibold text-[#0b2239]">Google Drive</h2><p className="text-[11px] text-slate-400">Armazenamento corporativo</p></div></div><div className="flex items-center gap-2"><a href={driveAccountUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[11px] font-medium text-slate-600">Abrir no Drive <ExternalLink size={13} /></a><button onClick={refresh} className="grid size-8 place-items-center rounded-lg border border-slate-200 text-slate-500"><RefreshCw size={14} className={loading ? "animate-spin" : ""} /></button></div></div>{error && <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-[11px] text-amber-700">{error}</p>}<div className="grid gap-5 md:grid-cols-[.9fr_1.4fr]"><div className="rounded-xl bg-[#0b2239] p-5 text-white"><p className="text-[11px] font-medium text-slate-300">Uso total</p><div className="mt-2 flex items-end justify-between gap-4"><p className="text-[30px] font-semibold">{pct.toFixed(1)}%</p><p className="text-[11px] text-slate-300">{Number(data?.usedGb || 0).toFixed(2)} GB de {Number(data?.totalGb || 0).toFixed(0)} GB</p></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-blue-400" style={{ width: `${pct}%` }} /></div><div className="mt-4 grid grid-cols-2 gap-2 text-[11px]"><div className="rounded-lg bg-white/[.06] p-2.5"><span className="text-slate-400">Disponível</span><p className="mt-1 font-medium">{Number(data?.availableGb || 0).toFixed(2)} GB</p></div><div className="rounded-lg bg-white/[.06] p-2.5"><span className="text-slate-400">Plano</span><p className="mt-1 font-medium">{Number(data?.totalGb || 0).toFixed(0)} GB</p></div></div></div><div><div className="mb-2 flex items-center justify-between"><p className="text-[12px] font-medium text-slate-500">Pastas monitoradas</p><span className="text-[11px] text-slate-400">{data?.folders?.length || 0}</span></div><div className="space-y-2">{data?.folders?.length ? data.folders.slice(0, 4).map((folder) => <div key={folder.id} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3.5 py-3"><div className="min-w-0"><p className="truncate text-[12px] font-medium text-[#17324d]">{folder.name}</p><p className="mt-0.5 text-[10px] text-slate-400">{folder.files.toLocaleString("pt-BR")} arquivos · {folder.folders.toLocaleString("pt-BR")} pastas</p></div><span className="ml-3 text-[12px] font-semibold text-[#0b2239]">{folder.usedGb.toFixed(2)} GB</span></div>) : <div className="rounded-xl border border-dashed border-slate-200 px-4 py-7 text-center text-xs text-slate-400">{loading ? "Atualizando armazenamento..." : "Nenhuma pasta monitorada."}</div>}</div></div></div></section>;
 }
 
-function StorageLine({ label, value }: { label: string; value: string }) {
-  return <div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3 text-[13px] text-slate-500"><span className="grid size-8 place-items-center rounded-full bg-slate-100 text-slate-500"><Cloud size={15} /></span>{label}</div><b className="text-[13px] text-[#071d35]">{value}</b></div>;
+function InfoRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3.5 py-3"><span className="grid size-8 place-items-center rounded-lg bg-white text-blue-700">{icon}</span><span className="flex-1 text-[12px] text-slate-500">{label}</span><span className="text-[12px] font-semibold text-[#0b2239]">{value}</span></div>;
 }
 
-function SideItem({ icon, title, subtitle }: { icon: ReactNode; title: string; subtitle: string }) {
-  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3.5 py-3"><span className="grid size-9 place-items-center rounded-xl bg-white text-blue-700 shadow-sm">{icon}</span><div className="min-w-0 flex-1"><b className="block text-[13px] text-[#071d35]">{title}</b><span className="text-[11px] text-slate-400">{subtitle}</span></div><span className="size-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50" /></div>;
-}
-
-function Quick({ href, icon, label, tone }: { href: string; icon: ReactNode; label: string; tone: "green" | "blue" | "purple" | "orange" | "slate" }) {
-  const style = { green: "bg-emerald-50 text-emerald-600", blue: "bg-blue-50 text-blue-700", purple: "bg-violet-50 text-violet-600", orange: "bg-orange-50 text-orange-600", slate: "bg-slate-100 text-slate-600" }[tone];
-  return <a href={href} className={`flex min-h-[82px] flex-col items-center justify-center gap-2 rounded-xl px-2 text-center text-[11px] font-black transition hover:-translate-y-0.5 ${style}`}>{icon}<span>{label}</span></a>;
+function Quick({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
+  return <a href={href} className="flex min-h-[72px] flex-col items-center justify-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-2 text-center text-[11px] font-medium text-[#315a82] transition hover:border-blue-200 hover:bg-blue-50">{icon}<span>{label}</span></a>;
 }
 
 function buildChart(rows: Movement[]) {
@@ -331,16 +199,6 @@ function buildChart(rows: Movement[]) {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const list = rows.filter((x) => onlyDate(x.data).startsWith(key));
-    return {
-      mes: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
-      entradas: list.filter((x) => x.tipo.includes("entrada")).reduce((sum, x) => sum + Number(x.valor || 0), 0),
-      saidas: list.filter((x) => x.tipo.includes("saida")).reduce((sum, x) => sum + Number(x.valor || 0), 0),
-    };
+    return { mes: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""), entradas: list.filter((x) => x.tipo.includes("entrada")).reduce((sum, x) => sum + Number(x.valor || 0), 0), saidas: list.filter((x) => x.tipo.includes("saida")).reduce((sum, x) => sum + Number(x.valor || 0), 0) };
   });
 }
-
-const placeholderFolders = [
-  { id: "rg", name: "Prefeitura de Ribeiro Gonçalves", usedGb: 0 },
-  { id: "bg", name: "Prefeitura de Baixa Grande do Ribeiro", usedGb: 0 },
-  { id: "outros", name: "Outros órgãos", usedGb: 0 },
-];
