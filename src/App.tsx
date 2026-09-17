@@ -11,6 +11,8 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Accounts from "./pages/Accounts";
 import SupportCenter from "./pages/SupportCenter";
+import Systems from "./pages/Systems";
+import UsersAccess from "./pages/UsersAccess";
 function Private() {
   const { session, loading } = useAuth();
   if (loading)
@@ -32,6 +34,8 @@ export default function App() {
           <Route path="despesas" element={<Expenses />} />
           <Route path="relatorios" element={<Reports />} />
           <Route path="suporte" element={<SupportCenter />} />
+          <Route path="sistemas" element={<Systems />} />
+          <Route path="usuarios" element={<UsersAccess />} />
           <Route path="configuracoes" element={<Settings />} />
           <Route path="receitas" element={<DataPage kind="receitas" />} />
           <Route path="clientes" element={<DataPage kind="clientes" />} />
