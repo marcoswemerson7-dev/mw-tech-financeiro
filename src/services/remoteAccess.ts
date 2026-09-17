@@ -3,6 +3,7 @@ import { appwriteConfig, tables, TABLES } from "../lib/appwrite";
 
 export type RemoteDevice = {
   id: string;
+  tipo_orgao: string;
   orgao: string;
   setor?: string;
   usuario?: string;
@@ -18,6 +19,7 @@ const TYPE = "anydesk_device";
 
 type RemoteMeta = {
   __mw_control_anydesk?: boolean;
+  tipo_orgao?: string;
   orgao?: string;
   setor?: string;
   usuario?: string;
@@ -26,6 +28,14 @@ type RemoteMeta = {
   observacao?: string;
 };
 
+function inferOrganizationType(name: string) {
+  const value = String(name || "").toLowerCase();
+  if (value.includes("câmara") || value.includes("camara")) return "Câmara Municipal";
+  if (value.includes("prefeitura")) return "Prefeitura Municipal";
+  if (value.includes("empresa")) return "Empresa";
+  return "Outros órgãos";
+}
+
 function normalize(row: any): RemoteDevice {
   let meta: RemoteMeta = {};
   try {
@@ -33,9 +43,11 @@ function normalize(row: any): RemoteDevice {
   } catch {
     meta = {};
   }
+  const orgao = String(meta.orgao || row.nome || "");
   return {
     id: row.$id || row.id,
-    orgao: String(meta.orgao || row.nome || ""),
+    tipo_orgao: String(meta.tipo_orgao || inferOrganizationType(orgao)),
+    orgao,
     setor: String(meta.setor || ""),
     usuario: String(meta.usuario || ""),
     dispositivo: String(meta.dispositivo || row.nome || ""),
@@ -50,6 +62,7 @@ function normalize(row: any): RemoteDevice {
 function serialize(values: Partial<RemoteDevice>) {
   return JSON.stringify({
     __mw_control_anydesk: true,
+    tipo_orgao: String(values.tipo_orgao || inferOrganizationType(String(values.orgao || ""))).trim(),
     orgao: String(values.orgao || "").trim(),
     setor: String(values.setor || "").trim(),
     usuario: String(values.usuario || "").trim(),
