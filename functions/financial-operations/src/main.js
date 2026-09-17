@@ -21,17 +21,29 @@ async function getDriveStorage(){
   const folders=[];for(const item of configuredFolders){if(!item?.id||!item?.name)continue;const stats=await folderUsage(token,item.id);folders.push({id:item.id,name:item.name,...stats,percentOfTotal:limit?Math.round((stats.bytes/limit)*1000)/10:0})}
   return{ok:true,totalGb:gb(limit),usedGb:gb(usage),availableGb:gb(Math.max(limit-usage,0)),percent:limit?Math.round((usage/limit)*1000)/10:0,folders,updatedAt:new Date().toISOString()};
 }
-const T={accounts:"contas_financeiras",moves:"movimentacoes_financeiras",expenses:"despesas",payments:"pagamentos_despesas",ops:"operacoes_idempotentes"};
+const T={accounts:"contas_financeiras",moves:"movimentacoes_financeiras",expenses:"despesas",payments:"pagamentos_despesas",ops:"operacoes_idempotentes",systems:"sistemas_orgaos",staff:"usuarios_acessos"};
 export default async ({req,res,error})=>{
   const userId=req.headers["x-appwrite-user-id"];
   if(!userId)return res.json({error:"Usuário não autenticado."},401);
   let input;try{input=JSON.parse(req.body||"{}");}catch{return res.json({error:"JSON inválido."},400)}
   const {action,idempotencyKey}=input;
   if(action==="getDriveStorage"){try{return res.json(await getDriveStorage())}catch(e){error(e.message);return res.json({error:e.message||"Erro ao consultar o Google Drive."},400)}}
-  if(!idempotencyKey)return res.json({error:"Chave de idempotência obrigatória."},400);
+  const adminActions=["listSystems","saveSystem","deleteSystem","listStaff","saveStaff","deleteStaff"];
+  if(!idempotencyKey&&!adminActions.includes(action))return res.json({error:"Chave de idempotência obrigatória."},400);
   const client=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
   const db=new TablesDB(client),databaseId=process.env.APPWRITE_DATABASE_ID;
   try{
+    if(adminActions.includes(action)){
+      const adminIds=String(process.env.CONTROL_ADMIN_USER_IDS||"").split(",").map(x=>x.trim()).filter(Boolean),isAdmin=adminIds.includes(userId);
+      const requireAdmin=()=>{if(!isAdmin)throw new Error("Acesso exclusivo do administrador do MW TECH Control.")};
+      if(action==="listSystems"){const result=await db.listRows({databaseId,tableId:T.systems,queries:[Query.orderAsc("orgao"),Query.limit(200)]});return res.json({ok:true,rows:result.rows})}
+      if(action==="listStaff"){requireAdmin();const result=await db.listRows({databaseId,tableId:T.staff,queries:[Query.orderAsc("nome"),Query.limit(200)]});return res.json({ok:true,rows:result.rows})}
+      requireAdmin();const now=new Date().toISOString();
+      if(action==="saveSystem"){const data={orgao:input.orgao||"",tipo_orgao:input.tipo_orgao||"Prefeitura",sistema:input.sistema||"Gestão Licita",dominio_url:input.dominio_url||"",vercel_url:input.vercel_url||"",acesso_url:input.acesso_url||input.dominio_url||"",ambiente:input.ambiente||"Produção",status:input.status||"ativo",observacao:input.observacao||"",updated_at:now};const row=input.id?await db.updateRow({databaseId,tableId:T.systems,rowId:input.id,data}):await db.createRow({databaseId,tableId:T.systems,rowId:ID.unique(),data:{...data,created_at:now}});return res.json({ok:true,row})}
+      if(action==="deleteSystem"){await db.deleteRow({databaseId,tableId:T.systems,rowId:input.id});return res.json({ok:true})}
+      if(action==="saveStaff"){const data={nome:input.nome||"",email:input.email||"",cargo:input.cargo||"Colaborador",status:input.status||"ativo",modulos:JSON.stringify(input.modulos||[]),updated_at:now};const row=input.id?await db.updateRow({databaseId,tableId:T.staff,rowId:input.id,data}):await db.createRow({databaseId,tableId:T.staff,rowId:ID.unique(),data:{...data,created_at:now}});return res.json({ok:true,row})}
+      if(action==="deleteStaff"){await db.deleteRow({databaseId,tableId:T.staff,rowId:input.id});return res.json({ok:true})}
+    }
     try{const done=await db.getRow({databaseId,tableId:T.ops,rowId:idempotencyKey});return res.json({ok:true,id:done.result_id,replayed:true})}catch(e){if(e.code!==404)throw e}
     const tx=await db.createTransaction();const tid=tx.$id,now=new Date().toISOString();
     const get=(tableId,rowId)=>db.getRow({databaseId,tableId,rowId,transactionId:tid});
