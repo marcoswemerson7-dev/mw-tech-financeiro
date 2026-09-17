@@ -1,6 +1,6 @@
-# MW TECH Financeiro
+# MW TECH Control
 
-Sistema interno de gestão financeira construído com React, TypeScript, Vite, Tailwind CSS e Appwrite.
+Plataforma administrativa geral da MW TECH construída com React, TypeScript, Vite, Tailwind CSS e Appwrite.
 
 ## Configuração
 
