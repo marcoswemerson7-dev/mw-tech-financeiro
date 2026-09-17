@@ -33,6 +33,39 @@ type SystemMeta = {
 };
 
 const FALLBACK_TYPE = "sistema_orgao";
+const CACHE_KEY = "mw-control:managed-systems-cache:v1";
+const CACHE_TTL = 5 * 60 * 1000;
+let memoryCache: { rows: ManagedSystem[]; timestamp: number } | null = null;
+let inflight: Promise<ManagedSystem[]> | null = null;
+
+function readCache() {
+  if (memoryCache && Date.now() - memoryCache.timestamp < CACHE_TTL) return memoryCache.rows;
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null");
+    if (parsed?.timestamp && Array.isArray(parsed.rows) && Date.now() - parsed.timestamp < CACHE_TTL) {
+      memoryCache = parsed;
+      return parsed.rows as ManagedSystem[];
+    }
+  } catch {
+    // Cache inválido não pode impedir a leitura real.
+  }
+  return null;
+}
+
+function writeCache(rows: ManagedSystem[]) {
+  memoryCache = { rows, timestamp: Date.now() };
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(memoryCache));
+  } catch {
+    // O sistema continua funcionando mesmo sem storage disponível.
+  }
+}
+
+export function getManagedSystemsCached() {
+  return readCache();
+}
 
 async function execute(action: string, payload: Record<string, unknown> = {}) {
   if (!appwriteConfig.financialFunctionId) throw new Error("Função administrativa não configurada.");
@@ -160,14 +193,30 @@ async function fallbackDelete(id: string) {
   await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.counterparties, rowId: id });
 }
 
-export async function getManagedSystems() {
+async function fetchManagedSystems() {
   try {
     const body = await execute("listSystems");
-    return (body.rows || []).map(normalize);
+    const rows = (body.rows || []).map(normalize);
+    writeCache(rows);
+    return rows;
   } catch (error) {
     if (!missingAdminTable(error)) throw error;
-    return fallbackList();
+    const rows = await fallbackList();
+    writeCache(rows);
+    return rows;
   }
+}
+
+export async function getManagedSystems(force = false) {
+  const cached = !force ? readCache() : null;
+  if (cached) {
+    if (!inflight) {
+      inflight = fetchManagedSystems().finally(() => { inflight = null; });
+    }
+    return cached;
+  }
+  if (!inflight) inflight = fetchManagedSystems().finally(() => { inflight = null; });
+  return inflight;
 }
 
 export async function saveManagedSystem(values: Partial<ManagedSystem>) {
@@ -183,13 +232,17 @@ export async function saveManagedSystem(values: Partial<ManagedSystem>) {
     status: values.status,
     observacao: serializeMeta(values),
   };
+  let saved: ManagedSystem;
   try {
     const body = await execute("saveSystem", payload);
-    return normalize(body.row);
+    saved = normalize(body.row);
   } catch (error) {
     if (!missingAdminTable(error)) throw error;
-    return fallbackSave(values);
+    saved = await fallbackSave(values);
   }
+  const current = readCache() || [];
+  writeCache(values.id ? current.map((item) => item.id === saved.id ? saved : item) : [...current, saved]);
+  return saved;
 }
 
 export async function uploadSystemLogo(file: File) {
@@ -213,4 +266,5 @@ export async function deleteManagedSystem(id: string) {
     if (!missingAdminTable(error)) throw error;
     await fallbackDelete(id);
   }
+  writeCache((readCache() || []).filter((item) => item.id !== id));
 }
