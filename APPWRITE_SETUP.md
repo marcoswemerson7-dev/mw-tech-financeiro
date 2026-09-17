@@ -1,10 +1,10 @@
-# Configuração do Appwrite Cloud — MW TECH Financeiro
+# Configuração do Appwrite Cloud — MW TECH Control
 
 O Appwrite foi adicionado em paralelo. Os arquivos e migrations do Supabase continuam no repositório apenas como histórico e fallback técnico; nenhuma chave administrativa é usada no navegador.
 
 ## 1. Criar o projeto
 
-1. Acesse o Appwrite Cloud e crie o projeto `MW TECH Financeiro`.
+1. Acesse o Appwrite Cloud e crie o projeto `MW TECH Control`.
 2. Em **Platforms**, adicione uma aplicação Web.
 3. Em desenvolvimento, use o hostname `localhost`. No deploy, adicione também o domínio da Vercel.
 4. Copie o **Project ID**.
