@@ -28,6 +28,7 @@ import { getDriveStorageUsage, type DriveStorageUsage } from "../services/google
 const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0));
 const onlyDate = (value: unknown) => String(value || "").slice(0, 10);
+const driveAccountUrl = "https://drive.google.com/drive/u/0/my-drive?authuser=arquivoscplrg%40gmail.com";
 
 export default function Dashboard() {
   const [rows, setRows] = useState<Movement[]>([]);
@@ -252,7 +253,7 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
           </div>
         </div>
         <div className="flex gap-2">
-          <a href="https://drive.google.com" target="_blank" rel="noreferrer" className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-4 text-[13px] font-black text-[#071d35] transition hover:bg-slate-50">Abrir no Drive<ExternalLink size={15} /></a>
+          <a href={driveAccountUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-4 text-[13px] font-black text-[#071d35] transition hover:bg-slate-50">Abrir no Drive<ExternalLink size={15} /></a>
           <button onClick={refresh} type="button" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Atualizar armazenamento"><RefreshCw size={16} className={loading ? "animate-spin" : ""} /></button>
           <button type="button" className="grid size-10 place-items-center rounded-xl border border-slate-200 text-slate-500" aria-label="Mais opções"><MoreHorizontal size={17} /></button>
         </div>
