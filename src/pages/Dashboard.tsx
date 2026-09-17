@@ -24,6 +24,8 @@ import {
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
+import { getManagedSystems, type ManagedSystem } from "../services/managedSystems";
+import { getTeamAccess, type TeamAccess } from "../services/teamAccess";
 
 const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0));
@@ -36,6 +38,9 @@ export default function Dashboard() {
   const [drive, setDrive] = useState<DriveStorageUsage | null>(null);
   const [driveLoading, setDriveLoading] = useState(true);
   const [driveError, setDriveError] = useState("");
+  const [systemsCount, setSystemsCount] = useState(0);
+  const [activeSystemsCount, setActiveSystemsCount] = useState(0);
+  const [usersCount, setUsersCount] = useState(0);
 
   useEffect(() => {
     if (!isConfigured) return;
@@ -43,6 +48,13 @@ export default function Dashboard() {
       setRows(movements);
       setAccount(accounts.reduce((sum, item) => sum + Number(item.saldo_atual || 0), 0));
     });
+    getManagedSystems().then((systems) => {
+      setSystemsCount(systems.length);
+      setActiveSystemsCount(systems.filter((item: ManagedSystem) => item.status === "ativo").length);
+    }).catch(() => undefined);
+    getTeamAccess().then((users) => {
+      setUsersCount(users.filter((item: TeamAccess) => item.status === "ativo").length);
+    }).catch(() => undefined);
   }, []);
 
   const loadDrive = () => {
@@ -120,7 +132,7 @@ export default function Dashboard() {
         <MetricCard icon={<ArrowUpRight size={26} />} title="A receber hoje" value={brl(receberHoje)} hint={`${recebimentosHoje} título${recebimentosHoje === 1 ? "" : "s"}`} action="Ver recebimentos" href="/movimentacoes" tone="green" />
         <MetricCard icon={<ArrowDownRight size={26} />} title="A pagar hoje" value={brl(pagarHoje)} hint={`${pagamentosHoje} título${pagamentosHoje === 1 ? "" : "s"}`} action="Ver pagamentos" href="/despesas" tone="orange" />
         <MetricCard icon={<BarChart3 size={26} />} title="Saldo em caixa" value={brl(account)} hint="Saldo total disponível" action="Ver fluxo de caixa" href="/caixa" tone="blue" />
-        <MetricCard icon={<UsersRound size={26} />} title="Usuários ativos" value="Controle central" hint="Permissões por função" action="Gerenciar usuários" href="/usuarios" tone="slate" />
+        <MetricCard icon={<UsersRound size={26} />} title="Usuários ativos" value={String(usersCount)} hint="Permissões por função" action="Gerenciar usuários" href="/usuarios" tone="slate" />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[2.35fr_.85fr]">
@@ -134,8 +146,8 @@ export default function Dashboard() {
             <a href="/sistemas" className="text-[12px] font-black text-blue-700">Ver todos →</a>
           </div>
           <div className="space-y-3">
-            <SideItem icon={<Building2 size={19} />} title="Prefeituras" subtitle="Órgãos gerenciados" />
-            <SideItem icon={<PanelsTopLeft size={19} />} title="Sistemas ativos" subtitle="Ambientes centralizados" />
+            <SideItem icon={<Building2 size={19} />} title={`${systemsCount} órgão${systemsCount === 1 ? "" : "s"}`} subtitle="Órgãos gerenciados" />
+            <SideItem icon={<PanelsTopLeft size={19} />} title={`${activeSystemsCount} sistema${activeSystemsCount === 1 ? "" : "s"} ativo${activeSystemsCount === 1 ? "" : "s"}`} subtitle="Ambientes centralizados" />
             <SideItem icon={<Link2 size={19} />} title="Integrações" subtitle="Serviços conectados" />
           </div>
         </section>

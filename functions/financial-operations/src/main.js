@@ -29,7 +29,8 @@ export default async ({req,res,error})=>{
   const {action,idempotencyKey}=input;
   if(action==="getDriveStorage"){try{return res.json(await getDriveStorage())}catch(e){error(e.message);return res.json({error:e.message||"Erro ao consultar o Google Drive."},400)}}
   const adminActions=["listSystems","saveSystem","deleteSystem","listStaff","saveStaff","deleteStaff"];
-  if(!idempotencyKey&&!adminActions.includes(action))return res.json({error:"Chave de idempotência obrigatória."},400);
+  const adminMutations=["saveSystem","deleteSystem","saveStaff","deleteStaff"];
+  if(!idempotencyKey&&(!adminActions.includes(action)||adminMutations.includes(action)))return res.json({error:"Chave de idempotência obrigatória."},400);
   const client=new Client().setEndpoint(process.env.APPWRITE_ENDPOINT).setProject(process.env.APPWRITE_PROJECT_ID).setKey(process.env.APPWRITE_API_KEY);
   const db=new TablesDB(client),databaseId=process.env.APPWRITE_DATABASE_ID;
   try{
@@ -39,10 +40,11 @@ export default async ({req,res,error})=>{
       if(action==="listSystems"){const result=await db.listRows({databaseId,tableId:T.systems,queries:[Query.orderAsc("orgao"),Query.limit(200)]});return res.json({ok:true,rows:result.rows})}
       if(action==="listStaff"){requireAdmin();const result=await db.listRows({databaseId,tableId:T.staff,queries:[Query.orderAsc("nome"),Query.limit(200)]});return res.json({ok:true,rows:result.rows})}
       requireAdmin();const now=new Date().toISOString();
-      if(action==="saveSystem"){const data={orgao:input.orgao||"",tipo_orgao:input.tipo_orgao||"Prefeitura",sistema:input.sistema||"Gestão Licita",dominio_url:input.dominio_url||"",vercel_url:input.vercel_url||"",acesso_url:input.acesso_url||input.dominio_url||"",ambiente:input.ambiente||"Produção",status:input.status||"ativo",observacao:input.observacao||"",updated_at:now};const row=input.id?await db.updateRow({databaseId,tableId:T.systems,rowId:input.id,data}):await db.createRow({databaseId,tableId:T.systems,rowId:ID.unique(),data:{...data,created_at:now}});return res.json({ok:true,row})}
-      if(action==="deleteSystem"){await db.deleteRow({databaseId,tableId:T.systems,rowId:input.id});return res.json({ok:true})}
-      if(action==="saveStaff"){const data={nome:input.nome||"",email:input.email||"",cargo:input.cargo||"Colaborador",status:input.status||"ativo",modulos:JSON.stringify(input.modulos||[]),updated_at:now};const row=input.id?await db.updateRow({databaseId,tableId:T.staff,rowId:input.id,data}):await db.createRow({databaseId,tableId:T.staff,rowId:ID.unique(),data:{...data,created_at:now}});return res.json({ok:true,row})}
-      if(action==="deleteStaff"){await db.deleteRow({databaseId,tableId:T.staff,rowId:input.id});return res.json({ok:true})}
+      try{const done=await db.getRow({databaseId,tableId:T.ops,rowId:idempotencyKey});return res.json({ok:true,id:done.result_id,replayed:true})}catch(e){if(e.code!==404)throw e}
+      if(action==="saveSystem"){const data={orgao:input.orgao||"",tipo_orgao:input.tipo_orgao||"Prefeitura",sistema:input.sistema||"Gestão Licita",dominio_url:input.dominio_url||"",vercel_url:input.vercel_url||"",acesso_url:input.acesso_url||input.dominio_url||"",ambiente:input.ambiente||"Produção",status:input.status||"ativo",observacao:input.observacao||"",updated_at:now};const row=input.id?await db.updateRow({databaseId,tableId:T.systems,rowId:input.id,data}):await db.createRow({databaseId,tableId:T.systems,rowId:ID.unique(),data:{...data,created_at:now}});await db.createRow({databaseId,tableId:T.ops,rowId:idempotencyKey,data:{action,user_id:userId,result_id:row.$id,created_at:now}});return res.json({ok:true,row})}
+      if(action==="deleteSystem"){await db.deleteRow({databaseId,tableId:T.systems,rowId:input.id});await db.createRow({databaseId,tableId:T.ops,rowId:idempotencyKey,data:{action,user_id:userId,result_id:input.id||"",created_at:now}});return res.json({ok:true,id:input.id})}
+      if(action==="saveStaff"){const data={nome:input.nome||"",email:input.email||"",cargo:input.cargo||"Colaborador",status:input.status||"ativo",modulos:JSON.stringify(input.modulos||[]),updated_at:now};const row=input.id?await db.updateRow({databaseId,tableId:T.staff,rowId:input.id,data}):await db.createRow({databaseId,tableId:T.staff,rowId:ID.unique(),data:{...data,created_at:now}});await db.createRow({databaseId,tableId:T.ops,rowId:idempotencyKey,data:{action,user_id:userId,result_id:row.$id,created_at:now}});return res.json({ok:true,row})}
+      if(action==="deleteStaff"){await db.deleteRow({databaseId,tableId:T.staff,rowId:input.id});await db.createRow({databaseId,tableId:T.ops,rowId:idempotencyKey,data:{action,user_id:userId,result_id:input.id||"",created_at:now}});return res.json({ok:true,id:input.id})}
     }
     try{const done=await db.getRow({databaseId,tableId:T.ops,rowId:idempotencyKey});return res.json({ok:true,id:done.result_id,replayed:true})}catch(e){if(e.code!==404)throw e}
     const tx=await db.createTransaction();const tid=tx.$id,now=new Date().toISOString();
@@ -107,7 +109,7 @@ export default async ({req,res,error})=>{
       const expense=await get(T.expenses,input.despesa_id);
       if(expense.status==="pago")throw new Error("Estorne o pagamento antes de editar uma despesa paga.");
       resultId=expense.$id;
-      await update(T.expenses,expense.$id,{descricao:input.descricao??expense.descricao,categoria:input.categoria??expense.categoria,competencia:input.competencia?new Date(input.competencia).toISOString():expense.competencia,vencimento:input.data_vencimento?new Date(input.data_vencimento).toISOString():expense.vencimento,valor:positive(input.valor??expense.valor),conta_id:input.conta_id??expense.conta_id,fornecedor:input.fornecedor??expense.fornecedor,observacao:input.observacao??expense.observacao,updated_at:now});
+      await update(T.expenses,expense.$id,{descricao:input.descricao??expense.descricao,categoria:input.categoria??expense.categoria,categoria_id:input.categoria_id??expense.categoria_id,competencia:input.competencia?new Date(input.competencia).toISOString():expense.competencia,vencimento:input.data_vencimento?new Date(input.data_vencimento).toISOString():expense.vencimento,valor:positive(input.valor??expense.valor),conta_id:input.conta_id??expense.conta_id,fornecedor:input.fornecedor??expense.fornecedor,observacao:input.observacao??expense.observacao,updated_at:now});
     }else if(action==="cancelExpense"){
       const expense=await get(T.expenses,input.despesa_id);
       if(expense.status==="pago")throw new Error("Estorne o pagamento antes de cancelar uma despesa paga.");

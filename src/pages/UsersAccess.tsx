@@ -8,10 +8,12 @@ export default function UsersAccess() {
   const [edit, setEdit] = useState<Partial<TeamAccess> | null>(null);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [busyRow, setBusyRow] = useState("");
   useEffect(() => { getTeamAccess().then(setRows).catch((e) => setError(e.message)); }, []);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setError("");
+    e.preventDefault(); setError(""); setBusy(true);
     try {
       const form = new FormData(e.currentTarget);
       const saved = await saveTeamAccess({
@@ -25,10 +27,20 @@ export default function UsersAccess() {
       setRows((current) => edit?.id ? current.map((x) => x.id === edit.id ? saved : x) : [...current, saved]);
       setEdit(null); setToast("Permissões salvas com sucesso."); setTimeout(() => setToast(""), 2500);
     } catch (e: any) { setError(e.message); }
+    finally { setBusy(false); }
   }
   async function remove(id: string) {
     if (!confirm("Remover este funcionário da gestão de acessos?")) return;
-    await deleteTeamAccess(id); setRows((x) => x.filter((row) => row.id !== id));
+    setError(""); setBusyRow(id);
+    try {
+      await deleteTeamAccess(id);
+      setRows((x) => x.filter((row) => row.id !== id));
+      setToast("Acesso removido com sucesso."); setTimeout(() => setToast(""), 2500);
+    } catch (e: any) {
+      setError(e.message || "Não foi possível remover o acesso.");
+    } finally {
+      setBusyRow("");
+    }
   }
 
   return <div className="space-y-7">
@@ -49,7 +61,7 @@ export default function UsersAccess() {
           <td className="px-6 py-5 font-semibold text-slate-600">{item.cargo}</td>
           <td className="px-6 py-5"><Badge status={item.status}/></td>
           <td className="max-w-[390px] px-6 py-5"><div className="flex flex-wrap gap-1.5">{item.modulos.map((key)=><span key={key} className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">{ACCESS_MODULES.find(([id])=>id===key)?.[1]||key}</span>)}</div></td>
-          <td className="px-6 py-5"><div className="flex gap-2"><button onClick={()=>setEdit(item)} className="grid size-10 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700"><Pencil size={16}/></button><button onClick={()=>remove(item.id)} className="grid size-10 place-items-center rounded-xl border border-rose-100 bg-rose-50 text-rose-700"><Trash2 size={16}/></button></div></td>
+          <td className="px-6 py-5"><div className="flex gap-2"><button onClick={()=>setEdit(item)} disabled={Boolean(busyRow)} className="grid size-10 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700 disabled:opacity-50"><Pencil size={16}/></button><button onClick={()=>remove(item.id)} disabled={busyRow===item.id} className="grid size-10 place-items-center rounded-xl border border-rose-100 bg-rose-50 text-rose-700 disabled:opacity-50"><Trash2 size={16}/></button></div></td>
         </tr>)}</tbody>
       </table></div>
     </div>:<Empty/>}
@@ -62,7 +74,7 @@ export default function UsersAccess() {
         <label className="text-sm font-bold text-slate-600">Status<select name="status" defaultValue={edit.status||"ativo"} className="input"><option value="ativo">Ativo</option><option value="suspenso">Suspenso</option><option value="inativo">Inativo</option></select></label>
         <fieldset className="sm:col-span-2"><legend className="text-sm font-black text-[#061426]">Módulos permitidos</legend><div className="mt-3 grid gap-3 sm:grid-cols-2">{ACCESS_MODULES.map(([id,label])=><label key={id} className="flex min-h-[54px] items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 font-bold text-slate-700"><input type="checkbox" name="modulos" value={id} defaultChecked={(edit.modulos||[]).includes(id)} className="size-5 accent-blue-600"/>{label}</label>)}</div></fieldset>
         <p className="sm:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4 text-[13px] leading-6 text-blue-900">O cadastro define as permissões administrativas. A conta de login correspondente deve existir no Appwrite Auth para o funcionário entrar no sistema.</p>
-        <div className="flex justify-end gap-3 sm:col-span-2"><ActionButton tone="outline" onClick={()=>setEdit(null)}>Cancelar</ActionButton><ActionButton type="submit">Salvar permissões</ActionButton></div>
+        <div className="flex justify-end gap-3 sm:col-span-2"><ActionButton tone="outline" onClick={()=>setEdit(null)} disabled={busy}>Cancelar</ActionButton><ActionButton type="submit" disabled={busy}>{busy ? "Salvando..." : "Salvar permissões"}</ActionButton></div>
       </form>
     </div></div>}
   </div>;

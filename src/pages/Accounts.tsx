@@ -41,6 +41,7 @@ export default function Accounts() {
     [search, setSearch] = useState(""),
     [type, setType] = useState(""),
     [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
     [toast, setToast] = useState("");
   async function load() {
     if (!isConfigured) {
@@ -59,6 +60,7 @@ export default function Accounts() {
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
+    setError("");
     const d: any = Object.fromEntries(new FormData(e.currentTarget));
     const logoFile = (e.currentTarget.elements.namedItem("logo") as HTMLInputElement)?.files?.[0];
     delete d.logo;
@@ -98,6 +100,8 @@ export default function Accounts() {
       setEdit(null);
       setToast(edit?.id ? "Alterações salvas com sucesso." : "Conta salva com sucesso.");
       setTimeout(() => setToast(""), 2600);
+    } catch (e: any) {
+      setError(e.message || "Não foi possível salvar a conta.");
     } finally {
       setBusy(false);
     }
@@ -105,6 +109,7 @@ export default function Accounts() {
   async function remove(id: string) {
     if (!confirm("Excluir esta conta? Se houver histórico vinculado, ela será inativada para preservar os registros financeiros.")) return;
     setBusy(true);
+    setError("");
     if (!isConfigured) {
       const n = rows.filter((x) => x.id !== id);
       localStorage.setItem("mw-accounts", JSON.stringify(n));
@@ -118,6 +123,8 @@ export default function Accounts() {
         setRows((current) => current.filter((x) => x.id !== id));
         setToast("Conta excluída com sucesso.");
         setTimeout(() => setToast(""), 2600);
+      } catch (e: any) {
+        setError(e.message || "Não foi possível excluir a conta.");
       } finally {
         setBusy(false);
       }
@@ -144,6 +151,7 @@ export default function Accounts() {
           </ActionButton>
         }
       />
+      {error && <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">{error}</p>}
 
       <div className="grid gap-5 md:grid-cols-3">
         <StatCard title="Saldo total em contas" value={money(total)} icon={<Landmark size={27} />} tone="blue" hint="↑ 100% vs mês anterior" />
@@ -271,7 +279,7 @@ export default function Accounts() {
               </label>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button type="button" onClick={() => setEdit(null)} className="rounded-xl border px-4 py-2">
+              <button type="button" onClick={() => setEdit(null)} disabled={busy} className="rounded-xl border px-4 py-2 disabled:opacity-50">
                 Cancelar
               </button>
               <button disabled={busy} className="rounded-xl bg-[#0b2b66] px-5 py-2 text-white disabled:opacity-50">

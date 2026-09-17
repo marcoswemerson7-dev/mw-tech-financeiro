@@ -104,7 +104,7 @@ export default function Expenses() {
           categoria_id: d.categoria_id || "",
           fornecedor: d.fornecedor || "",
           competencia: d.competencia,
-          vencimento: d.data_vencimento,
+          data_vencimento: d.data_vencimento,
           valor: d.valor,
           conta_id: d.conta_bancaria_id || "",
           observacao: d.observacoes || "",

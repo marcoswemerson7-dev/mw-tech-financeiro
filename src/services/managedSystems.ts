@@ -28,12 +28,18 @@ async function execute(action: string, payload: Record<string, unknown> = {}) {
   if (!appwriteConfig.financialFunctionId) throw new Error("Função administrativa não configurada.");
   const execution = await functions.createExecution({
     functionId: appwriteConfig.financialFunctionId,
-    body: JSON.stringify({ action, ...payload }),
+    body: JSON.stringify({ action, idempotencyKey: ID.unique(), ...payload }),
     async: false,
   });
-  const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
+  let body: Record<string, any> = {};
+  try {
+    body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
+  } catch {
+    body = {};
+  }
   if (execution.status !== "completed" || body.error) {
-    throw new Error(body.error || "Operação não concluída.");
+    const executionError = String((execution as unknown as { errors?: string }).errors || "").trim();
+    throw new Error(body.error || executionError || "Operação não concluída.");
   }
   return body;
 }
