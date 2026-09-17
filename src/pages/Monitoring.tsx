@@ -96,6 +96,19 @@ function EndpointRow({
   );
 }
 
+function formatBytes(value: number | null | undefined) {
+  if (value === null || value === undefined) return "—";
+  const mb = value / 1024 / 1024;
+  return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
+}
+
+function MetricBox({ label, value }: { label: string; value: string | number }) {
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4">
+    <span className="text-[11px] font-black uppercase tracking-wide text-slate-400">{label}</span>
+    <b className="mt-1 block text-xl font-black text-[#07182d]">{value}</b>
+  </div>;
+}
+
 function SystemCard({ item }: { item: SystemHealthSnapshot }) {
   const StatusIcon = iconFor(item.overall);
   const isBg = item.key === "bg";
@@ -129,6 +142,19 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
       <div className="space-y-3 p-5">
         <EndpointRow icon={<Server size={19} />} title="Aplicação / domínio" health={item.app} />
         <EndpointRow icon={<Database size={19} />} title="Banco Supabase" health={item.database} />
+
+        {item.metrics?.configured ? <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricBox label="Processos" value={item.metrics.processes ?? "—"} />
+          <MetricBox label="Usuários cadastrados" value={item.metrics.users ?? "—"} />
+          <MetricBox label="Ativos em 24h" value={item.metrics.active24h ?? "—"} />
+          <MetricBox label="Banco de dados" value={formatBytes(item.metrics.databaseBytes)} />
+          <MetricBox label="Notas fiscais" value={item.metrics.invoices ?? "—"} />
+          <MetricBox label="Pagamentos" value={item.metrics.payments ?? "—"} />
+          <MetricBox label="Ações em 24h" value={item.metrics.audit24h ?? "—"} />
+          <MetricBox label="Atualização" value={item.metrics.checkedAt ? new Date(item.metrics.checkedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : "—"} />
+        </div> : <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          Métricas detalhadas aguardando as credenciais seguras do Supabase na Vercel.
+        </div>}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 p-4">
