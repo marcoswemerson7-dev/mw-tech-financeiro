@@ -13,6 +13,7 @@ import Accounts from "./pages/Accounts";
 import SupportCenter from "./pages/SupportCenter";
 import Systems from "./pages/Systems";
 import UsersAccess from "./pages/UsersAccess";
+import Storage from "./pages/Storage";
 function Private() {
   const { session, loading } = useAuth();
   if (loading)
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="contas" element={<Accounts />} />
           <Route path="despesas" element={<Expenses />} />
           <Route path="relatorios" element={<Reports />} />
+          <Route path="armazenamento" element={<Storage />} />
           <Route path="suporte" element={<SupportCenter />} />
           <Route path="sistemas" element={<Systems />} />
           <Route path="usuarios" element={<UsersAccess />} />
