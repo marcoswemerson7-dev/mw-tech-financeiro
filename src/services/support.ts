@@ -129,10 +129,20 @@ export const supportService = {
   },
 
   async updateStatus(ticketId: string, status: string) {
-    if (status === "resolvido" || status === "fechado") {
-      return archiveRequest(ticketId);
-    }
     const source = resolveSource(ticketId);
-    return requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "update_status", ticket_id: ticketId, status }) });
+    const result = await requestFrom(source, "", {
+      method: "POST",
+      body: JSON.stringify({ action: "update_status", ticket_id: ticketId, status }),
+    });
+
+    if (status === "resolvido" || status === "fechado") {
+      try {
+        await archiveRequest(ticketId);
+      } catch (error) {
+        console.warn("Chamado encerrado, mas o arquivamento no Drive falhou", error);
+      }
+    }
+
+    return result;
   },
 };
