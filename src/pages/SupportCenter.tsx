@@ -364,7 +364,7 @@ export default function SupportCenter() {
             </div>
           ) : (
             <div className="flex h-full min-h-[760px] flex-col">
-              <header className="border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
+              <div className="border-b border-slate-100 bg-white px-5 py-5 sm:px-6" style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
@@ -375,9 +375,9 @@ export default function SupportCenter() {
                     <div className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-slate-600"><Landmark size={16} /><span className="truncate">{selectedOrg?.name || selected.tenant_key}</span></div>
                     <p className="mt-2 text-[12px] text-slate-400">Aberto por {selected.requester_name || selected.requester_email || "Usuário"} em {fmt(selected.created_at)}</p>
                   </div>
-                  <button onClick={() => void loadDetail(selected, true)} className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50" title="Atualizar conversa"><RefreshCw size={16} /></button>
+                  <button onClick={() => void loadDetail(selected, true)} className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50" title="Atualizar conversa"><RefreshCw size={16} /></button>
                 </div>
-              </header>
+              </div>
 
               <div className="flex-1 overflow-y-auto bg-[#fbfcfe] px-4 py-5 sm:px-6 sm:py-6">
                 <div className="mb-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Conversa<span className="h-px flex-1 bg-slate-200" /></div>
