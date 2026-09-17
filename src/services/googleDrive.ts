@@ -1,6 +1,3 @@
-import { ID } from "appwrite";
-import { appwriteConfig, functions } from "../lib/appwrite";
-
 export type DriveFolderUsage = {
   id: string;
   name: string;
@@ -18,34 +15,25 @@ export type DriveStorageUsage = {
   percent: number;
   folders: DriveFolderUsage[];
   updatedAt: string;
+  account?: string;
 };
 
-export async function getDriveStorageUsage(): Promise<DriveStorageUsage> {
-  if (!appwriteConfig.financialFunctionId) {
-    throw new Error("Função administrativa não configurada.");
-  }
+const DRIVE_STORAGE_ENDPOINT = "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-drive-storage-summary";
+const MW_TECH_DRIVE_KEY = "ADJ9w5w15Tinci91aHGav4vWjpqDqhq2NBeHqqOoQH4";
 
-  const execution = await functions.createExecution({
-    functionId: appwriteConfig.financialFunctionId,
-    body: JSON.stringify({
-      action: "getDriveStorage",
-      idempotencyKey: `drive-storage-${ID.unique()}`,
-    }),
-    async: false,
+export async function getDriveStorageUsage(): Promise<DriveStorageUsage> {
+  const response = await fetch(DRIVE_STORAGE_ENDPOINT, {
+    method: "GET",
+    headers: {
+      "x-mw-tech-key": MW_TECH_DRIVE_KEY,
+    },
+    cache: "no-store",
   });
 
-  let body: Record<string, unknown> = {};
-  try {
-    body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
-  } catch {
-    body = {};
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || body?.error) {
+    throw new Error(body?.error || "Não foi possível consultar o armazenamento do Google Drive.");
   }
 
-  if (execution.status !== "completed" || body.error) {
-    const executionError = String((execution as unknown as { errors?: string }).errors || "").trim();
-    const responseError = typeof body.error === "string" ? body.error : "";
-    throw new Error(responseError || executionError || `Falha na função do Google Drive (${execution.status}).`);
-  }
-
-  return body as unknown as DriveStorageUsage;
+  return body as DriveStorageUsage;
 }
