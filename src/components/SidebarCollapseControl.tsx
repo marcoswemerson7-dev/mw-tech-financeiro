@@ -45,6 +45,27 @@ export default function SidebarCollapseControl() {
     };
   }, [collapsed, location.pathname]);
 
+  useEffect(() => {
+    if (location.pathname !== "/suporte") return;
+    const renameClosingAction = () => {
+      document.querySelectorAll("button").forEach((button) => {
+        if (button.textContent?.trim() === "Resolver chamado") {
+          const textNode = Array.from(button.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+          if (textNode) textNode.textContent = "Encerrar atendimento";
+          else button.append("Encerrar atendimento");
+        }
+        if (button.textContent?.trim() === "Resolvendo...") {
+          const textNode = Array.from(button.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
+          if (textNode) textNode.textContent = "Encerrando...";
+        }
+      });
+    };
+    renameClosingAction();
+    const observer = new MutationObserver(renameClosingAction);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
   if (location.pathname === "/login") return null;
 
   return (
