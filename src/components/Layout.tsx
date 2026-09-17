@@ -1,22 +1,8 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
-  House,
-  Wallet,
-  ArrowLeftRight,
-  Landmark,
-  Receipt,
-  FileChartColumn,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Bell,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  CircleDollarSign,
-  PanelsTopLeft,
-  UsersRound,
+  House, Wallet, ArrowLeftRight, Landmark, Receipt, FileChartColumn, Settings,
+  LogOut, Menu, X, Bell, ChevronDown, CircleDollarSign, PanelsTopLeft,
+  UsersRound, Search, Cloud, Headphones, Building2,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -34,187 +20,76 @@ const financeItems = [
   ["/relatorios", "Relatórios", FileChartColumn],
 ] as const;
 const bottomItems = [
-  ["/suporte", "Central de Suporte", Bell],
+  ["/suporte", "Central de Suporte", Headphones],
   ["/configuracoes", "Configurações", Settings],
 ] as const;
 
 export default function Layout() {
-  const [open, setOpen] = useState(false),
-    [collapsed, setCollapsed] = useState(() => localStorage.getItem("mw-sidebar-collapsed") === "true"),
-    loc = useLocation(),
-    { logout } = useAuth();
-
-  const title = [...items, ...financeItems, ...bottomItems].find(([p]) =>
-    p === "/" ? loc.pathname === "/" : loc.pathname.startsWith(p),
-  )?.[1];
+  const [open, setOpen] = useState(false);
+  const loc = useLocation();
+  const { logout } = useAuth();
   const financeActive = financeItems.some(([path]) => loc.pathname.startsWith(path));
 
   return (
-    <div className="min-h-screen bg-[#f2f5f9] text-slate-900">
-      <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[278px] flex-col bg-gradient-to-b from-[#061426] via-[#07182d] to-[#061426] text-white shadow-2xl shadow-slate-950/20 transition-all duration-300 lg:translate-x-0 ${collapsed ? "lg:w-[92px]" : "lg:w-[278px]"} ${open ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            const next = !collapsed;
-            setCollapsed(next);
-            localStorage.setItem("mw-sidebar-collapsed", String(next));
-          }}
-          className="absolute -right-4 top-[118px] z-40 hidden size-9 place-items-center rounded-full border border-white/15 bg-[#061426] text-[#f5c75b] shadow-lg shadow-slate-950/25 transition hover:bg-[#0b2b50] lg:grid"
-          aria-label={collapsed ? "Mostrar barra lateral" : "Esconder barra lateral"}
-          title={collapsed ? "Mostrar barra lateral" : "Esconder barra lateral"}
-        >
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-        </button>
-
-        <div className={`relative flex h-[154px] items-center justify-center border-b border-white/10 transition-all ${collapsed ? "lg:h-[110px] lg:px-3" : "px-6"}`}>
-          <img
-            src="/mw-tech-logo.png"
-            className={`object-contain transition-all duration-300 ${collapsed ? "h-[58px] w-[58px] lg:rounded-xl" : "h-[124px] w-[190px]"}`}
-            alt="MW TECH Control"
-          />
-          <button
-            className="absolute right-4 top-4 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden"
-            onClick={() => setOpen(false)}
-            aria-label="Fechar menu"
-          >
-            <X size={22} />
-          </button>
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-900">
+      <aside className={`fixed inset-y-0 left-0 z-30 flex w-[255px] flex-col overflow-y-auto border-r border-white/10 bg-[#071d35] text-white shadow-xl transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="relative flex min-h-[175px] items-center justify-center px-5 pt-3">
+          <img src="/mw-tech-logo-horizontal.png" className="w-[215px] max-h-[145px] object-contain" alt="MW TECH" />
+          <button className="absolute right-3 top-3 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu"><X size={22}/></button>
         </div>
 
-        <p className={`px-6 pb-3 pt-7 text-[11px] font-bold uppercase tracking-[.22em] text-slate-400 transition-all ${collapsed ? "lg:px-0 lg:text-center lg:text-[9px] lg:tracking-[.12em]" : ""}`}>
-          Menu principal
-        </p>
-
-        <nav className={`flex-1 space-y-2.5 px-4 ${collapsed ? "lg:px-3" : ""}`}>
-          {items.map(([to, label, I]) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/"}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex min-h-[56px] items-center gap-4 rounded-xl border-l-[4px] px-4 py-3 text-[15px] font-bold transition-all ${collapsed ? "lg:justify-center lg:px-2" : ""} ${isActive ? "border-l-[#e8ac35] bg-white/[.075] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.04)]" : "border-l-transparent text-slate-200 hover:bg-white/[.055] hover:text-white"}`
-              }
-              title={label}
-            >
-              <I size={21} strokeWidth={2} />
-              <span className={collapsed ? "lg:sr-only" : ""}>{label}</span>
+        <nav className="flex-1 space-y-1.5 px-3 pb-5">
+          {items.map(([to,label,I]) => (
+            <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} className={({isActive}) => `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition ${isActive ? "border-[#f0b83f] bg-white/[.08] text-[#f5c75b]" : "border-transparent text-slate-200 hover:bg-white/[.05] hover:text-white"}`}>
+              <I size={20}/><span>{label}</span>
             </NavLink>
           ))}
-          <div>
-            <div
-              className={`flex min-h-[56px] items-center gap-4 rounded-xl border-l-[4px] px-4 py-3 text-[15px] font-bold transition-all ${collapsed ? "lg:justify-center lg:px-2" : ""} ${financeActive ? "border-l-[#e8ac35] bg-white/[.075] text-[#f5c75b]" : "border-l-transparent text-slate-200"}`}
-              title="Financeiro"
-            >
-              <CircleDollarSign size={21} strokeWidth={2} />
-              <span className={collapsed ? "lg:sr-only" : ""}>Financeiro</span>
-              <ChevronDown size={15} className={`ml-auto ${collapsed ? "lg:hidden" : ""}`} />
+
+          <div className="pt-1">
+            <div className={`flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold ${financeActive ? "border-[#f0b83f] bg-white/[.08] text-[#f5c75b]" : "border-transparent text-slate-200"}`}>
+              <CircleDollarSign size={20}/><span>Financeiro</span><ChevronDown size={15} className="ml-auto"/>
             </div>
-            <div className={`mt-1 space-y-1 ${collapsed ? "lg:hidden" : ""}`}>
-              {financeItems.map(([to, label, I]) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={() => setOpen(false)}
-                  className={({ isActive }) =>
-                    `ml-7 flex min-h-[40px] items-center gap-3 rounded-lg px-3 text-[13px] font-semibold transition ${isActive ? "bg-white/[.075] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.055] hover:text-white"}`
-                  }
-                >
-                  <I size={16} />
-                  {label}
+            <div className="mt-1 space-y-1 pl-5">
+              {financeItems.map(([to,label,I]) => (
+                <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({isActive}) => `flex min-h-[37px] items-center gap-2.5 rounded-lg px-3 text-[12px] font-semibold transition ${isActive ? "bg-white/[.07] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.05] hover:text-white"}`}>
+                  <I size={15}/>{label}
                 </NavLink>
               ))}
             </div>
           </div>
-          {bottomItems.map(([to, label, I]) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex min-h-[56px] items-center gap-4 rounded-xl border-l-[4px] px-4 py-3 text-[15px] font-bold transition-all ${collapsed ? "lg:justify-center lg:px-2" : ""} ${isActive ? "border-l-[#e8ac35] bg-white/[.075] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.04)]" : "border-l-transparent text-slate-200 hover:bg-white/[.055] hover:text-white"}`
-              }
-              title={label}
-            >
-              <I size={21} strokeWidth={2} />
-              <span className={collapsed ? "lg:sr-only" : ""}>{label}</span>
+
+          <div className="flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] border-transparent px-4 text-[14px] font-bold text-slate-200">
+            <Cloud size={20}/><span>Armazenamento (Drive)</span>
+          </div>
+
+          {bottomItems.map(([to,label,I]) => (
+            <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({isActive}) => `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition ${isActive ? "border-[#f0b83f] bg-white/[.08] text-[#f5c75b]" : "border-transparent text-slate-200 hover:bg-white/[.05] hover:text-white"}`}>
+              <I size={20}/><span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className={`border-t border-white/10 p-4 ${collapsed ? "lg:px-3" : ""}`}>
-          <button
-            onClick={logout}
-            className={`flex min-h-[50px] w-full items-center gap-3 rounded-xl px-4 py-3 text-[14px] font-semibold text-slate-300 transition hover:bg-white/[.06] hover:text-white ${collapsed ? "lg:justify-center lg:px-2" : ""}`}
-            title="Sair"
-          >
-            <LogOut size={19} />
-            <span className={collapsed ? "lg:sr-only" : ""}>Sair</span>
-          </button>
-          <div className={`mt-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.06] p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] ${collapsed ? "lg:justify-center lg:p-2.5" : ""}`}>
-            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#f5c75b] to-[#d99a24] text-xs font-black text-[#071426]">
-              MW
-            </span>
-            <div className={`min-w-0 ${collapsed ? "lg:hidden" : ""}`}>
-              <b className="block truncate text-[13px]">Administrador</b>
-              <small className="text-[11px] text-slate-400">Acesso completo</small>
-            </div>
-            <ChevronDown size={14} className={`ml-auto shrink-0 text-slate-400 ${collapsed ? "lg:hidden" : ""}`} />
-          </div>
+        <div className="mx-4 mb-4 rounded-2xl border border-[#c99a38]/30 bg-white/[.035] p-4">
+          <div className="flex items-start gap-3"><Building2 size={26} className="mt-0.5 text-[#f0b83f]"/><div><b className="text-sm">MW TECH</b><p className="mt-1 text-xs leading-5 text-slate-300">Gestão hoje.<br/>Resultados amanhã.</p></div></div>
         </div>
+        <button onClick={logout} className="mx-4 mb-5 flex min-h-[42px] items-center gap-3 rounded-xl px-4 text-sm font-semibold text-slate-400 hover:bg-white/[.05] hover:text-white"><LogOut size={18}/>Sair</button>
       </aside>
 
-      {open && (
-        <button
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
-          aria-label="Fechar menu"
-        />
-      )}
+      {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu"/>}
 
-      <div className={`transition-all duration-300 ${collapsed ? "lg:pl-[92px]" : "lg:pl-[270px]"}`}>
-        <header className="sticky top-0 z-10 flex min-h-[108px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#061426] via-[#082b50] to-[#061426] px-5 text-white shadow-[0_8px_28px_rgba(6,20,38,.18)] sm:px-8 lg:px-11">
-          <div className="flex min-w-0 items-center">
-            <button
-              className="mr-4 rounded-xl border border-white/15 bg-white/10 p-2.5 text-white lg:hidden"
-              onClick={() => setOpen(true)}
-              aria-label="Abrir menu"
-            >
-              <Menu size={22} />
-            </button>
-            <div className="min-w-0">
-              <p className="text-[12px] font-black uppercase tracking-[.24em] text-[#f5c75b]">
-                MW TECH Control
-              </p>
-              <h1 className="mt-1 truncate text-[28px] font-black tracking-[-0.01em] text-white sm:text-[32px]">
-                {title}
-              </h1>
-            </div>
+      <div className="lg:pl-[255px]">
+        <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-white/10 bg-[#082743] px-4 text-white shadow-sm sm:px-7">
+          <div className="flex items-center gap-4">
+            <button className="rounded-lg p-2 hover:bg-white/10 lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={22}/></button>
+            <div className="hidden h-10 w-[500px] max-w-[42vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.06] px-4 md:flex"><Search size={18} className="text-slate-300"/><input aria-label="Buscar no sistema" placeholder="Buscar no sistema..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400"/><span className="rounded-md bg-white/[.06] px-2 py-1 text-[11px] text-slate-300">Ctrl + K</span></div>
           </div>
-
           <div className="flex items-center gap-3">
-            <button className="relative grid size-12 place-items-center rounded-xl border border-white/10 bg-white/[.06] text-white shadow-sm transition hover:bg-white/[.1]" aria-label="Notificações">
-              <Bell size={20} />
-              <i className="absolute right-2.5 top-2.5 size-2.5 rounded-full bg-[#f5c75b] ring-2 ring-[#082b50]" />
-            </button>
-            <button className="hidden min-h-[54px] items-center gap-2.5 rounded-xl border border-white/12 bg-white/[.06] p-1.5 pr-3 shadow-sm sm:flex">
-              <span className="grid size-11 place-items-center rounded-lg bg-[#061426] text-xs font-black text-[#e5b557]">
-                MW
-              </span>
-              <span className="text-left leading-tight">
-                <b className="block text-[14px] text-white">Administrador</b>
-                <small className="text-[12px] text-blue-100">Acesso completo</small>
-              </span>
-              <ChevronDown size={16} className="text-blue-100" />
-            </button>
+            <button className="relative grid size-10 place-items-center rounded-xl text-white hover:bg-white/10" aria-label="Notificações"><Bell size={20}/><i className="absolute right-2 top-2 size-2 rounded-full bg-[#f5c75b]"/></button>
+            <div className="h-7 w-px bg-white/15"/>
+            <button className="flex items-center gap-2.5 rounded-xl border border-white/10 px-2 py-1.5 hover:bg-white/[.05]"><span className="grid size-9 place-items-center rounded-full bg-[#061426] text-xs font-black text-[#e5b557]">MW</span><span className="hidden text-left leading-tight sm:block"><b className="block text-[13px]">Administrador</b><small className="text-[11px] text-blue-100">Acesso completo</small></span><ChevronDown size={15}/></button>
           </div>
         </header>
-
-        <main className="mx-auto w-full max-w-[1600px] p-5 sm:p-8 lg:p-10 xl:p-11">
-          <Outlet />
-        </main>
+        <main className="mx-auto w-full max-w-[1680px] p-4 sm:p-6 lg:p-8"><Outlet/></main>
       </div>
     </div>
   );
