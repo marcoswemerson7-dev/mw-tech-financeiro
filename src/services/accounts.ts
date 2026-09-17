@@ -1,5 +1,5 @@
-import { ID, Query } from "appwrite";
-import { appwriteConfig, tables, TABLES } from "../lib/appwrite";
+import { Query } from "appwrite";
+import { appwriteConfig, functions, tables, TABLES } from "../lib/appwrite";
 import { clearFastCache, readFastCache, writeFastCache } from "../lib/fast-cache";
 
 export type Account = {
@@ -15,23 +15,25 @@ let accountsCacheAt = accountsCache ? Date.now() : 0;
 const CACHE_TTL = 5 * 60 * 1000;
 let reconcilePromise: Promise<Account[]> | null = null;
 
-export function peekAccounts() {
-  return accountsCache;
-}
+export function peekAccounts() { return accountsCache; }
+export function invalidateAccountsCache() { accountsCache = null; accountsCacheAt = 0; clearFastCache("accounts"); }
 
-export function invalidateAccountsCache() {
-  accountsCache = null;
-  accountsCacheAt = 0;
-  clearFastCache("accounts");
+async function execute(action: string, payload: Record<string, unknown>) {
+  if (!appwriteConfig.financialFunctionId) throw new Error("Função financeira não configurada.");
+  const execution = await functions.createExecution({
+    functionId: appwriteConfig.financialFunctionId,
+    body: JSON.stringify({ action, idempotencyKey: crypto.randomUUID(), ...payload }),
+    async: false,
+  });
+  let body: Record<string, any> = {};
+  try { body = execution.responseBody ? JSON.parse(execution.responseBody) : {}; } catch { body = {}; }
+  const executionError = String((execution as unknown as { errors?: string }).errors || "").trim();
+  if (execution.status !== "completed" || body.error) throw new Error(body.error || executionError || "Operação não concluída.");
+  return body;
 }
 
 async function reconcileBalances(accounts: Account[]) {
-  const movements = await tables.listRows({
-    databaseId: appwriteConfig.databaseId,
-    tableId: TABLES.transactions,
-    queries: [Query.limit(5000)],
-  });
-
+  const movements = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.transactions, queries: [Query.limit(5000)] });
   const expected = new Map(accounts.map((account) => [account.id, Number(account.saldo_inicial || 0)]));
   for (const movement of movements.rows as any[]) {
     const value = Number(movement.valor || 0);
@@ -47,24 +49,8 @@ async function reconcileBalances(accounts: Account[]) {
       expected.set(destinationId, (expected.get(destinationId) || 0) + value);
     }
   }
-
-  const now = new Date().toISOString();
-  const reconciled = await Promise.all(accounts.map(async (account) => {
-    const calculated = Number((expected.get(account.id) ?? account.saldo_inicial ?? 0).toFixed(2));
-    if (Math.abs(calculated - Number(account.saldo_atual || 0)) > 0.009) {
-      await tables.updateRow({
-        databaseId: appwriteConfig.databaseId,
-        tableId: TABLES.accounts,
-        rowId: account.id,
-        data: { saldo_atual: calculated, updated_at: now },
-      });
-    }
-    return { ...account, saldo_atual: calculated };
-  }));
-  accountsCache = reconciled;
-  accountsCacheAt = Date.now();
-  writeFastCache("accounts", reconciled);
-  return reconciled;
+  const reconciled = accounts.map((account) => ({ ...account, saldo_atual: Number((expected.get(account.id) ?? account.saldo_inicial ?? 0).toFixed(2)) }));
+  accountsCache = reconciled; accountsCacheAt = Date.now(); writeFastCache("accounts", reconciled); return reconciled;
 }
 
 export function reconcileAccountsInBackground() {
@@ -75,46 +61,33 @@ export function reconcileAccountsInBackground() {
 
 export async function getAccounts(force = false) {
   if (!force && accountsCache && Date.now() - accountsCacheAt < CACHE_TTL) return accountsCache;
-
-  const result = await tables.listRows({
-    databaseId: appwriteConfig.databaseId,
-    tableId: TABLES.accounts,
-    queries: [Query.orderAsc("nome"), Query.limit(200)],
-  });
+  const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, queries: [Query.orderAsc("nome"), Query.limit(200)] });
   const rows = result.rows.map(map);
-  accountsCache = rows;
-  accountsCacheAt = Date.now();
-  writeFastCache("accounts", rows);
-
-  // A conferência completa continua existindo, mas nunca bloqueia a interface.
-  // Isso é especialmente importante após salvar/excluir, quando várias telas usam getAccounts(true).
-  void reconcileAccountsInBackground();
+  accountsCache = rows; accountsCacheAt = Date.now(); writeFastCache("accounts", rows);
   return rows;
 }
 
 export async function saveAccount(data: Partial<Account>, id?: string) {
   const payload = {
+    id,
     nome: data.nome,
-    tipo: data.tipo_conta || "corrente",
+    tipo_conta: data.tipo_conta || "corrente",
     banco: data.banco || "",
     codigo_banco: data.codigo_banco || "",
     agencia: data.agencia || "",
-    numero_conta: data.conta || "",
+    conta: data.conta || "",
     saldo_inicial: Number(data.saldo_inicial || 0),
-    saldo_atual: id ? Number(data.saldo_atual || 0) : Number(data.saldo_inicial || 0),
+    saldo_atual: Number(data.saldo_atual ?? data.saldo_inicial ?? 0),
     cor: data.cor || "#0b2b66",
     ativo: data.ativo ?? true,
-    updated_at: new Date().toISOString(),
   };
-  const result = id
-    ? await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: id, data: payload })
-    : await tables.createRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: ID.unique(), data: { ...payload, created_at: new Date().toISOString() } });
+  const result = await execute("saveAccount", payload);
   invalidateAccountsCache();
-  return result;
+  return result.row;
 }
 
 export async function deleteAccount(id: string) {
-  const result = await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.accounts, rowId: id });
+  const result = await execute("deleteAccount", { id });
   invalidateAccountsCache();
   return result;
 }
