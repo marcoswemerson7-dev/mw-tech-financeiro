@@ -23,7 +23,7 @@ main > div:has(> footer) b { font-weight: 680 !important; }
 @media (min-width: 1280px) {
   main:has(> div > footer) {
     padding: 12px 14px 8px !important;
-    background: #f3f7fb !important;
+    background: #eef4f9 !important;
   }
 
   main > div:has(> footer) {
@@ -34,12 +34,12 @@ main > div:has(> footer) b { font-weight: 680 !important; }
 
   /* HERO */
   main > div:has(> footer) > section:nth-of-type(1) {
-    min-height: 122px !important;
-    padding: 18px 28px !important;
-    border: 1px solid #dfe7f0 !important;
+    min-height: 116px !important;
+    padding: 17px 26px !important;
+    border: 1px solid #d9e4ef !important;
     border-radius: 15px !important;
-    background: linear-gradient(100deg, #fff 0%, #fff 47%, #f9fbff 68%, #fff 100%) !important;
-    box-shadow: 0 8px 24px rgba(15, 42, 72, .055) !important;
+    background: linear-gradient(100deg, #fff 0%, #fff 45%, #f8fbff 68%, #fff 100%) !important;
+    box-shadow: 0 8px 22px rgba(15, 42, 72, .06) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(1) > div:last-child {
@@ -57,13 +57,14 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   main > div:has(> footer) > section:nth-of-type(1) h1 + p {
     margin-top: 7px !important;
     font-size: 13px !important;
-    color: #6480a0 !important;
+    color: #5d7897 !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(1) > div:last-child > div:nth-child(2),
   main > div:has(> footer) > section:nth-of-type(1) > div:last-child > div:nth-child(3) {
-    min-height: 82px !important;
+    min-height: 80px !important;
     border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(20, 48, 80, .06) !important;
   }
 
   /* KPI */
@@ -72,17 +73,17 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   }
 
   main > div:has(> footer) > section:nth-of-type(2) > a {
-    min-height: 126px !important;
-    padding: 16px 18px !important;
-    border: 1px solid #e0e8f1 !important;
+    min-height: 120px !important;
+    padding: 15px 17px !important;
+    border: 1px solid #dbe6f1 !important;
     border-radius: 15px !important;
-    background: #fff !important;
-    box-shadow: 0 7px 20px rgba(25, 55, 86, .055) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%) !important;
+    box-shadow: 0 7px 20px rgba(25, 55, 86, .06) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(2) > a:hover {
-    border-color: #cad8e7 !important;
-    box-shadow: 0 10px 26px rgba(25, 55, 86, .085) !important;
+    border-color: #c4d5e6 !important;
+    box-shadow: 0 10px 26px rgba(25, 55, 86, .10) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(2) > a p:first-of-type {
@@ -99,25 +100,31 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   }
 
   main > div:has(> footer) > section:nth-of-type(2) > a p:nth-of-type(3) {
-    color: #8298b2 !important;
+    color: #7d95af !important;
   }
 
   /* DRIVE + SISTEMAS */
   main > div:has(> footer) > section:nth-of-type(3) {
     grid-template-columns: minmax(0, 2.25fr) minmax(315px, .82fr) !important;
     gap: 12px !important;
+    align-items: stretch !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section {
-    border: 1px solid #dfe7f0 !important;
+    border: 1px solid #d9e4ef !important;
     border-radius: 15px !important;
     background: #fff !important;
-    box-shadow: 0 7px 20px rgba(25, 55, 86, .05) !important;
+    box-shadow: 0 7px 20px rgba(25, 55, 86, .055) !important;
   }
 
+  /* Google Drive compacto, na proporção do modelo */
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child {
-    min-height: 290px !important;
-    padding: 15px 17px !important;
+    min-height: 246px !important;
+    padding: 14px 16px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:first-child {
+    margin-bottom: 12px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:first-child h2 {
@@ -126,32 +133,96 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child {
-    grid-template-columns: 370px minmax(0, 1fr) !important;
-    gap: 22px !important;
+    grid-template-columns: 330px minmax(0, 1fr) !important;
+    gap: 18px !important;
+    align-items: stretch !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child {
-    min-height: 205px !important;
-    padding: 18px 20px !important;
+    min-height: 170px !important;
+    padding: 15px 17px !important;
     border-radius: 12px !important;
-    background: linear-gradient(145deg, #062847 0%, #05233f 100%) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 20px rgba(5,35,63,.12) !important;
+    background: linear-gradient(145deg, #073254 0%, #052640 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 20px rgba(5,35,63,.14) !important;
   }
 
-  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child p:nth-child(2) {
-    font-size: 34px !important;
+  /* Corrige o bloco de uso para não quebrar os GB em várias linhas */
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > p:first-child {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: #c8d8e8 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(2) {
+    margin-top: 5px !important;
+    align-items: flex-end !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(2) > p:first-child {
+    font-size: 30px !important;
+    line-height: 1 !important;
     font-weight: 760 !important;
+    white-space: nowrap !important;
   }
 
-  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:last-child > div.space-y-2 > div,
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(2) > p:last-child {
+    max-width: none !important;
+    padding-bottom: 2px !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    color: #d7e4f1 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(3) {
+    margin-top: 11px !important;
+    height: 7px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(4) {
+    margin-top: 12px !important;
+    gap: 8px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(4) > div {
+    min-height: 54px !important;
+    padding: 8px 10px !important;
+    border: 1px solid rgba(255,255,255,.04) !important;
+    background: rgba(255,255,255,.075) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(4) p:first-child {
+    font-size: 9px !important;
+    color: #bfd0e1 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child > div:nth-child(4) p:last-child {
+    margin-top: 2px !important;
+    font-size: 14px !important;
+    line-height: 1.1 !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    color: #fff !important;
+  }
+
+  /* Pastas mais vivas e compactas */
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:last-child > div.space-y-2 > div {
+    min-height: 50px !important;
+    border: 1px solid #e5edf6 !important;
+    background: linear-gradient(180deg, #f8fbfe 0%, #f4f8fc 100%) !important;
+    box-shadow: 0 2px 7px rgba(30, 73, 110, .035) !important;
+  }
+
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:last-child > div.space-y-2 > a {
-    min-height: 56px !important;
-    border: 1px solid #edf1f6 !important;
-    background: #f7f9fc !important;
+    min-height: 34px !important;
+    border-color: #d7e4f0 !important;
+    color: #1769d2 !important;
+    background: #fbfdff !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:last-child {
-    padding: 16px !important;
+    padding: 15px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:last-child > div:first-child h2 {
@@ -160,8 +231,9 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:last-child > div:last-child > div {
-    min-height: 62px !important;
-    background: #f6f8fb !important;
+    min-height: 57px !important;
+    background: linear-gradient(180deg, #f8fbfe 0%, #f4f8fc 100%) !important;
+    border: 1px solid #edf2f7 !important;
   }
 
   /* LINHA INFERIOR */
@@ -171,12 +243,12 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   }
 
   main > div:has(> footer) > section:nth-of-type(4) > section {
-    min-height: 254px !important;
-    padding: 16px !important;
-    border: 1px solid #dfe7f0 !important;
+    min-height: 246px !important;
+    padding: 15px !important;
+    border: 1px solid #d9e4ef !important;
     border-radius: 15px !important;
     background: #fff !important;
-    box-shadow: 0 7px 20px rgba(25, 55, 86, .05) !important;
+    box-shadow: 0 7px 20px rgba(25, 55, 86, .055) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(4) > section h2 {
@@ -185,24 +257,24 @@ main > div:has(> footer) b { font-weight: 680 !important; }
   }
 
   main > div:has(> footer) > section:nth-of-type(4) .recharts-responsive-container {
-    height: 178px !important;
+    height: 172px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(4) > section:last-child a {
-    min-height: 74px !important;
-    border: 1px solid #edf2f7 !important;
-    background: #f8fafc !important;
+    min-height: 70px !important;
+    border: 1px solid #e7eef6 !important;
+    background: linear-gradient(180deg, #fbfdff 0%, #f5f9fd 100%) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(4) > section:last-child a:hover {
     background: #edf5ff !important;
-    border-color: #d8e6f6 !important;
+    border-color: #cfdeee !important;
   }
 
   main > div:has(> footer) > footer {
     padding: 1px 8px 2px !important;
     font-size: 9px !important;
-    color: #7d93ad !important;
+    color: #768fa9 !important;
   }
 }
 
@@ -210,8 +282,8 @@ main > div:has(> footer) b { font-weight: 680 !important; }
 @media (min-width: 1024px) {
   body > #root aside {
     width: 236px !important;
-    background: linear-gradient(180deg, #062844 0%, #05243f 52%, #042039 100%) !important;
-    box-shadow: 8px 0 24px rgba(3, 25, 47, .11) !important;
+    background: linear-gradient(180deg, #072c4a 0%, #052641 52%, #042039 100%) !important;
+    box-shadow: 8px 0 24px rgba(3, 25, 47, .12) !important;
   }
 
   body > #root .lg\:pl-\[254px\] {
@@ -220,13 +292,13 @@ main > div:has(> footer) b { font-weight: 680 !important; }
 
   body > #root aside > div:first-child {
     min-height: 166px !important;
-    border-bottom-color: rgba(255,255,255,.035) !important;
+    border-bottom-color: rgba(255,255,255,.04) !important;
   }
 
   body > #root aside > div:first-child img {
     height: 132px !important;
     width: 190px !important;
-    filter: saturate(1.12) contrast(1.05) !important;
+    filter: saturate(1.18) contrast(1.07) brightness(1.04) !important;
   }
 
   body > #root aside nav {
@@ -249,19 +321,19 @@ main > div:has(> footer) b { font-weight: 680 !important; }
     padding-left: 10px !important;
     font-size: 11px !important;
     font-weight: 520 !important;
-    color: #d6e0eb !important;
+    color: #dbe7f2 !important;
   }
 
   body > #root aside nav a[aria-current="page"] {
-    box-shadow: inset 3px 0 0 #f2bc3e, inset 0 0 0 1px rgba(255,255,255,.025) !important;
+    box-shadow: inset 3px 0 0 #f3be3f, inset 0 0 0 1px rgba(255,255,255,.03), 0 3px 10px rgba(0,0,0,.06) !important;
   }
 
   body > #root header {
     height: 58px !important;
     padding-left: 18px !important;
     padding-right: 18px !important;
-    background: linear-gradient(90deg, #082e50 0%, #0a3a63 45%, #082e50 100%) !important;
-    box-shadow: 0 4px 14px rgba(6, 20, 38, .14) !important;
+    background: linear-gradient(90deg, #08345a 0%, #0a426f 45%, #08345a 100%) !important;
+    box-shadow: 0 4px 14px rgba(6, 20, 38, .16) !important;
   }
 
   body > #root header input {
