@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "../lib/auth";
 import { supportService, type SupportTicket } from "../services/support";
 
-const CHECK_INTERVAL_MS = 2500;
+const CHECK_INTERVAL_MS = 2000;
 const TITLE_RESET_MS = 9000;
 
 const stamp = (ticket: SupportTicket) =>
@@ -23,44 +23,6 @@ function emitToast(message: string) {
   );
 }
 
-function playSupportChime() {
-  try {
-    const AudioContextCtor =
-      window.AudioContext ||
-      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextCtor) return;
-
-    const ctx = new AudioContextCtor();
-    void ctx.resume().catch(() => undefined);
-
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0.0001, ctx.currentTime);
-    master.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.025);
-    master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.72);
-    master.connect(ctx.destination);
-
-    const notes = [659.25, 880];
-    notes.forEach((frequency, index) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const start = ctx.currentTime + index * 0.18;
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(frequency, start);
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.8, start + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
-      osc.connect(gain);
-      gain.connect(master);
-      osc.start(start);
-      osc.stop(start + 0.3);
-    });
-
-    window.setTimeout(() => void ctx.close(), 1100);
-  } catch {
-    // O navegador pode bloquear áudio antes da primeira interação do usuário.
-  }
-}
-
 export default function SupportNotifier() {
   const { session } = useAuth();
   const initialized = useRef(false);
@@ -68,6 +30,71 @@ export default function SupportNotifier() {
   const originalTitle = useRef(document.title);
   const titleTimer = useRef<number | null>(null);
   const busy = useRef(false);
+  const audioContext = useRef<AudioContext | null>(null);
+  const audioUnlocked = useRef(false);
+
+  useEffect(() => {
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+    const unlockAudio = async () => {
+      if (!AudioContextCtor || audioUnlocked.current) return;
+      try {
+        const ctx = audioContext.current || new AudioContextCtor();
+        audioContext.current = ctx;
+        if (ctx.state === "suspended") await ctx.resume();
+
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.00001, ctx.currentTime);
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.01);
+        audioUnlocked.current = true;
+      } catch {
+        // Uma nova interação do usuário tentará novamente.
+      }
+    };
+
+    window.addEventListener("pointerdown", unlockAudio, { passive: true });
+    window.addEventListener("keydown", unlockAudio);
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+  }, []);
+
+  const playSupportChime = () => {
+    try {
+      const ctx = audioContext.current;
+      if (!ctx || ctx.state !== "running") return;
+
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, ctx.currentTime);
+      master.gain.exponentialRampToValueAtTime(0.24, ctx.currentTime + 0.02);
+      master.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.9);
+      master.connect(ctx.destination);
+
+      [659.25, 880, 1046.5].forEach((frequency, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = ctx.currentTime + index * 0.14;
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.8, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(start);
+        osc.stop(start + 0.28);
+      });
+    } catch {
+      // Mantém a notificação visual mesmo se o áudio falhar.
+    }
+  };
 
   useEffect(() => {
     if (!session) {
@@ -96,6 +123,8 @@ export default function SupportNotifier() {
       titleTimer.current = window.setTimeout(() => {
         document.title = originalTitle.current;
       }, TITLE_RESET_MS);
+
+      window.dispatchEvent(new CustomEvent("mw-support-notification", { detail: { ticket, isNewTicket } }));
     };
 
     const check = async () => {
@@ -112,6 +141,7 @@ export default function SupportNotifier() {
         if (!initialized.current) {
           snapshot.current = new Map(active.map((ticket) => [ticket.id, stamp(ticket)]));
           initialized.current = true;
+          window.dispatchEvent(new CustomEvent("mw-support-updated", { detail: { tickets: data.tickets } }));
           return;
         }
 
@@ -136,13 +166,11 @@ export default function SupportNotifier() {
           changes
             .sort((a, b) => stamp(a.ticket) - stamp(b.ticket))
             .forEach(({ ticket, isNew }) => notify(ticket, isNew));
-
-          window.dispatchEvent(
-            new CustomEvent("mw-support-updated", { detail: { tickets: data.tickets } }),
-          );
         }
-      } catch {
-        // Uma falha temporária na notificação não deve interromper o sistema.
+
+        window.dispatchEvent(new CustomEvent("mw-support-updated", { detail: { tickets: data.tickets } }));
+      } catch (error) {
+        console.warn("[SUPPORT-NOTIFIER] Falha ao consultar chamados", error);
       } finally {
         busy.current = false;
       }
@@ -164,6 +192,12 @@ export default function SupportNotifier() {
       document.title = originalTitle.current;
     };
   }, [session]);
+
+  useEffect(() => {
+    return () => {
+      if (audioContext.current) void audioContext.current.close().catch(() => undefined);
+    };
+  }, []);
 
   return null;
 }
