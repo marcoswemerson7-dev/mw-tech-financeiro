@@ -24,13 +24,15 @@ const tables = [
   { id: "despesas_recorrencias", name: "Despesas recorrentes", columns: [s("descricao",255,true),s("categoria_id",36),s("conta_id",36),f("valor",true),{key:"dia_vencimento",type:"integer",required:true},dt("data_inicio",true),dt("data_fim"),b("ativo",true),dt("created_at",true)], indexes:[{key:"recorrencia_ativa",type:"key",attributes:["ativo"]}] },
   { id: "pagamentos_despesas", name: "Pagamentos de despesas", columns: [s("despesa_id",36,true),s("conta_id",36,true),f("valor",true),dt("data_pagamento",true),s("comprovante_id",36),s("observacao",32768),s("created_by",36,true),b("estornado"),dt("created_at",true),dt("estornado_at"),s("idempotency_key",36,true)], indexes:[{key:"pagamento_despesa",type:"key",attributes:["despesa_id"]},{key:"pagamento_idempotency",type:"unique",attributes:["idempotency_key"]}] },
   { id: "configuracoes_empresa", name: "Configurações da empresa", columns: ["nome_empresa","razao_social","cnpj","telefone","email","endereco","cidade","estado","pix","banco","agencia","conta","logo_url"].map(k=>s(k,k==="endereco"||k==="logo_url"?2048:255)) },
+  { id: "sistemas_orgaos", name: "Sistemas e órgãos", permissions: [], columns: [s("orgao",180,true),s("tipo_orgao",40,true),s("sistema",120,true),s("dominio_url",2048),s("vercel_url",2048),s("acesso_url",2048),s("ambiente",30,true),s("status",30,true),s("observacao",32768),dt("created_at",true),dt("updated_at",true)], indexes:[{key:"sistema_orgao",type:"key",attributes:["orgao"]},{key:"sistema_status",type:"key",attributes:["status"]}] },
+  { id: "usuarios_acessos", name: "Usuários e acessos", permissions: [], columns: [s("nome",180,true),s("email",320,true),s("cargo",120,true),s("status",30,true),s("modulos",32768,true),dt("created_at",true),dt("updated_at",true)], indexes:[{key:"acesso_email",type:"unique",attributes:["email"]},{key:"acesso_status",type:"key",attributes:["status"]}] },
   { id: "operacoes_idempotentes", name: "Operações idempotentes", columns: [s("action",40,true),s("user_id",36,true),s("result_id",36),dt("created_at",true)] },
 ];
 async function exists(run:()=>Promise<unknown>) { try { await run(); return true; } catch (e:any) { if (e?.code === 404) return false; throw e; } }
-if (!(await exists(()=>db.get({ databaseId })))) await db.create({ databaseId, name: "MW TECH Financeiro" });
+if (!(await exists(()=>db.get({ databaseId })))) await db.create({ databaseId, name: "MW TECH Control" });
 for (const table of tables) {
   if (await exists(()=>db.getTable({databaseId,tableId:table.id}))) { console.log(`= ${table.id}`); continue; }
-  await db.createTable({ databaseId, tableId:table.id, name:table.name, permissions, rowSecurity:false, columns:table.columns, indexes:table.indexes || [] });
+  await db.createTable({ databaseId, tableId:table.id, name:table.name, permissions:"permissions" in table ? table.permissions : permissions, rowSecurity:false, columns:table.columns, indexes:table.indexes || [] });
   console.log(`+ ${table.id}`);
 }
 if (!(await exists(()=>storage.getBucket({bucketId:"comprovantes"})))) {
