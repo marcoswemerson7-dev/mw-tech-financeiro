@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/auth";
 import Layout from "./components/Layout";
 import SupportNotifier from "./components/SupportNotifier";
+import SidebarCollapseControl from "./components/SidebarCollapseControl";
 
 function lazyWithRecovery<T extends ComponentType<any>>(
   importer: () => Promise<{ default: T }>,
@@ -140,6 +141,7 @@ export default function App() {
     <AppErrorBoundary>
       <AuthProvider>
         <SupportNotifier />
+        <SidebarCollapseControl />
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/login" element={<Login />} />
