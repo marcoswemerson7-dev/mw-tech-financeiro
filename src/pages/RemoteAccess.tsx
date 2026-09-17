@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
   Search,
+  ShieldCheck,
   Trash2,
   UserRound,
   Wifi,
@@ -31,6 +32,7 @@ const emptyForm = {
   dispositivo: "",
   anydesk_id: "",
   observacao: "",
+  acesso_nao_supervisionado: false,
   ativo: true,
 };
 
@@ -111,6 +113,7 @@ export default function RemoteAccess() {
       dispositivo: device.dispositivo,
       anydesk_id: device.anydesk_id,
       observacao: device.observacao || "",
+      acesso_nao_supervisionado: device.acesso_nao_supervisionado === true,
       ativo: device.ativo,
     });
     setError("");
@@ -156,7 +159,7 @@ export default function RemoteAccess() {
           <div>
             <div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-[.22em] text-[#c98d20]"><Monitor size={17}/> MW TECH Control</div>
             <h1 className="text-[34px] font-black tracking-[-.03em] text-[#07182d]">Acesso remoto · AnyDesk</h1>
-            <p className="mt-2 max-w-2xl text-sm font-medium text-slate-500">Dispositivos separados por Prefeitura, Câmara, empresa ou outro órgão.</p>
+            <p className="mt-2 max-w-2xl text-sm font-medium text-slate-500">Dispositivos separados por Prefeitura, Câmara, empresa ou outro órgão, com indicação de acesso não supervisionado.</p>
           </div>
           <button onClick={openNew} className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#082743] px-5 text-sm font-black text-white shadow-[0_10px_24px_rgba(8,39,67,.18)] transition hover:-translate-y-0.5 hover:bg-[#0b355b]"><Plus size={18}/> Adicionar dispositivo</button>
         </div>
@@ -198,7 +201,10 @@ export default function RemoteAccess() {
                         <article key={device.id} className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_8px_24px_rgba(7,24,45,.05)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(7,24,45,.09)]">
                           <div className="p-5">
                             <div className="flex items-start justify-between gap-3"><div className="flex items-center gap-3"><div className="grid size-12 place-items-center rounded-2xl bg-slate-100 text-[#082743]"><Monitor size={23}/></div><div><h3 className="font-black text-[#07182d]">{device.dispositivo}</h3><p className="mt-1 text-xs font-semibold text-slate-500">{device.setor || "Setor não informado"}</p></div></div><span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${device.ativo ? theme.pill : "border-slate-200 bg-slate-100 text-slate-500"}`}>{device.ativo ? "Ativo" : "Inativo"}</span></div>
-                            <div className="mt-5 space-y-3 rounded-2xl bg-slate-50 p-4">
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              {device.acesso_nao_supervisionado ? <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.08em] text-emerald-700"><ShieldCheck size={13}/> Não supervisionado configurado</span> : <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.08em] text-slate-500"><ShieldCheck size={13}/> Aceite manual</span>}
+                            </div>
+                            <div className="mt-4 space-y-3 rounded-2xl bg-slate-50 p-4">
                               <div><span className="text-[10px] font-black uppercase tracking-[.12em] text-slate-400">AnyDesk</span><p className={`mt-1 text-base font-black ${theme.accent}`}>{device.anydesk_id}</p></div>
                               {device.usuario && <div className="flex items-center gap-2 text-sm font-semibold text-slate-600"><UserRound size={15}/>{device.usuario}</div>}
                               {device.observacao && <p className="text-xs leading-5 text-slate-500">{device.observacao}</p>}
@@ -222,7 +228,7 @@ export default function RemoteAccess() {
 
       {modalOpen && <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/65 p-4">
         <div className="w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-[0_30px_100px_rgba(0,0,0,.35)]">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div><h3 className="text-xl font-black text-[#07182d]">{editing ? "Editar dispositivo" : "Adicionar dispositivo"}</h3><p className="text-xs text-slate-500">Cadastre o órgão e o endereço do AnyDesk.</p></div><button onClick={() => setModalOpen(false)} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={20}/></button></div>
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div><h3 className="text-xl font-black text-[#07182d]">{editing ? "Editar dispositivo" : "Adicionar dispositivo"}</h3><p className="text-xs text-slate-500">Cadastre o órgão, o endereço do AnyDesk e informe se o acesso sem aceite já foi configurado.</p></div><button onClick={() => setModalOpen(false)} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={20}/></button></div>
           <form onSubmit={save} className="grid gap-4 p-6 sm:grid-cols-2">
             <label className="text-sm font-bold text-slate-600">Tipo de órgão<select value={form.tipo_orgao} onChange={(e) => setForm({ ...form, tipo_orgao: e.target.value })} className="input mt-2">{organizationTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
             <label className="text-sm font-bold text-slate-600">Órgão<input required value={form.orgao} onChange={(e) => setForm({ ...form, orgao: e.target.value })} placeholder="Ex.: Prefeitura Municipal de Ribeiro Gonçalves - PI" className="input mt-2" /></label>
@@ -231,6 +237,7 @@ export default function RemoteAccess() {
             <label className="text-sm font-bold text-slate-600">Setor<input value={form.setor} onChange={(e) => setForm({ ...form, setor: e.target.value })} placeholder="Ex.: Licitação" className="input mt-2" /></label>
             <label className="text-sm font-bold text-slate-600">Usuário/responsável<input value={form.usuario} onChange={(e) => setForm({ ...form, usuario: e.target.value })} placeholder="Ex.: Márcia" className="input mt-2" /></label>
             <label className="sm:col-span-2 text-sm font-bold text-slate-600">Observações<textarea value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })} rows={3} className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10" /></label>
+            <label className={`sm:col-span-2 flex items-start gap-3 rounded-2xl border px-4 py-4 text-sm font-bold ${form.acesso_nao_supervisionado ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 bg-slate-50 text-slate-600"}`}><input type="checkbox" checked={form.acesso_nao_supervisionado} onChange={(e) => setForm({ ...form, acesso_nao_supervisionado: e.target.checked })} className="mt-0.5 size-4" /><span><span className="flex items-center gap-2"><ShieldCheck size={17}/> Acesso não supervisionado configurado</span><small className="mt-1 block font-medium leading-5 opacity-75">Marque somente depois de configurar uma senha de Acesso Não Supervisionado no AnyDesk deste computador. A senha não é armazenada no MW TECH Control.</small></span></label>
             <label className="sm:col-span-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600"><input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} className="size-4" /> Dispositivo ativo</label>
             {error && <div className="sm:col-span-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{error}</div>}
             <div className="sm:col-span-2 flex justify-end gap-3 border-t border-slate-100 pt-4"><button type="button" onClick={() => setModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600">Cancelar</button><button type="submit" disabled={saving} className="rounded-xl bg-[#082743] px-5 py-2.5 text-sm font-black text-white disabled:opacity-60">{saving ? "Salvando..." : "Salvar dispositivo"}</button></div>
