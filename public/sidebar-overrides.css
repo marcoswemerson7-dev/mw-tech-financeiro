@@ -1,21 +1,26 @@
-/* Destaque visual do grupo Financeiro no menu lateral */
+/* Financeiro alinhado ao padrão visual aprovado: discreto quando fechado, destaque só quando ativo */
 aside nav > div.pt-1 > div:first-child {
-  background: rgba(14, 116, 144, 0.18) !important;
-  border-left-color: #38bdf8 !important;
-  color: #bae6fd !important;
-  font-weight: 600 !important;
-  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.08);
+  background: transparent !important;
+  border-left-color: transparent !important;
+  color: #f8fafc !important;
+  font-weight: 650 !important;
+  box-shadow: none !important;
   transition: background-color .16s ease, color .16s ease, border-color .16s ease;
 }
 
 aside nav > div.pt-1 > div:first-child:hover {
-  background: rgba(14, 116, 144, 0.26) !important;
-  color: #e0f2fe !important;
+  background: rgba(255,255,255,.05) !important;
+  color: #ffffff !important;
 }
 
-/* Quando uma tela financeira estiver ativa, mantém identidade própria sem competir com o dourado da Visão Geral. */
 aside nav > div.pt-1 > div:first-child:has(+ div a[aria-current="page"]) {
-  background: rgba(14, 116, 144, 0.30) !important;
-  border-left-color: #67e8f9 !important;
-  color: #ecfeff !important;
+  background: rgba(255,255,255,.065) !important;
+  border-left-color: #f2bc3e !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025) !important;
+}
+
+aside nav > div.pt-1 > div:last-child a[aria-current="page"] {
+  background: rgba(255,255,255,.06) !important;
+  color: #f4c65a !important;
 }
