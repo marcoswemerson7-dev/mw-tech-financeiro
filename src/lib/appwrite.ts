@@ -33,4 +33,6 @@ export const TABLES = {
   payments: "pagamentos_despesas",
   company: "configuracoes_empresa",
   idempotentOperations: "operacoes_idempotentes",
+  managedSystems: "sistemas_orgaos",
+  teamAccess: "usuarios_acessos",
 } as const;
