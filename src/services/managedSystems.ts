@@ -28,7 +28,11 @@ async function execute(action: string, payload: Record<string, unknown> = {}) {
   if (!appwriteConfig.financialFunctionId) throw new Error("Função administrativa não configurada.");
   const execution = await functions.createExecution({
     functionId: appwriteConfig.financialFunctionId,
-    body: JSON.stringify({ action, ...payload }),
+    body: JSON.stringify({
+      action,
+      idempotencyKey: `control-${action}-${ID.unique()}`.slice(0, 36),
+      ...payload,
+    }),
     async: false,
   });
   const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
