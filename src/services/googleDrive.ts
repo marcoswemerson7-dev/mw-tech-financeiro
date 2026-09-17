@@ -25,8 +25,6 @@ export async function getDriveStorageUsage(): Promise<DriveStorageUsage> {
     throw new Error("Função administrativa não configurada.");
   }
 
-  // A chave também mantém compatibilidade com versões anteriores da função
-  // financeira que validavam idempotência antes de tratar ações somente leitura.
   const execution = await functions.createExecution({
     functionId: appwriteConfig.financialFunctionId,
     body: JSON.stringify({
@@ -35,9 +33,19 @@ export async function getDriveStorageUsage(): Promise<DriveStorageUsage> {
     }),
     async: false,
   });
-  const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
-  if (execution.status !== "completed" || body.error) {
-    throw new Error(body.error || "Não foi possível consultar o armazenamento.");
+
+  let body: Record<string, unknown> = {};
+  try {
+    body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
+  } catch {
+    body = {};
   }
-  return body as DriveStorageUsage;
+
+  if (execution.status !== "completed" || body.error) {
+    const executionError = String((execution as unknown as { errors?: string }).errors || "").trim();
+    const responseError = typeof body.error === "string" ? body.error : "";
+    throw new Error(responseError || executionError || `Falha na função do Google Drive (${execution.status}).`);
+  }
+
+  return body as unknown as DriveStorageUsage;
 }
