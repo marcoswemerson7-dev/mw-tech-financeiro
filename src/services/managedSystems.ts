@@ -1,52 +1,18 @@
-import { ID, Query } from "appwrite";
-import { appwriteConfig, tables, TABLES } from "../lib/appwrite";
+import { appwriteConfig, functions } from "../lib/appwrite";
 
 export type ManagedSystem = {
-  id: string;
-  orgao: string;
-  tipo_orgao: string;
-  sistema: string;
-  dominio_url?: string;
-  vercel_url?: string;
-  acesso_url?: string;
-  ambiente: string;
-  status: string;
-  observacao?: string;
-  created_at: string;
-  updated_at: string;
+  id: string; orgao: string; tipo_orgao: string; sistema: string; dominio_url?: string;
+  vercel_url?: string; acesso_url?: string; ambiente: string; status: string; observacao?: string;
+  created_at: string; updated_at: string;
 };
-
-export async function getManagedSystems() {
-  const result = await tables.listRows({
-    databaseId: appwriteConfig.databaseId,
-    tableId: TABLES.managedSystems,
-    queries: [Query.orderAsc("orgao"), Query.limit(200)],
-  });
-  return result.rows.map((row: any) => ({ ...row, id: row.$id })) as ManagedSystem[];
+async function execute(action: string, payload: Record<string, unknown> = {}) {
+  if (!appwriteConfig.financialFunctionId) throw new Error("Função administrativa não configurada.");
+  const execution = await functions.createExecution({ functionId: appwriteConfig.financialFunctionId, body: JSON.stringify({ action, ...payload }), async: false });
+  const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
+  if (execution.status !== "completed" || body.error) throw new Error(body.error || "Operação não concluída.");
+  return body;
 }
-
-export async function saveManagedSystem(values: Partial<ManagedSystem>) {
-  const now = new Date().toISOString();
-  const data = {
-    orgao: values.orgao || "",
-    tipo_orgao: values.tipo_orgao || "Prefeitura",
-    sistema: values.sistema || "Gestão Licita",
-    dominio_url: values.dominio_url || "",
-    vercel_url: values.vercel_url || "",
-    acesso_url: values.acesso_url || values.dominio_url || "",
-    ambiente: values.ambiente || "Produção",
-    status: values.status || "ativo",
-    observacao: values.observacao || "",
-    updated_at: now,
-  };
-  if (values.id) {
-    const row: any = await tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.managedSystems, rowId: values.id, data });
-    return { ...row, id: row.$id } as ManagedSystem;
-  }
-  const row: any = await tables.createRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.managedSystems, rowId: ID.unique(), data: { ...data, created_at: now } });
-  return { ...row, id: row.$id } as ManagedSystem;
-}
-
-export async function deleteManagedSystem(id: string) {
-  await tables.deleteRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.managedSystems, rowId: id });
-}
+const normalize=(row:any):ManagedSystem=>({...row,id:row.$id||row.id});
+export async function getManagedSystems(){const body=await execute("listSystems");return (body.rows||[]).map(normalize)}
+export async function saveManagedSystem(values:Partial<ManagedSystem>){const body=await execute("saveSystem",values);return normalize(body.row)}
+export async function deleteManagedSystem(id:string){await execute("deleteSystem",{id})}
