@@ -120,10 +120,10 @@ export default function Layout() {
             </NavLink>
           ))}
 
-          <div className="flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] border-transparent px-4 text-[14px] font-bold text-slate-100">
+          <NavLink to="/armazenamento" onClick={() => setOpen(false)} className={navClass}>
             <Cloud size={21} strokeWidth={2} />
             <span>Armazenamento (Drive)</span>
-          </div>
+          </NavLink>
 
           {bottomItems.map(([to, label, I]) => (
             <NavLink key={to} to={to} onClick={() => setOpen(false)} className={navClass}>
