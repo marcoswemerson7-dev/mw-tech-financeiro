@@ -68,7 +68,7 @@ export default function Layout() {
           <img
             src="/mw-tech-logo.png"
             className={`object-contain transition-all duration-300 ${collapsed ? "h-[58px] w-[58px] lg:rounded-xl" : "h-[124px] w-[190px]"}`}
-            alt="MW TECH Financeiro"
+            alt="MW TECH Control"
           />
           <button
             className="absolute right-4 top-4 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden"
@@ -182,7 +182,7 @@ export default function Layout() {
             </button>
             <div className="min-w-0">
               <p className="text-[12px] font-black uppercase tracking-[.24em] text-[#f5c75b]">
-                MW TECH Financeiro
+                MW TECH Control
               </p>
               <h1 className="mt-1 truncate text-[28px] font-black tracking-[-0.01em] text-white sm:text-[32px]">
                 {title}
