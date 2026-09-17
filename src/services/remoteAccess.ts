@@ -10,6 +10,7 @@ export type RemoteDevice = {
   dispositivo: string;
   anydesk_id: string;
   observacao?: string;
+  acesso_nao_supervisionado: boolean;
   ativo: boolean;
   created_at: string;
   updated_at: string;
@@ -26,6 +27,7 @@ type RemoteMeta = {
   dispositivo?: string;
   anydesk_id?: string;
   observacao?: string;
+  acesso_nao_supervisionado?: boolean;
 };
 
 function inferOrganizationType(name: string) {
@@ -53,6 +55,7 @@ function normalize(row: any): RemoteDevice {
     dispositivo: String(meta.dispositivo || row.nome || ""),
     anydesk_id: String(meta.anydesk_id || row.documento || ""),
     observacao: String(meta.observacao || ""),
+    acesso_nao_supervisionado: meta.acesso_nao_supervisionado === true,
     ativo: row.ativo !== false,
     created_at: row.created_at || row.$createdAt || new Date().toISOString(),
     updated_at: row.updated_at || row.$updatedAt || row.$createdAt || new Date().toISOString(),
@@ -69,6 +72,7 @@ function serialize(values: Partial<RemoteDevice>) {
     dispositivo: String(values.dispositivo || "").trim(),
     anydesk_id: String(values.anydesk_id || "").trim(),
     observacao: String(values.observacao || "").trim(),
+    acesso_nao_supervisionado: values.acesso_nao_supervisionado === true,
   });
 }
 
