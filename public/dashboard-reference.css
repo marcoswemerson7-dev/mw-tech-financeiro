@@ -1,0 +1,173 @@
+/* MW TECH Control — ajuste fino da Visão Geral conforme referência aprovada */
+@media (min-width: 1280px) {
+  main:has(> div > footer) {
+    padding: 14px 16px 10px !important;
+  }
+
+  main > div:has(> footer) {
+    max-width: 100% !important;
+    gap: 0 !important;
+    row-gap: 14px !important;
+    padding-bottom: 8px !important;
+  }
+
+  /* Cabeçalho executivo */
+  main > div:has(> footer) > section:nth-of-type(1) {
+    min-height: 118px !important;
+    padding: 18px 28px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 5px 18px rgba(15, 35, 70, .045) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(1) > div:last-child {
+    grid-template-columns: minmax(460px, 1.45fr) minmax(280px, .66fr) minmax(250px, .58fr) !important;
+    gap: 16px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(1) h1 {
+    font-size: 34px !important;
+    line-height: 1.02 !important;
+    font-weight: 650 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(1) p {
+    letter-spacing: normal;
+  }
+
+  /* KPI */
+  main > div:has(> footer) > section:nth-of-type(2) {
+    gap: 14px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(2) > a {
+    min-height: 126px !important;
+    padding: 16px 18px !important;
+    border-radius: 15px !important;
+    box-shadow: 0 5px 18px rgba(15, 35, 70, .04) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(2) > a p:nth-of-type(2) {
+    font-size: 24px !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Drive + Sistemas */
+  main > div:has(> footer) > section:nth-of-type(3) {
+    grid-template-columns: minmax(0, 2.2fr) minmax(320px, .82fr) !important;
+    gap: 14px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section {
+    border-radius: 15px !important;
+    box-shadow: 0 5px 18px rgba(15, 35, 70, .04) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child {
+    min-height: 286px !important;
+    padding: 15px 17px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child {
+    grid-template-columns: 370px minmax(0, 1fr) !important;
+    gap: 22px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child {
+    min-height: 196px !important;
+    padding: 18px 20px !important;
+    border-radius: 12px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:last-child {
+    padding: 16px !important;
+  }
+
+  /* Linha inferior */
+  main > div:has(> footer) > section:nth-of-type(4) {
+    grid-template-columns: minmax(0, 1.18fr) minmax(0, .94fr) minmax(340px, .88fr) !important;
+    gap: 14px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(4) > section {
+    min-height: 252px !important;
+    padding: 16px !important;
+    border-radius: 15px !important;
+    box-shadow: 0 5px 18px rgba(15, 35, 70, .04) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(4) .recharts-responsive-container {
+    height: 175px !important;
+  }
+
+  /* Rodapé da Visão Geral */
+  main > div:has(> footer) > footer {
+    padding: 0 8px 3px !important;
+    font-size: 9px !important;
+  }
+}
+
+/* Tipografia corporativa: menos peso, melhor leitura */
+main > div:has(> footer) {
+  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+main > div:has(> footer) h1,
+main > div:has(> footer) h2,
+main > div:has(> footer) h3 {
+  font-weight: 650 !important;
+}
+
+main > div:has(> footer) strong,
+main > div:has(> footer) b {
+  font-weight: 600 !important;
+}
+
+/* Barra superior e menu com proporções da referência */
+@media (min-width: 1024px) {
+  body > #root aside {
+    width: 236px !important;
+  }
+
+  body > #root aside + * {
+    margin-left: 0;
+  }
+
+  body > #root .lg\:pl-\[254px\] {
+    padding-left: 236px !important;
+  }
+
+  body > #root aside > div:first-child {
+    min-height: 168px !important;
+  }
+
+  body > #root aside > div:first-child img {
+    height: 132px !important;
+    width: 190px !important;
+  }
+
+  body > #root aside nav {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    row-gap: 2px !important;
+  }
+
+  body > #root aside nav > a,
+  body > #root aside nav > div > div:first-child {
+    min-height: 45px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
+
+  body > #root aside nav > div > div:last-child a {
+    min-height: 34px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+  }
+
+  body > #root header {
+    height: 60px !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    box-shadow: 0 4px 14px rgba(6, 20, 38, .14) !important;
+  }
+}
