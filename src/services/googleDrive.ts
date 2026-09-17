@@ -1,3 +1,4 @@
+import { ID } from "appwrite";
 import { appwriteConfig, functions } from "../lib/appwrite";
 
 export type DriveFolderUsage = {
@@ -24,9 +25,14 @@ export async function getDriveStorageUsage(): Promise<DriveStorageUsage> {
     throw new Error("Função administrativa não configurada.");
   }
 
+  // A chave também mantém compatibilidade com versões anteriores da função
+  // financeira que validavam idempotência antes de tratar ações somente leitura.
   const execution = await functions.createExecution({
     functionId: appwriteConfig.financialFunctionId,
-    body: JSON.stringify({ action: "getDriveStorage" }),
+    body: JSON.stringify({
+      action: "getDriveStorage",
+      idempotencyKey: `drive-storage-${ID.unique()}`,
+    }),
     async: false,
   });
   const body = execution.responseBody ? JSON.parse(execution.responseBody) : {};
