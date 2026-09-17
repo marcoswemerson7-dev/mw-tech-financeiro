@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
   ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, Building2, CalendarDays,
-  CheckCircle2, Cloud, ExternalLink, FileChartColumn, Folder, Headphones, Landmark,
+  Cloud, FileChartColumn, Folder, Headphones, Landmark,
   Link2, MoreHorizontal, PanelsTopLeft, Plus, RefreshCw, Settings2, UsersRound, Wallet,
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
@@ -134,7 +134,7 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({icon,title,value,hint,action,href,tone}:{icon:React.ReactNode;title:string;value:string;hint:string;action:string;href:string;tone:"green"|"orange"|"blue"|"slate"}) {
+function MetricCard({icon,title,value,hint,action,href,tone}:{icon:ReactNode;title:string;value:string;hint:string;action:string;href:string;tone:"green"|"orange"|"blue"|"slate"}) {
   const styles = {green:"bg-emerald-50 text-emerald-600",orange:"bg-orange-50 text-orange-600",blue:"bg-blue-50 text-blue-600",slate:"bg-slate-100 text-slate-600"}[tone];
   return <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]"><div className="flex items-start gap-4"><span className={`grid size-12 shrink-0 place-items-center rounded-full ${styles}`}>{icon}</span><div className="min-w-0 flex-1"><p className="text-sm font-bold text-[#18324d]">{title}</p><strong className="mt-1 block truncate text-[24px] font-black tracking-[-.025em] text-[#071d35]">{value}</strong><span className="mt-1 block text-xs text-slate-400">{hint}</span><a href={href} className="mt-3 flex items-center justify-end gap-1.5 text-xs font-bold text-blue-700">{action}<ArrowRight size={14}/></a></div></div></article>;
 }
@@ -152,9 +152,9 @@ function DriveCard({data,loading,error,refresh}:{data:DriveStorageUsage|null;loa
 }
 
 function DriveLine({label,value}:{label:string;value:string}){return <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3"><span className="text-[11px] text-slate-500">{label}</span><b className="text-xs text-[#071d35]">{value}</b></div>}
-function SideItem({icon,title,subtitle}:{icon:React.ReactNode;title:string;subtitle:string}){return <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-blue-700">{icon}</span><div className="flex-1"><b className="block text-xs text-[#071d35]">{title}</b><span className="text-[11px] text-slate-400">{subtitle}</span></div><span className="size-2.5 rounded-full bg-emerald-500"/></div>}
-function Quick({href,icon,label,tone}:{href:string;icon:React.ReactNode;label:string;tone:"green"|"blue"|"purple"|"orange"|"slate"}){const s={green:"bg-emerald-50 text-emerald-600",blue:"bg-blue-50 text-blue-600",purple:"bg-violet-50 text-violet-600",orange:"bg-orange-50 text-orange-600",slate:"bg-slate-100 text-slate-600"}[tone];return <a href={href} className={`flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl p-2 text-center text-[11px] font-bold transition hover:-translate-y-0.5 ${s}`}>{icon}<span>{label}</span></a>}
-function MiniStat({label,value,icon,tone}:{label:string;value:string;icon:React.ReactNode;tone:"green"|"orange"|"blue"}){const s={green:"bg-emerald-50 text-emerald-600",orange:"bg-orange-50 text-orange-600",blue:"bg-blue-50 text-blue-600"}[tone];return <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-xl ${s}`}>{icon}</span><div><span className="block text-[11px] font-semibold text-slate-400">{label}</span><b className="text-sm text-[#071d35]">{value}</b></div></div>}
+function SideItem({icon,title,subtitle}:{icon:ReactNode;title:string;subtitle:string}){return <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-blue-700">{icon}</span><div className="flex-1"><b className="block text-xs text-[#071d35]">{title}</b><span className="text-[11px] text-slate-400">{subtitle}</span></div><span className="size-2.5 rounded-full bg-emerald-500"/></div>}
+function Quick({href,icon,label,tone}:{href:string;icon:ReactNode;label:string;tone:"green"|"blue"|"purple"|"orange"|"slate"}){const s={green:"bg-emerald-50 text-emerald-600",blue:"bg-blue-50 text-blue-600",purple:"bg-violet-50 text-violet-600",orange:"bg-orange-50 text-orange-600",slate:"bg-slate-100 text-slate-600"}[tone];return <a href={href} className={`flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl p-2 text-center text-[11px] font-bold transition hover:-translate-y-0.5 ${s}`}>{icon}<span>{label}</span></a>}
+function MiniStat({label,value,icon,tone}:{label:string;value:string;icon:ReactNode;tone:"green"|"orange"|"blue"}){const s={green:"bg-emerald-50 text-emerald-600",orange:"bg-orange-50 text-orange-600",blue:"bg-blue-50 text-blue-600"}[tone];return <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-xl ${s}`}>{icon}</span><div><span className="block text-[11px] font-semibold text-slate-400">{label}</span><b className="text-sm text-[#071d35]">{value}</b></div></div>}
 
 function buildChart(rows: Movement[]){
   const fmt = new Intl.DateTimeFormat("pt-BR",{month:"short"});
