@@ -3,54 +3,45 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 const STORAGE_KEY = "mw-tech:sidebar-collapsed";
-const EXPANDED_WIDTH = 254;
-const COLLAPSED_WIDTH = 86;
+const EXPANDED = 254;
+const COLLAPSED = 86;
 
 export default function SidebarCollapseControl() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(STORAGE_KEY) === "1");
 
   useEffect(() => {
-    document.body.classList.toggle("mw-sidebar-collapsed", collapsed);
     localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
 
-    const syncLayout = () => {
-      const desktop = window.matchMedia("(min-width: 1024px)").matches;
-      const sidebar = document.querySelector<HTMLElement>("aside.fixed.inset-y-0.left-0");
-      if (!sidebar) return;
+    const apply = () => {
+      if (window.innerWidth < 1024) return;
 
-      const layoutRoot = sidebar.parentElement;
-      if (!layoutRoot) return;
+      const sidebar = document.querySelector("aside.fixed.inset-y-0.left-0") as HTMLElement | null;
+      const appHeader = document.querySelector("header.sticky.top-0") as HTMLElement | null;
+      const shell = appHeader?.parentElement as HTMLElement | null;
+      const width = collapsed ? COLLAPSED : EXPANDED;
 
-      const mainShell = Array.from(layoutRoot.children).find((element) => {
-        if (!(element instanceof HTMLElement) || element === sidebar) return false;
-        return element.querySelector("header.sticky") !== null;
-      }) as HTMLElement | undefined;
-
-      if (!mainShell) return;
-
-      if (desktop) {
-        const width = collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH;
+      if (sidebar) {
         sidebar.style.width = `${width}px`;
-        sidebar.style.transition = "width 220ms ease, transform 220ms ease";
-        mainShell.style.paddingLeft = `${width}px`;
-        mainShell.style.transition = "padding-left 220ms ease";
-      } else {
-        sidebar.style.width = "";
-        mainShell.style.paddingLeft = "";
+        sidebar.style.transition = "width 220ms ease";
+        sidebar.style.overflowX = "hidden";
       }
+
+      if (shell) {
+        shell.style.paddingLeft = `${width}px`;
+        shell.style.transition = "padding-left 220ms ease";
+      }
+
+      document.body.classList.toggle("mw-sidebar-collapsed", collapsed);
     };
 
-    syncLayout();
-    const frame = window.requestAnimationFrame(syncLayout);
-    const timer = window.setTimeout(syncLayout, 80);
-    window.addEventListener("resize", syncLayout);
+    apply();
+    const raf = window.requestAnimationFrame(apply);
+    window.addEventListener("resize", apply);
 
     return () => {
-      window.cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
-      window.removeEventListener("resize", syncLayout);
-      document.body.classList.remove("mw-sidebar-collapsed");
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", apply);
     };
   }, [collapsed, location.pathname]);
 
@@ -60,10 +51,6 @@ export default function SidebarCollapseControl() {
     <>
       <style>{`
         @media (min-width: 1024px) {
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 {
-            width: 86px !important;
-            overflow-x: hidden !important;
-          }
           body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 > div:first-child {
             min-height: 112px !important;
             padding-left: 8px !important;
@@ -103,12 +90,12 @@ export default function SidebarCollapseControl() {
       <button
         type="button"
         onClick={() => setCollapsed((value) => !value)}
-        className="fixed top-[92px] z-50 hidden size-8 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_6px_18px_rgba(7,24,45,.18)] transition-all duration-200 hover:bg-slate-50 lg:grid"
-        style={{ left: collapsed ? COLLAPSED_WIDTH - 16 : EXPANDED_WIDTH - 16 }}
+        className="fixed top-[110px] z-50 hidden size-9 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-[0_6px_18px_rgba(7,24,45,.18)] transition-all hover:bg-slate-50 lg:grid"
+        style={{ left: collapsed ? COLLAPSED - 18 : EXPANDED - 18 }}
         title={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
         aria-label={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
       >
-        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        {collapsed ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
       </button>
     </>
   );
