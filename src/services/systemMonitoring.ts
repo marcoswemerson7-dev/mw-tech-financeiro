@@ -10,6 +10,19 @@ export type EndpointHealth = {
   message: string;
 };
 
+export type MonitoringMetrics = {
+  configured: boolean;
+  processes: number | null;
+  users: number | null;
+  active24h: number | null;
+  invoices: number | null;
+  payments: number | null;
+  audit24h: number | null;
+  databaseBytes: number | null;
+  checkedAt?: string;
+  message?: string;
+};
+
 export type SystemHealthSnapshot = {
   key: "rg" | "bg";
   name: string;
@@ -21,6 +34,7 @@ export type SystemHealthSnapshot = {
   app: EndpointHealth;
   database: EndpointHealth;
   overall: HealthState;
+  metrics: MonitoringMetrics | null;
 };
 
 const FALLBACKS = {
@@ -69,42 +83,33 @@ function findSystem(rows: ManagedSystem[], key: "rg" | "bg") {
 
 async function probe(url: string, timeoutMs = 8000): Promise<EndpointHealth> {
   const checkedAt = new Date().toISOString();
-  if (!url) {
-    return { state: "unconfigured", latencyMs: null, checkedAt, url: "", message: "Não configurado" };
-  }
+  if (!url) return { state: "unconfigured", latencyMs: null, checkedAt, url: "", message: "Não configurado" };
 
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   const started = performance.now();
-
   try {
-    await fetch(url, {
-      method: "GET",
-      mode: "no-cors",
-      cache: "no-store",
-      redirect: "follow",
-      signal: controller.signal,
-    });
+    await fetch(url, { method: "GET", mode: "no-cors", cache: "no-store", redirect: "follow", signal: controller.signal });
     const latencyMs = Math.round(performance.now() - started);
     const state: HealthState = latencyMs > 2500 ? "attention" : "online";
-    return {
-      state,
-      latencyMs,
-      checkedAt,
-      url,
-      message: state === "online" ? "Respondendo normalmente" : "Respondendo com lentidão",
-    };
-  } catch (error) {
-    const aborted = controller.signal.aborted;
-    return {
-      state: "offline",
-      latencyMs: null,
-      checkedAt,
-      url,
-      message: aborted ? "Tempo limite excedido" : "Não foi possível alcançar o serviço",
-    };
+    return { state, latencyMs, checkedAt, url, message: state === "online" ? "Respondendo normalmente" : "Respondendo com lentidão" };
+  } catch {
+    return { state: "offline", latencyMs: null, checkedAt, url, message: controller.signal.aborted ? "Tempo limite excedido" : "Não foi possível alcançar o serviço" };
   } finally {
     window.clearTimeout(timeout);
+  }
+}
+
+async function loadMetrics() {
+  try {
+    const response = await fetch("/api/monitoring", { cache: "no-store" });
+    if (!response.ok) return new Map<"rg" | "bg", MonitoringMetrics>();
+    const data = await response.json();
+    return new Map<"rg" | "bg", MonitoringMetrics>(
+      (data.systems || []).map((item: any) => [item.tenant, item as MonitoringMetrics]),
+    );
+  } catch {
+    return new Map<"rg" | "bg", MonitoringMetrics>();
   }
 }
 
@@ -117,11 +122,9 @@ function combine(app: EndpointHealth, database: EndpointHealth): HealthState {
 
 export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
   let rows: ManagedSystem[] = [];
-  try {
-    rows = await getManagedSystems();
-  } catch {
-    rows = [];
-  }
+  try { rows = await getManagedSystems(); } catch { rows = []; }
+
+  const metrics = await loadMetrics();
 
   return Promise.all((["rg", "bg"] as const).map(async (key) => {
     const fallback = FALLBACKS[key];
@@ -129,11 +132,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
     const accessUrl = safeUrl(stored?.acesso_url || stored?.dominio_url || fallback.accessUrl);
     const supabaseUrl = projectRestUrl(stored?.supabase_url || fallback.supabaseUrl);
     const vercelUrl = safeUrl(stored?.vercel_url || "");
-
-    const [app, database] = await Promise.all([
-      probe(accessUrl),
-      probe(supabaseUrl),
-    ]);
+    const [app, database] = await Promise.all([probe(accessUrl), probe(supabaseUrl)]);
 
     return {
       key,
@@ -146,6 +145,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       app,
       database,
       overall: combine(app, database),
+      metrics: metrics.get(key) || null,
     };
   }));
 }
