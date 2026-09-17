@@ -24,23 +24,8 @@ const TENANTS: Record<TenantKey, { projectRef: string; url: string; keyEnv: stri
   },
 };
 
-async function countRows(baseUrl: string, key: string, table: string) {
-  const response = await fetch(`${baseUrl}/rest/v1/${table}?select=id&limit=1`, {
-    headers: {
-      apikey: key,
-      authorization: `Bearer ${key}`,
-      prefer: "count=exact",
-      range: "0-0",
-    },
-  });
-  if (!response.ok) throw new Error(`${table}: HTTP ${response.status}`);
-  const range = response.headers.get("content-range") || "";
-  const total = Number(range.split("/")[1]);
-  return Number.isFinite(total) ? total : null;
-}
-
-async function rpcNumber(baseUrl: string, key: string, fn: string) {
-  const response = await fetch(`${baseUrl}/rest/v1/rpc/${fn}`, {
+async function getSnapshot(baseUrl: string, key: string) {
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/mw_control_monitoring_snapshot`, {
     method: "POST",
     headers: {
       apikey: key,
@@ -49,10 +34,8 @@ async function rpcNumber(baseUrl: string, key: string, fn: string) {
     },
     body: "{}",
   });
-  if (!response.ok) return null;
-  const value = await response.json();
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  if (!response.ok) throw new Error(`Supabase HTTP ${response.status}`);
+  return await response.json();
 }
 
 async function tenantMetrics(tenant: TenantKey) {
@@ -73,24 +56,18 @@ async function tenantMetrics(tenant: TenantKey) {
   }
 
   try {
-    const [processes, users, invoices, payments, databaseBytes] = await Promise.all([
-      countRows(config.url, key, "processos"),
-      countRows(config.url, key, "profiles"),
-      countRows(config.url, key, "execucao_notas_fiscais"),
-      countRows(config.url, key, "execucao_pagamentos"),
-      rpcNumber(config.url, key, "mw_control_database_size_bytes"),
-    ]);
-
+    const snapshot = await getSnapshot(config.url, key);
     return {
       tenant,
       configured: true,
-      processes,
-      users,
-      invoices,
-      payments,
-      databaseBytes,
-      errors24h: null,
-      checkedAt: new Date().toISOString(),
+      processes: Number(snapshot.processes ?? 0),
+      users: Number(snapshot.users ?? 0),
+      active24h: Number(snapshot.active24h ?? 0),
+      invoices: Number(snapshot.invoices ?? 0),
+      payments: Number(snapshot.payments ?? 0),
+      audit24h: Number(snapshot.audit24h ?? 0),
+      databaseBytes: Number(snapshot.databaseBytes ?? 0),
+      checkedAt: snapshot.generatedAt || new Date().toISOString(),
     };
   } catch (error) {
     return {
