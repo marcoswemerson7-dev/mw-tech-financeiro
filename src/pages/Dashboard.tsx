@@ -23,16 +23,24 @@ import {
   MoreHorizontal,
   ReceiptText,
   TrendingUp,
+  HardDrive,
+  RefreshCw,
+  AlertTriangle,
+  FolderOpen,
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getExpenses } from "../services/expenses";
+import { getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 import { money, Empty, Badge, dateOnly, formatDate, SectionCard, StatCard, FinancialAmount } from "../components/UI";
 
 export default function Dashboard() {
   const [rows, setRows] = useState<Movement[]>([]),
     [account, setAccount] = useState(0),
-    [expenses, setExpenses] = useState<any[]>([]);
+    [expenses, setExpenses] = useState<any[]>([]),
+    [drive, setDrive] = useState<DriveStorageUsage | null>(null),
+    [driveLoading, setDriveLoading] = useState(true),
+    [driveError, setDriveError] = useState("");
 
   useEffect(() => {
     if (isConfigured)
@@ -41,6 +49,20 @@ export default function Dashboard() {
         setAccount(a.reduce((s, x) => s + Number(x.saldo_atual), 0));
         setExpenses(e);
       });
+  }, []);
+
+  const loadDriveStorage = () => {
+    setDriveLoading(true);
+    setDriveError("");
+    getDriveStorageUsage()
+      .then(setDrive)
+      .catch((error: Error) => setDriveError(error.message))
+      .finally(() => setDriveLoading(false));
+  };
+
+  useEffect(() => {
+    if (isConfigured) loadDriveStorage();
+    else setDriveLoading(false);
   }, []);
 
   const now = new Date(),
@@ -88,6 +110,13 @@ export default function Dashboard() {
           </span>
         </div>
       </section>
+
+      <DriveStoragePanel
+        data={drive}
+        loading={driveLoading}
+        error={driveError}
+        onRefresh={loadDriveStorage}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1fr_2.1fr]">
         <QuickCard title="A receber hoje" value={receivedToday} tone="green" href="/movimentacoes" cta="Ir para entradas" icon={<ArrowUpRight size={24} />} />
@@ -186,6 +215,133 @@ export default function Dashboard() {
           <Empty />
         )}
       </section>
+    </div>
+  );
+}
+
+
+function DriveStoragePanel({
+  data,
+  loading,
+  error,
+  onRefresh,
+}: {
+  data: DriveStorageUsage | null;
+  loading: boolean;
+  error: string;
+  onRefresh: () => void;
+}) {
+  const percent = Math.max(0, Math.min(100, data?.percent || 0));
+  const tone = percent >= 90 ? "bg-rose-500" : percent >= 75 ? "bg-amber-400" : "bg-emerald-500";
+  const status = percent >= 90 ? "Crítico" : percent >= 75 ? "Atenção" : "Espaço saudável";
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)]">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 sm:px-7">
+        <div className="flex items-center gap-4">
+          <span className="grid size-12 place-items-center rounded-xl bg-blue-50 text-blue-700">
+            <HardDrive size={24} />
+          </span>
+          <div>
+            <h3 className="text-[21px] font-black text-[#061426]">Armazenamento Google Drive</h3>
+            <p className="mt-1 text-[13px] text-slate-500">Uso geral e consumo das pastas de cada prefeitura</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={loading}
+          className="inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-slate-200 px-4 text-[14px] font-black text-[#061426] transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
+        >
+          <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
+          Atualizar
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="grid min-h-[190px] place-items-center px-6 py-8 text-slate-500">
+          <div className="text-center">
+            <RefreshCw size={28} className="mx-auto animate-spin text-blue-600" />
+            <p className="mt-3 font-semibold">Consultando o Google Drive...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="m-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+          <AlertTriangle size={21} className="mt-0.5 shrink-0" />
+          <div>
+            <b className="block">Google Drive aguardando configuração</b>
+            <p className="mt-1 text-[14px] leading-6">{error}</p>
+          </div>
+        </div>
+      ) : data ? (
+        <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1.05fr_1.95fr]">
+          <div className="rounded-2xl bg-[#061426] p-6 text-white">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] font-black uppercase tracking-[.16em] text-blue-200">Uso total</span>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-[12px] font-black">{status}</span>
+            </div>
+            <strong className="mt-5 block text-[38px] font-black tracking-tight">{percent.toFixed(1)}%</strong>
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/15">
+              <div className={`h-full rounded-full transition-all ${tone}`} style={{ width: `${percent}%` }} />
+            </div>
+            <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+              <DriveMetric label="Usado" value={`${data.usedGb.toFixed(2)} GB`} />
+              <DriveMetric label="Disponível" value={`${data.availableGb.toFixed(2)} GB`} />
+              <DriveMetric label="Plano" value={`${data.totalGb.toFixed(0)} GB`} />
+            </div>
+            <p className="mt-5 text-[12px] text-blue-200">
+              Atualizado em {new Date(data.updatedAt).toLocaleString("pt-BR")}
+            </p>
+          </div>
+
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h4 className="text-[15px] font-black text-[#061426]">Consumo por prefeitura</h4>
+              <span className="text-[12px] font-semibold text-slate-500">{data.folders.length} pasta{data.folders.length === 1 ? "" : "s"} monitorada{data.folders.length === 1 ? "" : "s"}</span>
+            </div>
+            {data.folders.length ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {data.folders.map((folder) => (
+                  <article key={folder.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-[#d09116] shadow-sm">
+                          <FolderOpen size={20} />
+                        </span>
+                        <div className="min-w-0">
+                          <b className="block truncate text-[14px] text-[#061426]">{folder.name}</b>
+                          <span className="text-[12px] text-slate-500">{folder.files.toLocaleString("pt-BR")} arquivos</span>
+                        </div>
+                      </div>
+                      <strong className="whitespace-nowrap text-[16px] font-black text-[#061426]">{folder.usedGb.toFixed(2)} GB</strong>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
+                      <div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(100, folder.percentOfTotal)}%` }} />
+                    </div>
+                    <p className="mt-2 text-right text-[11px] font-bold text-slate-500">{folder.percentOfTotal.toFixed(1)}% do armazenamento total</p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="grid min-h-[145px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                <div>
+                  <FolderOpen size={26} className="mx-auto text-slate-400" />
+                  <p className="mt-2 text-[14px] font-bold text-slate-600">Nenhuma pasta de prefeitura configurada</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function DriveMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-white/[.07] px-2 py-3">
+      <span className="block text-[11px] font-bold text-blue-200">{label}</span>
+      <b className="mt-1 block text-[14px]">{value}</b>
     </div>
   );
 }
