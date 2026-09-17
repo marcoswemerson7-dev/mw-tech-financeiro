@@ -88,6 +88,22 @@ GOOGLE_DRIVE_FOLDERS=[{"name":"Ribeiro Gonçalves","id":"ID_DA_PASTA_RG"},{"name
 
 A conta Google autorizada deve ter acesso às pastas informadas. O frontend nunca recebe essas credenciais: ele chama a Function autenticada, que consulta a API do Google e devolve apenas totais de armazenamento. Ao incluir uma nova prefeitura ou Câmara, adicione seu nome e ID ao JSON de `GOOGLE_DRIVE_FOLDERS`.
 
+
+## 6.2 Administração do MW TECH Control
+
+As áreas **Sistemas e órgãos** e **Usuários e acessos** usam tabelas privadas e somente a Function administrativa acessa seus dados. Depois de executar novamente o script de setup, configure na Function `financial-operations`:
+
+```text
+CONTROL_ADMIN_USER_IDS=ID_DO_USUARIO_ADMINISTRADOR
+```
+
+Para mais de um administrador, separe os IDs por vírgula. Não coloque essa variável no frontend ou em variáveis iniciadas por `VITE_`.
+
+- `sistemas_orgaos`: centraliza domínio, projeto Vercel, acesso, ambiente e situação de cada cliente.
+- `usuarios_acessos`: registra funcionários, cargos, situação e módulos autorizados.
+- As tabelas não concedem leitura ou escrita direta ao navegador.
+- A criação da conta de login do funcionário continua sendo feita no Appwrite Auth; a tela do Control define suas permissões administrativas.
+
 ## 7. Executar e publicar
 
 ```bash
