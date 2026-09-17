@@ -16,6 +16,7 @@ const SupportCenter = lazy(() => import("./pages/SupportCenter"));
 const Systems = lazy(() => import("./pages/Systems"));
 const UsersAccess = lazy(() => import("./pages/UsersAccess"));
 const Storage = lazy(() => import("./pages/Storage"));
+const RemoteAccess = lazy(() => import("./pages/RemoteAccess"));
 
 function LoadingScreen() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="despesas" element={<Expenses />} />
             <Route path="relatorios" element={<Reports />} />
             <Route path="armazenamento" element={<Storage />} />
+            <Route path="acesso-remoto" element={<RemoteAccess />} />
             <Route path="suporte" element={<SupportCenter />} />
             <Route path="sistemas" element={<Systems />} />
             <Route path="usuarios" element={<UsersAccess />} />
