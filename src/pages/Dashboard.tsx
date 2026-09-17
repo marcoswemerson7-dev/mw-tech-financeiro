@@ -1,478 +1,167 @@
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import {
-  Wallet,
-  ArrowUpRight,
-  ArrowDownRight,
-  ArrowRight,
-  Landmark,
-  CalendarDays,
-  ChevronRight,
-  CheckCircle2,
-  Crown,
-  MoreHorizontal,
-  ReceiptText,
-  TrendingUp,
-  HardDrive,
-  RefreshCw,
-  AlertTriangle,
-  FolderOpen,
+  ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, Building2, CalendarDays,
+  CheckCircle2, Cloud, ExternalLink, FileChartColumn, Folder, Headphones, Landmark,
+  Link2, MoreHorizontal, PanelsTopLeft, Plus, RefreshCw, Settings2, UsersRound, Wallet,
 } from "lucide-react";
 import { getAccounts, getMovements, type Movement } from "../lib/finance";
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { getExpenses } from "../services/expenses";
 import { getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
-import { money, Empty, Badge, dateOnly, formatDate, SectionCard, StatCard, FinancialAmount } from "../components/UI";
+
+const brl = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0));
+const onlyDate = (value: unknown) => String(value || "").slice(0, 10);
 
 export default function Dashboard() {
-  const [rows, setRows] = useState<Movement[]>([]),
-    [account, setAccount] = useState(0),
-    [expenses, setExpenses] = useState<any[]>([]),
-    [drive, setDrive] = useState<DriveStorageUsage | null>(null),
-    [driveLoading, setDriveLoading] = useState(true),
-    [driveError, setDriveError] = useState("");
+  const [rows, setRows] = useState<Movement[]>([]);
+  const [account, setAccount] = useState(0);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [drive, setDrive] = useState<DriveStorageUsage | null>(null);
+  const [driveLoading, setDriveLoading] = useState(true);
+  const [driveError, setDriveError] = useState("");
 
   useEffect(() => {
-    if (isConfigured)
-      Promise.all([getMovements(500), getAccounts(), getExpenses().catch(() => [])]).then(([m, a, e]) => {
-        setRows(m);
-        setAccount(a.reduce((s, x) => s + Number(x.saldo_atual), 0));
-        setExpenses(e);
-      });
+    if (!isConfigured) return;
+    Promise.all([getMovements(500), getAccounts(), getExpenses().catch(() => [])]).then(([m, a, e]) => {
+      setRows(m);
+      setAccount(a.reduce((sum, item) => sum + Number(item.saldo_atual || 0), 0));
+      setExpenses(e);
+    });
   }, []);
 
-  const loadDriveStorage = () => {
+  const loadDrive = () => {
+    if (!isConfigured) { setDriveLoading(false); return; }
     setDriveLoading(true);
     setDriveError("");
-    getDriveStorageUsage()
-      .then(setDrive)
-      .catch((error: Error) => setDriveError(error.message))
-      .finally(() => setDriveLoading(false));
+    getDriveStorageUsage().then(setDrive).catch((e: Error) => setDriveError(e.message)).finally(() => setDriveLoading(false));
   };
+  useEffect(loadDrive, []);
 
-  useEffect(() => {
-    if (isConfigured) loadDriveStorage();
-    else setDriveLoading(false);
-  }, []);
+  const now = new Date();
+  const month = now.toISOString().slice(0, 7);
+  const today = now.toISOString().slice(0, 10);
+  const current = rows.filter((x) => onlyDate(x.data).startsWith(month));
+  const entradas = current.filter((x) => x.tipo.includes("entrada")).reduce((s, x) => s + Number(x.valor || 0), 0);
+  const saidas = current.filter((x) => x.tipo.includes("saida")).reduce((s, x) => s + Number(x.valor || 0), 0);
+  const receberHoje = current.filter((x) => x.tipo.includes("entrada") && onlyDate(x.data) === today).reduce((s, x) => s + Number(x.valor || 0), 0);
+  const pagarHoje = current.filter((x) => x.tipo.includes("saida") && onlyDate(x.data) === today).reduce((s, x) => s + Number(x.valor || 0), 0);
+  const pendentes = expenses.filter((x) => x.status === "pendente" && onlyDate(x.data_vencimento || x.vencimento).startsWith(month));
+  const pendenteTotal = pendentes.reduce((s, x) => s + Number(x.valor || 0), 0);
+  const chart = useMemo(() => buildChart(rows), [rows]);
+  const recent = rows.slice(0, 4);
 
-  const now = new Date(),
-    month = now.toISOString().slice(0, 7),
-    today = now.toISOString().slice(0, 10),
-    current = rows.filter((x) => dateOnly(x.data).startsWith(month)),
-    ins = current
-      .filter((x) => x.tipo.includes("entrada"))
-      .reduce((a, x) => a + Number(x.valor), 0),
-    outs = current
-      .filter((x) => x.tipo.includes("saida"))
-      .reduce((a, x) => a + Number(x.valor), 0),
-    receivedToday = current
-      .filter((x) => x.tipo.includes("entrada") && dateOnly(x.data) === today)
-      .reduce((a, x) => a + Number(x.valor), 0),
-    paidToday = current
-      .filter((x) => x.tipo.includes("saida") && dateOnly(x.data) === today)
-      .reduce((a, x) => a + Number(x.valor), 0),
-    pendingExpenses = expenses
-      .filter((x) => x.status === "pendente" && dateOnly(x.data_vencimento || x.vencimento).startsWith(month)),
-    pendingTotal = pendingExpenses.reduce((a, x) => a + Number(x.valor), 0),
-    paidExpensesTotal = expenses
-      .filter((x) => x.status === "pago" && dateOnly(x.data_pagamento || x.vencimento).startsWith(month))
-      .reduce((a, x) => a + Number(x.valor), 0),
-    cash = account;
-
-  const chart = buildMonthlyChart(rows);
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(now);
 
   return (
-    <div className="space-y-7 lg:space-y-8">
-      <section className="rounded-2xl border border-[#17375f] bg-[#061426] p-7 text-white shadow-[0_18px_45px_rgba(6,20,38,.18)] sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-6">
-          <div>
-            <p className="text-[13px] font-black uppercase tracking-[.24em] text-[#f5c75b]">Bom dia, Marcos</p>
-            <h2 className="mt-2 text-[31px] font-black tracking-[-0.01em] sm:text-[38px]">
-              Painel financeiro
-            </h2>
-            <p className="mt-3 max-w-xl text-[16px] leading-7 text-blue-100">
-              Fluxo de caixa, pagamentos, recebimentos e atalhos para trabalhar sem demora.
-            </p>
-          </div>
-          <span className="inline-flex min-h-[54px] items-center gap-3 rounded-lg border border-[#e8ac35]/50 bg-white/[.06] px-5 text-[14px] font-black text-white">
-            <CalendarDays size={18} className="text-[#f5c75b]" />
-            Atualização do mês atual
-          </span>
-        </div>
-      </section>
-
-      <DriveStoragePanel
-        data={drive}
-        loading={driveLoading}
-        error={driveError}
-        onRefresh={loadDriveStorage}
-      />
-
-      <div className="grid gap-5 lg:grid-cols-[1fr_1fr_2.1fr]">
-        <QuickCard title="A receber hoje" value={receivedToday} tone="green" href="/movimentacoes" cta="Ir para entradas" icon={<ArrowUpRight size={24} />} />
-        <QuickCard title="A pagar hoje" value={paidToday} tone="orange" href="/despesas" cta="Ir para despesas" icon={<ArrowDownRight size={24} />} />
-        <section className="grid gap-4 rounded-lg bg-cyan-500 p-5 text-white shadow-sm md:grid-cols-2">
-          <MonthProgress title="Recebimentos do mês" realized={ins} planned={ins + pendingTotal} tone="green" />
-          <MonthProgress title="Pagamentos do mês" realized={paidExpensesTotal || outs} planned={(paidExpensesTotal || outs) + pendingTotal} tone="white" />
-          <a href="/movimentacoes" className="md:col-span-2 flex min-h-[42px] items-center justify-center gap-2 rounded-md bg-cyan-600/45 text-[14px] font-black transition hover:bg-cyan-700/45">
-            Ir para fluxo de caixa <ArrowRight size={16} />
-          </a>
-        </section>
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Saldo em caixa" value={money(cash)} icon={<Wallet size={26} />} tone="gold" hint="Atualizado agora" />
-        <StatCard title="Entradas do mês" value={money(ins)} icon={<ArrowUpRight size={26} />} tone="green" hint="Recebimentos confirmados" />
-        <StatCard title="Saídas do mês" value={<FinancialAmount value={outs} kind="saida" />} icon={<ArrowDownRight size={26} />} tone="red" hint="Pagamentos lançados" />
-        <StatCard title="A pagar no mês" value={<FinancialAmount value={pendingTotal} kind="pendente" />} icon={<ReceiptText size={26} />} tone="orange" hint={`${pendingExpenses.length} pendência${pendingExpenses.length === 1 ? "" : "s"}`} />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_.8fr]">
-        <SectionCard
-          title="Fluxo de caixa"
-          subtitle="Fluxo financeiro dos últimos 6 meses"
-          action={<select className="h-10 rounded-lg border border-slate-200 px-3 text-[13px] font-semibold text-slate-600 outline-none"><option>Últimos 6 meses</option></select>}
-        >
-          <ResponsiveContainer width="100%" height={335}>
-            <BarChart data={chart} barGap={10}>
-              <CartesianGrid stroke="#edf0f4" vertical={false} />
-              <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 13 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} width={72} />
-              <Tooltip formatter={(v) => money(v)} cursor={{ fill: "#f8fafc" }} />
-              <Legend wrapperStyle={{ fontSize: 13, paddingTop: 12 }} />
-              <Bar name="Entradas" dataKey="entradas" fill="#16a34a" radius={[7, 7, 0, 0]} maxBarSize={38} />
-              <Bar name="Saídas" dataKey="saidas" fill="#dc2626" radius={[7, 7, 0, 0]} maxBarSize={38} />
-            </BarChart>
-          </ResponsiveContainer>
-        </SectionCard>
-
-        <SectionCard title="Contas do mês" subtitle="Situação dos compromissos financeiros">
-          <div className="overflow-hidden rounded-xl border border-slate-200">
-            <Status label="A pagar" value={pendingTotal} count={pendingExpenses.length} color="amber" icon={<Wallet size={22} />} href="/despesas" />
-            <Status label="Pagas" value={paidExpensesTotal || outs} count={expenses.filter((x) => x.status === "pago").length} color="green" icon={<CheckCircle2 size={22} />} href="/despesas" />
-            <Status label="Recebidas" value={ins} count={current.filter((x) => x.tipo.includes("entrada")).length} color="green" icon={<TrendingUp size={22} />} href="/movimentacoes" />
-          </div>
-        </SectionCard>
-      </div>
-
-      <section className="grid gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-[0_14px_36px_rgba(15,35,70,.055)] md:grid-cols-5">
-        <BottomStat title="Entradas no mês" value={money(ins)} icon={<ArrowUpRight size={22} />} tone="green" />
-        <BottomStat title="Saídas no mês" value={<FinancialAmount value={outs} kind="saida" />} icon={<ArrowDownRight size={22} />} tone="red" />
-        <BottomStat title="Resultado do mês" value={<FinancialAmount value={ins - outs} kind="resultado" />} icon={<Crown size={22} />} tone="gold" />
-        <BottomStat title="Saldo bancário" value={money(account)} icon={<Landmark size={22} />} tone="blue" />
-        <BottomStat title="Movimentações" value={String(current.length)} icon={<ChevronRight size={22} />} tone="purple" />
-      </section>
-
-      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)]">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 sm:px-7 sm:py-6">
-          <div>
-            <h3 className="text-[21px] font-black text-[#061426]">Movimentações recentes</h3>
-            <p className="mt-1 text-[13px] text-slate-500">Últimos lançamentos registrados</p>
-          </div>
-          <a href="/movimentacoes" className="flex min-h-[42px] items-center gap-2 rounded-xl px-3 text-[14px] font-black text-[#061426] transition hover:bg-blue-50">
-            Ver todas <ArrowRight size={17} />
-          </a>
-        </div>
-
-        {rows.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-[14px]">
-              <thead className="bg-[#061426] text-[12px] font-black uppercase tracking-wide text-white">
-                <tr>
-                  {["Data", "Descrição", "Categoria", "Tipo", "Valor", "Status", "Ações"].map((x) => (
-                    <th key={x} className="px-6 py-4">{x}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((x) => (
-                  <tr key={x.id} className="border-t border-slate-100 transition hover:bg-slate-50/70">
-                    <td className="whitespace-nowrap px-6 py-5 text-slate-600">{formatDate(x.data)}</td>
-                    <td className="max-w-[300px] break-words px-6 py-5 font-bold text-[#061426]">{x.descricao}</td>
-                    <td className="px-6 py-5 text-slate-600">{x.categorias_financeiras?.nome || "—"}</td>
-                    <td className="px-6 py-5 capitalize text-slate-600">{x.tipo.replace("_", " ")}</td>
-                    <td className={`whitespace-nowrap px-6 py-5 text-right text-[15px] font-black ${x.tipo.includes("entrada") ? "text-emerald-700" : "text-rose-700"}`}>
-                      <FinancialAmount value={x.valor} kind={x.tipo} />
-                    </td>
-                    <td className="px-6 py-5"><Badge status="pago" /></td>
-                    <td className="px-6 py-5 text-slate-400"><MoreHorizontal size={19} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <Empty />
-        )}
-      </section>
-    </div>
-  );
-}
-
-
-function DriveStoragePanel({
-  data,
-  loading,
-  error,
-  onRefresh,
-}: {
-  data: DriveStorageUsage | null;
-  loading: boolean;
-  error: string;
-  onRefresh: () => void;
-}) {
-  const percent = Math.max(0, Math.min(100, data?.percent || 0));
-  const tone = percent >= 90 ? "bg-rose-500" : percent >= 75 ? "bg-amber-400" : "bg-emerald-500";
-  const status = percent >= 90 ? "Crítico" : percent >= 75 ? "Atenção" : "Espaço saudável";
-
-  return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)]">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 sm:px-7">
-        <div className="flex items-center gap-4">
-          <span className="grid size-12 place-items-center rounded-xl bg-blue-50 text-blue-700">
-            <HardDrive size={24} />
-          </span>
-          <div>
-            <h3 className="text-[21px] font-black text-[#061426]">Armazenamento Google Drive</h3>
-            <p className="mt-1 text-[13px] text-slate-500">Uso geral e consumo das pastas de cada prefeitura</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={loading}
-          className="inline-flex min-h-[42px] items-center gap-2 rounded-xl border border-slate-200 px-4 text-[14px] font-black text-[#061426] transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
-        >
-          <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
-          Atualizar
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="grid min-h-[190px] place-items-center px-6 py-8 text-slate-500">
-          <div className="text-center">
-            <RefreshCw size={28} className="mx-auto animate-spin text-blue-600" />
-            <p className="mt-3 font-semibold">Consultando o Google Drive...</p>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="m-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
-          <AlertTriangle size={21} className="mt-0.5 shrink-0" />
-          <div>
-            <b className="block">Google Drive aguardando configuração</b>
-            <p className="mt-1 text-[14px] leading-6">{error}</p>
-          </div>
-        </div>
-      ) : data ? (
-        <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1.05fr_1.95fr]">
-          <div className="rounded-2xl bg-[#061426] p-6 text-white">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[13px] font-black uppercase tracking-[.16em] text-blue-200">Uso total</span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-[12px] font-black">{status}</span>
-            </div>
-            <strong className="mt-5 block text-[38px] font-black tracking-tight">{percent.toFixed(1)}%</strong>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/15">
-              <div className={`h-full rounded-full transition-all ${tone}`} style={{ width: `${percent}%` }} />
-            </div>
-            <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-              <DriveMetric label="Usado" value={`${data.usedGb.toFixed(2)} GB`} />
-              <DriveMetric label="Disponível" value={`${data.availableGb.toFixed(2)} GB`} />
-              <DriveMetric label="Plano" value={`${data.totalGb.toFixed(0)} GB`} />
-            </div>
-            <p className="mt-5 text-[12px] text-blue-200">
-              Atualizado em {new Date(data.updatedAt).toLocaleString("pt-BR")}
-            </p>
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h4 className="text-[15px] font-black text-[#061426]">Consumo por prefeitura</h4>
-              <span className="text-[12px] font-semibold text-slate-500">{data.folders.length} pasta{data.folders.length === 1 ? "" : "s"} monitorada{data.folders.length === 1 ? "" : "s"}</span>
-            </div>
-            {data.folders.length ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {data.folders.map((folder) => (
-                  <article key={folder.id} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-[#d09116] shadow-sm">
-                          <FolderOpen size={20} />
-                        </span>
-                        <div className="min-w-0">
-                          <b className="block truncate text-[14px] text-[#061426]">{folder.name}</b>
-                          <span className="text-[12px] text-slate-500">{folder.files.toLocaleString("pt-BR")} arquivos</span>
-                        </div>
-                      </div>
-                      <strong className="whitespace-nowrap text-[16px] font-black text-[#061426]">{folder.usedGb.toFixed(2)} GB</strong>
-                    </div>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
-                      <div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(100, folder.percentOfTotal)}%` }} />
-                    </div>
-                    <p className="mt-2 text-right text-[11px] font-bold text-slate-500">{folder.percentOfTotal.toFixed(1)}% do armazenamento total</p>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="grid min-h-[145px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
-                <div>
-                  <FolderOpen size={26} className="mx-auto text-slate-400" />
-                  <p className="mt-2 text-[14px] font-bold text-slate-600">Nenhuma pasta de prefeitura configurada</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-function DriveMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-white/[.07] px-2 py-3">
-      <span className="block text-[11px] font-bold text-blue-200">{label}</span>
-      <b className="mt-1 block text-[14px]">{value}</b>
-    </div>
-  );
-}
-
-function Status({
-  label,
-  value,
-  count,
-  color,
-  icon,
-  href,
-}: {
-  label: string;
-  value: number;
-  count: number;
-  color: string;
-  icon: ReactNode;
-  href: string;
-}) {
-  const cls =
-    color === "green"
-      ? "bg-emerald-50 text-emerald-600"
-      : color === "red"
-        ? "bg-rose-50 text-rose-600"
-        : "bg-amber-50 text-[#d09116]";
-  return (
-    <a href={href} className="flex min-h-[86px] items-center justify-between gap-4 border-b border-slate-200 px-4 py-3 transition hover:bg-slate-50 last:border-b-0">
-      <div className="flex min-w-0 items-center gap-4">
-        <span className={`grid size-12 shrink-0 place-items-center rounded-full ${cls}`}>{icon}</span>
-        <div className="min-w-0">
-          <b className="block text-[15px] text-[#061426]">{label}</b>
-          <span className="mt-0.5 block text-[13px] text-slate-500">{count} contas</span>
-        </div>
-      </div>
-      <strong className="whitespace-nowrap text-[17px] font-black text-[#061426]">{money(value)}</strong>
-      <ChevronRight size={18} className="shrink-0 text-slate-400" />
-    </a>
-  );
-}
-
-function QuickCard({
-  title,
-  value,
-  tone,
-  href,
-  cta,
-  icon,
-}: {
-  title: string;
-  value: number;
-  tone: "green" | "orange";
-  href: string;
-  cta: string;
-  icon: ReactNode;
-}) {
-  const cls = tone === "green" ? "bg-emerald-400 text-white" : "bg-orange-300 text-white";
-  const footer = tone === "green" ? "bg-emerald-500/35" : "bg-orange-400/35";
-  return (
-    <a href={href} className={`flex min-h-[186px] flex-col justify-between overflow-hidden rounded-lg ${cls} shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg`}>
-      <div className="flex items-start justify-between gap-4 p-5">
+    <div className="space-y-4 pb-5">
+      <section className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)] lg:grid-cols-[1.35fr_.75fr_.55fr] lg:items-center">
         <div>
-          <p className="text-[16px] font-bold">{title}</p>
-          <strong className="mt-8 block text-[34px] font-black tracking-tight">{money(value)}</strong>
+          <p className="text-[12px] font-black uppercase tracking-[.24em] text-[#d49d24]">MW TECH CONTROL</p>
+          <h1 className="mt-1 text-[32px] font-black tracking-[-.03em] text-[#071d35] sm:text-[38px]">Visão geral da empresa</h1>
+          <p className="mt-1.5 text-sm text-slate-500">Acompanhe em tempo real os principais indicadores, sistemas e informações da MW TECH.</p>
         </div>
-        <span className="mt-10 grid size-14 place-items-center rounded-lg bg-white/18">{icon}</span>
-      </div>
-      <span className={`flex min-h-[34px] items-center justify-end gap-2 px-5 text-[14px] font-black ${footer}`}>
-        {cta} <ArrowRight size={16} />
-      </span>
-    </a>
-  );
-}
+        <div className="border-slate-200 lg:border-l lg:pl-7">
+          <p className="flex items-center gap-2 text-xs font-semibold capitalize text-slate-500"><CalendarDays size={15}/>{dateLabel}</p>
+          <h2 className="mt-2 text-[22px] font-black text-[#071d35]">Olá, Administrador!</h2>
+          <p className="mt-1 flex items-center gap-2 text-xs text-slate-500"><span className="size-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-50"/>Tudo funcionando normalmente.</p>
+        </div>
+        <div className="flex min-h-[92px] items-center gap-4 rounded-2xl border border-[#b78a2b]/30 bg-gradient-to-br from-[#092440] to-[#102b42] px-5 text-white shadow-sm">
+          <span className="grid size-12 place-items-center rounded-xl bg-[#d5a336]/15 text-[#f5c75b]"><BarChart3 size={25}/></span>
+          <div className="flex-1"><b className="block text-sm">Gestão eficiente</b><span className="text-xs text-slate-300">para um futuro maior.</span></div><ArrowRight size={18} className="text-[#f5c75b]"/>
+        </div>
+      </section>
 
-function MonthProgress({ title, realized, planned, tone }: { title: string; realized: number; planned: number; tone: "green" | "white" }) {
-  const percent = planned > 0 ? Math.min(100, Math.round((realized / planned) * 100)) : 0;
-  const ring = tone === "green" ? "border-lime-300 text-white" : "border-white text-white";
-  return (
-    <div className="flex items-center gap-5">
-      <span className={`grid size-20 shrink-0 place-items-center rounded-full border-[8px] ${ring}`}>
-        <b>{percent}%</b>
-      </span>
-      <div className="min-w-0">
-        <h3 className="text-[16px] font-black">{title}</h3>
-        <p className="mt-3 text-[14px] font-semibold">Realizado: {money(realized)}</p>
-        <p className="text-[14px] font-semibold">Falta: {money(Math.max(planned - realized, 0))}</p>
-        <p className="text-[14px] font-semibold">Previsto: {money(planned)}</p>
-      </div>
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard icon={<ArrowUpRight/>} title="A receber hoje" value={brl(receberHoje)} hint={`${current.filter(x => x.tipo.includes("entrada") && onlyDate(x.data) === today).length} lançamento(s)`} action="Ver recebimentos" href="/movimentacoes" tone="green"/>
+        <MetricCard icon={<ArrowDownRight/>} title="A pagar hoje" value={brl(pagarHoje)} hint={`${current.filter(x => x.tipo.includes("saida") && onlyDate(x.data) === today).length} lançamento(s)`} action="Ver pagamentos" href="/despesas" tone="orange"/>
+        <MetricCard icon={<BarChart3/>} title="Saldo em caixa" value={brl(account)} hint="Saldo total disponível" action="Ver fluxo de caixa" href="/caixa" tone="blue"/>
+        <MetricCard icon={<UsersRound/>} title="Usuários e acessos" value="Controle central" hint="Permissões por função" action="Gerenciar usuários" href="/usuarios" tone="slate"/>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[2.2fr_.8fr]">
+        <DriveCard data={drive} loading={driveLoading} error={driveError} refresh={loadDrive}/>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]">
+          <div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-700"><Building2 size={21}/></span><h3 className="font-black text-[#071d35]">Sistemas e órgãos</h3></div><a href="/sistemas" className="text-xs font-bold text-blue-700">Ver todos →</a></div>
+          <div className="space-y-2.5">
+            <SideItem icon={<Building2 size={18}/>} title="Prefeituras e órgãos" subtitle="Ambientes gerenciados"/>
+            <SideItem icon={<PanelsTopLeft size={18}/>} title="Sistemas ativos" subtitle="Acessos centralizados"/>
+            <SideItem icon={<Link2 size={18}/>} title="Integrações" subtitle="Serviços conectados"/>
+          </div>
+        </section>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1fr_.86fr_.9fr]">
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]">
+          <div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-600"><BarChart3 size={19}/></span><h3 className="font-black text-[#071d35]">Fluxo financeiro do mês</h3></div><span className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-500">Últimos 6 meses</span></div>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={chart} barGap={4}><CartesianGrid stroke="#edf2f7" vertical={false}/><XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{fontSize:11,fill:"#64748b"}}/><YAxis axisLine={false} tickLine={false} width={58} tick={{fontSize:10,fill:"#64748b"}} tickFormatter={(v)=>`R$ ${Math.round(v/1000)}k`}/><Tooltip formatter={(v)=>brl(Number(v))}/><Bar dataKey="entradas" name="Recebimentos" fill="#34c993" radius={[6,6,0,0]} maxBarSize={24}/><Bar dataKey="saidas" name="Pagamentos" fill="#f49b45" radius={[6,6,0,0]} maxBarSize={24}/></BarChart>
+          </ResponsiveContainer>
+          <div className="mt-1 flex justify-center gap-5 text-[11px] font-semibold text-slate-500"><span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-emerald-400"/>Recebimentos</span><span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-orange-400"/>Pagamentos</span></div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]">
+          <div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700"><FileChartColumn size={19}/></span><h3 className="font-black text-[#071d35]">Últimos lançamentos</h3></div><a href="/movimentacoes" className="text-xs font-bold text-blue-700">Ver todos →</a></div>
+          <div className="divide-y divide-slate-100">
+            {recent.length ? recent.map((x) => {
+              const entry = x.tipo.includes("entrada");
+              return <div key={x.id} className="flex items-center gap-3 py-3"><span className={`grid size-9 shrink-0 place-items-center rounded-full ${entry ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>{entry ? <ArrowUpRight size={18}/> : <ArrowDownRight size={18}/>}</span><div className="min-w-0 flex-1"><b className="block truncate text-xs text-[#071d35]">{x.descricao || (entry ? "Recebimento" : "Pagamento")}</b><span className="text-[11px] text-slate-400">{new Date(x.data).toLocaleDateString("pt-BR")}</span></div><b className={`text-xs ${entry ? "text-emerald-600" : "text-rose-600"}`}>{brl(Number(x.valor))}</b></div>
+            }) : <div className="py-10 text-center text-xs text-slate-400">Nenhum lançamento recente.</div>}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]">
+          <div className="mb-4 flex items-center gap-3"><span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-600">⚡</span><h3 className="font-black text-[#071d35]">Acesso rápido</h3></div>
+          <div className="grid grid-cols-3 gap-2.5">
+            <Quick href="/movimentacoes" icon={<Plus size={20}/>} label="Novo lançamento" tone="green"/>
+            <Quick href="/contas" icon={<Landmark size={20}/>} label="Contas bancárias" tone="blue"/>
+            <Quick href="/relatorios" icon={<FileChartColumn size={20}/>} label="Relatórios" tone="purple"/>
+            <Quick href="/usuarios" icon={<UsersRound size={20}/>} label="Usuários" tone="orange"/>
+            <Quick href="/suporte" icon={<Headphones size={20}/>} label="Suporte" tone="blue"/>
+            <Quick href="/configuracoes" icon={<Settings2 size={20}/>} label="Configurações" tone="slate"/>
+          </div>
+        </section>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <MiniStat label="Recebimentos do mês" value={brl(entradas)} icon={<ArrowUpRight size={18}/>} tone="green"/>
+        <MiniStat label="Pagamentos do mês" value={brl(saidas)} icon={<ArrowDownRight size={18}/>} tone="orange"/>
+        <MiniStat label="A pagar no mês" value={brl(pendenteTotal)} icon={<Wallet size={18}/>} tone="blue"/>
+      </section>
     </div>
   );
 }
 
-function buildMonthlyChart(rows: Movement[]) {
-  const formatter = new Intl.DateTimeFormat("pt-BR", { month: "short" });
-  const base = new Date();
-  return Array.from({ length: 6 }, (_, index) => {
-    const date = new Date(base.getFullYear(), base.getMonth() - (5 - index), 1);
-    const key = date.toISOString().slice(0, 7);
-    const monthRows = rows.filter((row) => dateOnly(row.data).startsWith(key));
-    return {
-      mes: formatter.format(date).replace(".", ""),
-      entradas: monthRows.filter((row) => row.tipo.includes("entrada")).reduce((sum, row) => sum + Number(row.valor), 0),
-      saidas: monthRows.filter((row) => row.tipo.includes("saida")).reduce((sum, row) => sum + Number(row.valor), 0),
-    };
+function MetricCard({icon,title,value,hint,action,href,tone}:{icon:React.ReactNode;title:string;value:string;hint:string;action:string;href:string;tone:"green"|"orange"|"blue"|"slate"}) {
+  const styles = {green:"bg-emerald-50 text-emerald-600",orange:"bg-orange-50 text-orange-600",blue:"bg-blue-50 text-blue-600",slate:"bg-slate-100 text-slate-600"}[tone];
+  return <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]"><div className="flex items-start gap-4"><span className={`grid size-12 shrink-0 place-items-center rounded-full ${styles}`}>{icon}</span><div className="min-w-0 flex-1"><p className="text-sm font-bold text-[#18324d]">{title}</p><strong className="mt-1 block truncate text-[24px] font-black tracking-[-.025em] text-[#071d35]">{value}</strong><span className="mt-1 block text-xs text-slate-400">{hint}</span><a href={href} className="mt-3 flex items-center justify-end gap-1.5 text-xs font-bold text-blue-700">{action}<ArrowRight size={14}/></a></div></div></article>;
+}
+
+function DriveCard({data,loading,error,refresh}:{data:DriveStorageUsage|null;loading:boolean;error:string;refresh:()=>void}) {
+  const pct = Math.max(0,Math.min(100,data?.percent || 0));
+  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(15,35,70,.05)]">
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><span className="grid size-11 place-items-center rounded-xl bg-blue-50 text-blue-600"><Cloud size={23}/></span><div><h3 className="font-black text-[#071d35]">Armazenamento Google Drive</h3><p className="text-xs text-slate-400">Pastas organizadas por prefeitura/órgão</p></div></div><div className="flex gap-2"><button onClick={refresh} className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50" title="Atualizar"><RefreshCw size={16} className={loading?"animate-spin":""}/></button><button className="grid size-9 place-items-center rounded-xl border border-slate-200 text-slate-600"><MoreHorizontal size={17}/></button></div></div>
+    {error ? <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">Google Drive aguardando configuração: {error}</div> : loading ? <div className="grid h-44 place-items-center text-sm text-slate-400"><RefreshCw className="animate-spin"/></div> : <div className="grid gap-4 lg:grid-cols-[.8fr_.9fr_1.25fr]">
+      <div className="flex items-center gap-4 rounded-xl bg-slate-50 p-4"><div className="relative grid size-28 shrink-0 place-items-center rounded-full" style={{background:`conic-gradient(#1478df ${pct*3.6}deg,#e9eef5 0deg)`}}><div className="grid size-20 place-items-center rounded-full bg-white"><b className="text-xl text-[#071d35]">{pct.toFixed(0)}%</b></div></div><div><b className="block text-sm text-[#071d35]">{pct.toFixed(0)}% utilizado</b><span className="mt-1 block text-xs text-slate-400">{data?.usedGb?.toFixed(1) || "0,0"} GB de {data?.totalGb?.toFixed(0) || "0"} GB</span></div></div>
+      <div className="space-y-2 rounded-xl border border-slate-100 p-3"><DriveLine label="Espaço utilizado" value={`${data?.usedGb?.toFixed(1) || "0,0"} GB`}/><DriveLine label="Espaço disponível" value={`${data?.availableGb?.toFixed(1) || "0,0"} GB`}/><DriveLine label="Total do plano" value={`${data?.totalGb?.toFixed(0) || "0"} GB`}/></div>
+      <div className="rounded-xl bg-slate-50 p-3"><div className="mb-2 flex items-center justify-between"><b className="text-xs text-[#071d35]">Pastas por prefeitura/órgão</b><span className="text-[11px] font-bold text-blue-700">Ver todas →</span></div><div className="space-y-1.5">{(data?.folders || []).slice(0,5).map(f=><div key={f.id} className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-2"><Folder size={15} className="text-amber-500"/><span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-600">{f.name}</span><b className="text-[11px] text-slate-500">{f.usedGb.toFixed(1)} GB</b></div>)}{!data?.folders?.length && <p className="py-6 text-center text-xs text-slate-400">Nenhuma pasta retornada.</p>}</div></div>
+    </div>}
+  </section>;
+}
+
+function DriveLine({label,value}:{label:string;value:string}){return <div className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-3"><span className="text-[11px] text-slate-500">{label}</span><b className="text-xs text-[#071d35]">{value}</b></div>}
+function SideItem({icon,title,subtitle}:{icon:React.ReactNode;title:string;subtitle:string}){return <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3"><span className="grid size-9 place-items-center rounded-lg bg-white text-blue-700">{icon}</span><div className="flex-1"><b className="block text-xs text-[#071d35]">{title}</b><span className="text-[11px] text-slate-400">{subtitle}</span></div><span className="size-2.5 rounded-full bg-emerald-500"/></div>}
+function Quick({href,icon,label,tone}:{href:string;icon:React.ReactNode;label:string;tone:"green"|"blue"|"purple"|"orange"|"slate"}){const s={green:"bg-emerald-50 text-emerald-600",blue:"bg-blue-50 text-blue-600",purple:"bg-violet-50 text-violet-600",orange:"bg-orange-50 text-orange-600",slate:"bg-slate-100 text-slate-600"}[tone];return <a href={href} className={`flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-xl p-2 text-center text-[11px] font-bold transition hover:-translate-y-0.5 ${s}`}>{icon}<span>{label}</span></a>}
+function MiniStat({label,value,icon,tone}:{label:string;value:string;icon:React.ReactNode;tone:"green"|"orange"|"blue"}){const s={green:"bg-emerald-50 text-emerald-600",orange:"bg-orange-50 text-orange-600",blue:"bg-blue-50 text-blue-600"}[tone];return <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-xl ${s}`}>{icon}</span><div><span className="block text-[11px] font-semibold text-slate-400">{label}</span><b className="text-sm text-[#071d35]">{value}</b></div></div>}
+
+function buildChart(rows: Movement[]){
+  const fmt = new Intl.DateTimeFormat("pt-BR",{month:"short"});
+  return Array.from({length:6},(_,i)=>{
+    const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-(5-i));
+    const key=d.toISOString().slice(0,7);
+    const list=rows.filter(x=>onlyDate(x.data).startsWith(key));
+    return {mes:fmt.format(d).replace(".","").replace(/^./,c=>c.toUpperCase()),entradas:list.filter(x=>x.tipo.includes("entrada")).reduce((s,x)=>s+Number(x.valor||0),0),saidas:list.filter(x=>x.tipo.includes("saida")).reduce((s,x)=>s+Number(x.valor||0),0)};
   });
-}
-
-function BottomStat({
-  title,
-  value,
-  icon,
-  tone,
-}: {
-  title: string;
-  value: ReactNode;
-  icon: ReactNode;
-  tone: "green" | "red" | "gold" | "blue" | "purple";
-}) {
-  const cls = {
-    green: "bg-emerald-50 text-emerald-600",
-    red: "bg-rose-50 text-rose-600",
-    gold: "bg-amber-50 text-[#d09116]",
-    blue: "bg-blue-50 text-blue-600",
-    purple: "bg-purple-50 text-purple-600",
-  }[tone];
-  return (
-    <div className="flex min-w-0 items-center gap-4 border-slate-200 px-2 py-3 md:border-r md:last:border-r-0">
-      <span className={`grid size-13 shrink-0 place-items-center rounded-full ${cls}`}>{icon}</span>
-      <div className="min-w-0">
-        <p className="text-[13px] font-bold text-slate-500">{title}</p>
-        <b className="mt-1 block truncate text-[20px] font-black text-[#061426]">{value}</b>
-      </div>
-    </div>
-  );
 }
