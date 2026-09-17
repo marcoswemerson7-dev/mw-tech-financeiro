@@ -1,70 +1,128 @@
-/* MW TECH Control — ajuste fino da Visão Geral conforme referência aprovada */
+/* MW TECH Control — fidelidade visual ao modelo executivo aprovado */
+
+/* Base mais viva e nítida, sem carregar fontes externas */
+main > div:has(> footer) {
+  font-family: Inter, "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  color: #0b2340;
+}
+
+main > div:has(> footer) h1,
+main > div:has(> footer) h2,
+main > div:has(> footer) h3 {
+  color: #071f3c !important;
+  letter-spacing: -0.025em !important;
+}
+
+main > div:has(> footer) h1 { font-weight: 760 !important; }
+main > div:has(> footer) h2,
+main > div:has(> footer) h3 { font-weight: 700 !important; }
+main > div:has(> footer) strong,
+main > div:has(> footer) b { font-weight: 680 !important; }
+
+/* Fundo e espaçamento geral da Visão Geral */
 @media (min-width: 1280px) {
   main:has(> div > footer) {
-    padding: 14px 16px 10px !important;
+    padding: 12px 14px 8px !important;
+    background: #f3f7fb !important;
   }
 
   main > div:has(> footer) {
     max-width: 100% !important;
-    gap: 0 !important;
-    row-gap: 14px !important;
-    padding-bottom: 8px !important;
+    row-gap: 12px !important;
+    padding-bottom: 6px !important;
   }
 
-  /* Cabeçalho executivo */
+  /* HERO */
   main > div:has(> footer) > section:nth-of-type(1) {
-    min-height: 118px !important;
+    min-height: 122px !important;
     padding: 18px 28px !important;
-    border-radius: 16px !important;
-    box-shadow: 0 5px 18px rgba(15, 35, 70, .045) !important;
+    border: 1px solid #dfe7f0 !important;
+    border-radius: 15px !important;
+    background: linear-gradient(100deg, #fff 0%, #fff 47%, #f9fbff 68%, #fff 100%) !important;
+    box-shadow: 0 8px 24px rgba(15, 42, 72, .055) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(1) > div:last-child {
-    grid-template-columns: minmax(460px, 1.45fr) minmax(280px, .66fr) minmax(250px, .58fr) !important;
+    grid-template-columns: minmax(470px, 1.38fr) minmax(285px, .64fr) minmax(255px, .55fr) !important;
     gap: 16px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(1) h1 {
-    font-size: 34px !important;
-    line-height: 1.02 !important;
-    font-weight: 650 !important;
+    font-size: 35px !important;
+    line-height: 1 !important;
+    font-weight: 780 !important;
+    color: #071f3c !important;
   }
 
-  main > div:has(> footer) > section:nth-of-type(1) p {
-    letter-spacing: normal;
+  main > div:has(> footer) > section:nth-of-type(1) h1 + p {
+    margin-top: 7px !important;
+    font-size: 13px !important;
+    color: #6480a0 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(1) > div:last-child > div:nth-child(2),
+  main > div:has(> footer) > section:nth-of-type(1) > div:last-child > div:nth-child(3) {
+    min-height: 82px !important;
+    border-radius: 12px !important;
   }
 
   /* KPI */
   main > div:has(> footer) > section:nth-of-type(2) {
-    gap: 14px !important;
+    gap: 12px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(2) > a {
     min-height: 126px !important;
     padding: 16px 18px !important;
+    border: 1px solid #e0e8f1 !important;
     border-radius: 15px !important;
-    box-shadow: 0 5px 18px rgba(15, 35, 70, .04) !important;
+    background: #fff !important;
+    box-shadow: 0 7px 20px rgba(25, 55, 86, .055) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(2) > a:hover {
+    border-color: #cad8e7 !important;
+    box-shadow: 0 10px 26px rgba(25, 55, 86, .085) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(2) > a p:first-of-type {
+    font-size: 12px !important;
+    font-weight: 650 !important;
+    color: #173759 !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(2) > a p:nth-of-type(2) {
     font-size: 24px !important;
-    line-height: 1.1 !important;
+    line-height: 1.08 !important;
+    font-weight: 760 !important;
+    color: #061f3d !important;
   }
 
-  /* Drive + Sistemas */
+  main > div:has(> footer) > section:nth-of-type(2) > a p:nth-of-type(3) {
+    color: #8298b2 !important;
+  }
+
+  /* DRIVE + SISTEMAS */
   main > div:has(> footer) > section:nth-of-type(3) {
-    grid-template-columns: minmax(0, 2.2fr) minmax(320px, .82fr) !important;
-    gap: 14px !important;
+    grid-template-columns: minmax(0, 2.25fr) minmax(315px, .82fr) !important;
+    gap: 12px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section {
+    border: 1px solid #dfe7f0 !important;
     border-radius: 15px !important;
-    box-shadow: 0 5px 18px rgba(15, 35, 70, .04) !important;
+    background: #fff !important;
+    box-shadow: 0 7px 20px rgba(25, 55, 86, .05) !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child {
-    min-height: 286px !important;
+    min-height: 290px !important;
     padding: 15px 17px !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:first-child h2 {
+    font-size: 17px !important;
+    font-weight: 740 !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child {
@@ -73,63 +131,87 @@
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child {
-    min-height: 196px !important;
+    min-height: 205px !important;
     padding: 18px 20px !important;
     border-radius: 12px !important;
+    background: linear-gradient(145deg, #062847 0%, #05233f 100%) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 20px rgba(5,35,63,.12) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:first-child p:nth-child(2) {
+    font-size: 34px !important;
+    font-weight: 760 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:last-child > div.space-y-2 > div,
+  main > div:has(> footer) > section:nth-of-type(3) > section:first-child > div:last-child > div:last-child > div.space-y-2 > a {
+    min-height: 56px !important;
+    border: 1px solid #edf1f6 !important;
+    background: #f7f9fc !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(3) > section:last-child {
     padding: 16px !important;
   }
 
-  /* Linha inferior */
+  main > div:has(> footer) > section:nth-of-type(3) > section:last-child > div:first-child h2 {
+    font-size: 16px !important;
+    font-weight: 730 !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(3) > section:last-child > div:last-child > div {
+    min-height: 62px !important;
+    background: #f6f8fb !important;
+  }
+
+  /* LINHA INFERIOR */
   main > div:has(> footer) > section:nth-of-type(4) {
-    grid-template-columns: minmax(0, 1.18fr) minmax(0, .94fr) minmax(340px, .88fr) !important;
-    gap: 14px !important;
+    grid-template-columns: minmax(0, 1.18fr) minmax(0, .94fr) minmax(330px, .88fr) !important;
+    gap: 12px !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(4) > section {
-    min-height: 252px !important;
+    min-height: 254px !important;
     padding: 16px !important;
+    border: 1px solid #dfe7f0 !important;
     border-radius: 15px !important;
-    box-shadow: 0 5px 18px rgba(15, 35, 70, .04) !important;
+    background: #fff !important;
+    box-shadow: 0 7px 20px rgba(25, 55, 86, .05) !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(4) > section h2 {
+    font-size: 15px !important;
+    font-weight: 730 !important;
   }
 
   main > div:has(> footer) > section:nth-of-type(4) .recharts-responsive-container {
-    height: 175px !important;
+    height: 178px !important;
   }
 
-  /* Rodapé da Visão Geral */
+  main > div:has(> footer) > section:nth-of-type(4) > section:last-child a {
+    min-height: 74px !important;
+    border: 1px solid #edf2f7 !important;
+    background: #f8fafc !important;
+  }
+
+  main > div:has(> footer) > section:nth-of-type(4) > section:last-child a:hover {
+    background: #edf5ff !important;
+    border-color: #d8e6f6 !important;
+  }
+
   main > div:has(> footer) > footer {
-    padding: 0 8px 3px !important;
+    padding: 1px 8px 2px !important;
     font-size: 9px !important;
+    color: #7d93ad !important;
   }
 }
 
-/* Tipografia corporativa: menos peso, melhor leitura */
-main > div:has(> footer) {
-  font-family: Inter, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-}
-
-main > div:has(> footer) h1,
-main > div:has(> footer) h2,
-main > div:has(> footer) h3 {
-  font-weight: 650 !important;
-}
-
-main > div:has(> footer) strong,
-main > div:has(> footer) b {
-  font-weight: 600 !important;
-}
-
-/* Barra superior e menu com proporções da referência */
+/* SIDEBAR E TOPBAR — mesmas proporções e presença visual do modelo */
 @media (min-width: 1024px) {
   body > #root aside {
     width: 236px !important;
-  }
-
-  body > #root aside + * {
-    margin-left: 0;
+    background: linear-gradient(180deg, #062844 0%, #05243f 52%, #042039 100%) !important;
+    box-shadow: 8px 0 24px rgba(3, 25, 47, .11) !important;
   }
 
   body > #root .lg\:pl-\[254px\] {
@@ -137,37 +219,59 @@ main > div:has(> footer) b {
   }
 
   body > #root aside > div:first-child {
-    min-height: 168px !important;
+    min-height: 166px !important;
+    border-bottom-color: rgba(255,255,255,.035) !important;
   }
 
   body > #root aside > div:first-child img {
     height: 132px !important;
     width: 190px !important;
+    filter: saturate(1.12) contrast(1.05) !important;
   }
 
   body > #root aside nav {
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+    padding: 10px 9px 12px !important;
     row-gap: 2px !important;
   }
 
   body > #root aside nav > a,
   body > #root aside nav > div > div:first-child {
     min-height: 45px !important;
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+    border-radius: 10px !important;
     font-size: 13px !important;
-    font-weight: 600 !important;
+    font-weight: 650 !important;
   }
 
   body > #root aside nav > div > div:last-child a {
     min-height: 34px !important;
+    padding-left: 10px !important;
     font-size: 11px !important;
-    font-weight: 500 !important;
+    font-weight: 520 !important;
+    color: #d6e0eb !important;
+  }
+
+  body > #root aside nav a[aria-current="page"] {
+    box-shadow: inset 3px 0 0 #f2bc3e, inset 0 0 0 1px rgba(255,255,255,.025) !important;
   }
 
   body > #root header {
-    height: 60px !important;
+    height: 58px !important;
     padding-left: 18px !important;
     padding-right: 18px !important;
+    background: linear-gradient(90deg, #082e50 0%, #0a3a63 45%, #082e50 100%) !important;
     box-shadow: 0 4px 14px rgba(6, 20, 38, .14) !important;
+  }
+
+  body > #root header input {
+    font-size: 13px !important;
+  }
+}
+
+/* Ajustes em telas menores */
+@media (max-width: 1279px) {
+  main > div:has(> footer) {
+    row-gap: 14px !important;
   }
 }
