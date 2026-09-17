@@ -74,6 +74,20 @@ A chave das Functions deve ter acesso a TablesDB. Permita execução apenas para
 
 As operações usam transações do TablesDB para gravar saldo e histórico de forma conjunta. Cada chamada recebe uma chave de idempotência; índices únicos impedem o mesmo pagamento ou movimento de ser aplicado duas vezes. Pagamentos estornados são preservados, nunca excluídos.
 
+
+## 6.1 Monitoramento do Google Drive
+
+O painel principal pode mostrar o armazenamento total da conta do Google Drive e o consumo das pastas de cada prefeitura. Configure os seguintes segredos na Function `financial-operations`:
+
+```text
+GOOGLE_DRIVE_CLIENT_ID=CLIENT_ID_DO_GOOGLE
+GOOGLE_DRIVE_CLIENT_SECRET=CLIENT_SECRET_DO_GOOGLE
+GOOGLE_DRIVE_REFRESH_TOKEN=REFRESH_TOKEN_DA_CONTA_DO_DRIVE
+GOOGLE_DRIVE_FOLDERS=[{"name":"Ribeiro Gonçalves","id":"ID_DA_PASTA_RG"},{"name":"Baixa Grande do Ribeiro","id":"ID_DA_PASTA_BGR"}]
+```
+
+A conta Google autorizada deve ter acesso às pastas informadas. O frontend nunca recebe essas credenciais: ele chama a Function autenticada, que consulta a API do Google e devolve apenas totais de armazenamento. Ao incluir uma nova prefeitura ou Câmara, adicione seu nome e ID ao JSON de `GOOGLE_DRIVE_FOLDERS`.
+
 ## 7. Executar e publicar
 
 ```bash
