@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
+  PanelsTopLeft,
+  UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -22,6 +24,8 @@ import { useAuth } from "../lib/auth";
 const items = [
   ["/", "Visão geral", House],
   ["/caixa", "Caixa", Wallet],
+  ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
+  ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
 const financeItems = [
   ["/movimentacoes", "Entradas e saídas", ArrowLeftRight],
