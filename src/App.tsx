@@ -38,7 +38,7 @@ const Reports = lazyWithRecovery(() => import("./pages/Reports"), "reports");
 const Settings = lazyWithRecovery(() => import("./pages/Settings"), "settings");
 const Accounts = lazyWithRecovery(() => import("./pages/Accounts"), "accounts");
 const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "support");
-const Systems = lazyWithRecovery(() => import("./pages/Systems"), "systems");
+const Systems = lazyWithRecovery(() => import("./pages/Systems"), "systems");\nconst Monitoring = lazyWithRecovery(() => import("./pages/Monitoring"), "monitoring");
 const UsersAccess = lazyWithRecovery(() => import("./pages/UsersAccess"), "users");
 const Storage = lazyWithRecovery(() => import("./pages/Storage"), "storage");
 const RemoteAccess = lazyWithRecovery(() => import("./pages/RemoteAccess"), "remote-access");
@@ -112,7 +112,7 @@ function Private() {
         import("./pages/Accounts"),
         import("./pages/Expenses"),
         import("./pages/Reports"),
-        import("./pages/Systems"),
+        import("./pages/Systems"),\n        import("./pages/Monitoring"),
         import("./pages/UsersAccess"),
         import("./pages/Storage"),
         import("./pages/RemoteAccess"),
@@ -155,7 +155,7 @@ export default function App() {
               <Route path="armazenamento" element={<Storage />} />
               <Route path="acesso-remoto" element={<RemoteAccess />} />
               <Route path="suporte" element={<SupportCenter />} />
-              <Route path="sistemas" element={<Systems />} />
+              <Route path="sistemas" element={<Systems />} />\n              <Route path="monitoramento" element={<Monitoring />} />
               <Route path="usuarios" element={<UsersAccess />} />
               <Route path="configuracoes" element={<Settings />} />
               <Route path="receitas" element={<DataPage kind="receitas" />} />
