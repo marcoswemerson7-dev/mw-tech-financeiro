@@ -2,9 +2,7 @@ import { Outlet, NavLink, useLocation } from "react-router-dom";
 import {
   House,
   Wallet,
-  ArrowLeftRight,
   Landmark,
-  Receipt,
   FileChartColumn,
   Settings,
   LogOut,
@@ -23,18 +21,21 @@ import {
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
 
-const items = [
+const topItems = [
   ["/", "Visão geral", House],
   ["/caixa", "Caixa", Wallet],
-  ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
-  ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
 
 const financeItems = [
-  ["/movimentacoes", "Entradas e saídas", ArrowLeftRight],
+  ["/movimentacoes", "Entradas e saídas", CircleDollarSign],
   ["/contas", "Contas bancárias", Landmark],
-  ["/despesas", "Contas a pagar", Receipt],
+  ["/despesas", "Contas a pagar", Wallet],
   ["/relatorios", "Relatórios", FileChartColumn],
+] as const;
+
+const managementItems = [
+  ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
+  ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
 
 const bottomItems = [
@@ -48,15 +49,22 @@ export default function Layout() {
   const { logout } = useAuth();
   const financeActive = financeItems.some(([path]) => loc.pathname.startsWith(path));
 
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition-all ${
+      isActive
+        ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.025)]"
+        : "border-transparent text-slate-100 hover:bg-white/[.05] hover:text-white"
+    }`;
+
   return (
     <div className="min-h-screen bg-[#f3f6fa] text-slate-900">
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex w-[258px] flex-col overflow-y-auto bg-gradient-to-b from-[#071d35] via-[#061a31] to-[#071a2e] text-white shadow-[12px_0_35px_rgba(6,20,38,.12)] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-gradient-to-b from-[#08223d] via-[#071d35] to-[#06192d] text-white shadow-[12px_0_35px_rgba(6,20,38,.12)] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="relative flex min-h-[180px] items-center justify-center border-b border-white/[.06] px-5 py-5">
+        <div className="relative flex min-h-[183px] items-center justify-center border-b border-white/[.055] px-5 py-4">
           <img
             src="/mw-tech-logo.png"
-            className="h-[142px] w-[210px] object-contain"
+            className="h-[148px] w-[215px] object-contain mix-blend-screen"
             alt="MW TECH"
           />
           <button
@@ -69,20 +77,8 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 space-y-2 px-3 py-4">
-          {items.map(([to, label, I]) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === "/"}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition-all ${
-                  isActive
-                    ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.025)]"
-                    : "border-transparent text-slate-100 hover:bg-white/[.05] hover:text-white"
-                }`
-              }
-            >
+          {topItems.map(([to, label, I]) => (
+            <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} className={navClass}>
               <I size={21} strokeWidth={2} />
               <span>{label}</span>
             </NavLink>
@@ -91,9 +87,7 @@ export default function Layout() {
           <div className="pt-1">
             <div
               className={`flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold ${
-                financeActive
-                  ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b]"
-                  : "border-transparent text-slate-100"
+                financeActive ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b]" : "border-transparent text-slate-100"
               }`}
             >
               <CircleDollarSign size={21} strokeWidth={2} />
@@ -108,9 +102,7 @@ export default function Layout() {
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
                     `flex min-h-[36px] items-center gap-2.5 rounded-lg px-3 text-[12px] font-semibold transition ${
-                      isActive
-                        ? "bg-white/[.07] text-[#f5c75b]"
-                        : "text-slate-300 hover:bg-white/[.05] hover:text-white"
+                      isActive ? "bg-white/[.07] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.05] hover:text-white"
                     }`
                   }
                 >
@@ -121,42 +113,35 @@ export default function Layout() {
             </div>
           </div>
 
+          {managementItems.map(([to, label, I]) => (
+            <NavLink key={to} to={to} onClick={() => setOpen(false)} className={navClass}>
+              <I size={21} strokeWidth={2} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+
           <div className="flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] border-transparent px-4 text-[14px] font-bold text-slate-100">
             <Cloud size={21} strokeWidth={2} />
             <span>Armazenamento (Drive)</span>
           </div>
 
           {bottomItems.map(([to, label, I]) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition-all ${
-                  isActive
-                    ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b]"
-                    : "border-transparent text-slate-100 hover:bg-white/[.05] hover:text-white"
-                }`
-              }
-            >
+            <NavLink key={to} to={to} onClick={() => setOpen(false)} className={navClass}>
               <I size={21} strokeWidth={2} />
               <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="mx-4 mb-3 overflow-hidden rounded-2xl border border-[#c99a38]/35 bg-white/[.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
+        <div className="relative mx-4 mb-3 overflow-hidden rounded-2xl border border-[#c99a38]/35 bg-white/[.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#d7a63a]/70 to-transparent" />
           <div className="flex items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f0b83f]/10 text-[#f0b83f]">
               <Building2 size={21} />
             </span>
             <div>
               <b className="text-sm">MW TECH</b>
-              <p className="mt-1 text-xs leading-5 text-slate-300">
-                Gestão hoje.
-                <br />
-                Resultados amanhã.
-              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-300">Gestão hoje.<br />Resultados amanhã.</p>
             </div>
           </div>
         </div>
@@ -171,22 +156,18 @@ export default function Layout() {
       </aside>
 
       {open && (
-        <button
-          onClick={() => setOpen(false)}
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
-          aria-label="Fechar menu"
-        />
+        <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />
       )}
 
-      <div className="lg:pl-[258px]">
-        <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#082743] via-[#0a3155] to-[#082743] px-4 text-white shadow-[0_7px_24px_rgba(6,20,38,.16)] sm:px-7 lg:px-8">
-          <div className="flex items-center gap-4">
+      <div className="lg:pl-[254px]">
+        <header className="sticky top-0 z-10 flex h-[72px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#082743] via-[#0a3155] to-[#082743] px-4 text-white shadow-[0_7px_24px_rgba(6,20,38,.16)] sm:px-7 lg:px-6">
+          <div className="flex items-center gap-5">
             <button
-              className="rounded-lg p-2 hover:bg-white/10 lg:hidden"
+              className="grid size-9 place-items-center rounded-lg text-white/90 transition hover:bg-white/10"
               onClick={() => setOpen(true)}
               aria-label="Abrir menu"
             >
-              <Menu size={22} />
+              <Menu size={24} />
             </button>
             <div className="hidden h-11 w-[500px] max-w-[40vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
               <Search size={18} className="text-slate-300" />
@@ -200,10 +181,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              className="relative grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10"
-              aria-label="Notificações"
-            >
+            <button className="relative grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10" aria-label="Notificações">
               <Bell size={20} />
               <i className="absolute right-2 top-2 size-2 rounded-full bg-[#f5c75b]" />
             </button>
@@ -219,7 +197,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="w-full p-4 sm:p-6 lg:p-7 xl:p-8">
+        <main className="w-full p-4 sm:p-6 lg:p-7 xl:px-8 xl:py-6">
           <Outlet />
         </main>
       </div>
