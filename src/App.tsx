@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, type ComponentType, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/auth";
 import Layout from "./components/Layout";
@@ -47,7 +47,7 @@ function LoadingScreen() {
     <div className="grid min-h-[45vh] place-items-center">
       <div className="flex items-center gap-3 text-sm font-semibold text-slate-500">
         <span className="size-5 animate-spin rounded-full border-2 border-slate-200 border-t-blue-600" />
-        Carregando...
+        Carregando módulo...
       </div>
     </div>
   );
@@ -100,6 +100,37 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: bo
 
 function Private() {
   const { session, loading } = useAuth();
+
+  useEffect(() => {
+    if (!session) return;
+    const preload = () => {
+      void Promise.allSettled([
+        import("./pages/Dashboard"),
+        import("./pages/Cash"),
+        import("./pages/Transactions"),
+        import("./pages/Accounts"),
+        import("./pages/Expenses"),
+        import("./pages/Reports"),
+        import("./pages/Systems"),
+        import("./pages/UsersAccess"),
+        import("./pages/Storage"),
+        import("./pages/RemoteAccess"),
+        import("./pages/SupportCenter"),
+        import("./pages/Settings"),
+        import("./pages/DataPage"),
+      ]);
+      void import("./services/managedSystems").then(({ getManagedSystems }) => getManagedSystems()).catch(() => undefined);
+    };
+
+    const win = window as typeof window & { requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (win.requestIdleCallback) {
+      const id = win.requestIdleCallback(preload, { timeout: 1200 });
+      return () => win.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(preload, 250);
+    return () => window.clearTimeout(id);
+  }, [session]);
+
   if (loading) return <LoadingScreen />;
   return session ? <Layout /> : <Navigate to="/login" replace />;
 }
