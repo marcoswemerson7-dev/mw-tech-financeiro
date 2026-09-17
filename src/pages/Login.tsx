@@ -39,12 +39,12 @@ export default function Login() {
         </div>
         <div className="relative z-10 max-w-2xl">
           <div className="mb-7 h-1.5 w-20 rounded-full bg-[#d9a443]" />
-          <p className="text-[13px] font-bold uppercase tracking-[.28em] text-[#efc46c]">MW TECH Financeiro</p>
+          <p className="text-[13px] font-bold uppercase tracking-[.28em] text-[#efc46c]">MW TECH Control</p>
           <h1 className="mt-5 max-w-xl text-[54px] font-extrabold leading-[1.08] tracking-[-.035em]">
-            Controle financeiro simples, seguro e organizado.
+            Controle administrativo completo, seguro e organizado.
           </h1>
           <p className="mt-6 max-w-lg text-[18px] leading-8 text-slate-300">
-            Acompanhe entradas, saídas, contas, despesas e resultados com uma visão clara do seu negócio.
+            Centralize financeiro, clientes, contratos, sistemas, armazenamento e suporte em uma única visão.
           </p>
           <div className="mt-10 flex items-center gap-3 text-sm font-semibold text-slate-300">
             <span className="grid size-10 place-items-center rounded-lg bg-white/10 text-[#efc46c]"><ShieldCheck size={21} /></span>
@@ -115,7 +115,7 @@ export default function Login() {
             {busy ? "Entrando..." : "Entrar"}
           </button>
 
-          <p className="mt-6 text-center text-[12px] text-slate-400">Acesso restrito · MW TECH Financeiro</p>
+          <p className="mt-6 text-center text-[12px] text-slate-400">Acesso restrito · MW TECH Control</p>
         </form>
       </section>
     </div>
