@@ -68,7 +68,7 @@ function EndpointRow({
   title,
   health,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   health: EndpointHealth;
 }) {
@@ -265,7 +265,7 @@ function SummaryCard({
 }: {
   label: string;
   value: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   tone: "emerald" | "amber" | "rose" | "blue";
 }) {
   const styles = {
