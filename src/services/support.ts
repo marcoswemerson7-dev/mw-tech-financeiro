@@ -130,6 +130,29 @@ export const supportService = {
 
   async updateStatus(ticketId: string, status: string) {
     const source = resolveSource(ticketId);
+
+    if (status === "resolvido") {
+      await requestFrom(source, "", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "send_message",
+          ticket_id: ticketId,
+          body: "Olá! Seu atendimento foi concluído e o chamado foi resolvido. Agradecemos pelo contato com o suporte da MW TECH. Se precisar de algo mais, estaremos à disposição.",
+        }),
+      });
+    }
+
+    if (status === "fechado") {
+      await requestFrom(source, "", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "send_message",
+          ticket_id: ticketId,
+          body: "Este chamado foi encerrado pela equipe de suporte da MW TECH. Caso ainda precise de atendimento, você pode abrir um novo chamado.",
+        }),
+      });
+    }
+
     const result = await requestFrom(source, "", {
       method: "POST",
       body: JSON.stringify({ action: "update_status", ticket_id: ticketId, status }),
