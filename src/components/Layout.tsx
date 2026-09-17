@@ -21,6 +21,7 @@ import {
   UserRound,
   Phone,
   KeyRound,
+  Monitor,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -41,6 +42,7 @@ const financeItems = [
 
 const managementItems = [
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
+  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
   ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
 
