@@ -1,11 +1,23 @@
 import { account } from "../lib/appwrite";
 
-const ENDPOINT = "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-support-admin";
-const ARCHIVE_ENDPOINT = "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/archive-support-to-drive";
+type SupportSource = "rg" | "bg";
 
-async function request(path = "", init: RequestInit = {}) {
+const SOURCES: Record<SupportSource, { endpoint: string; archiveEndpoint: string }> = {
+  rg: {
+    endpoint: "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-support-admin",
+    archiveEndpoint: "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/archive-support-to-drive",
+  },
+  bg: {
+    endpoint: "https://jfzavijlkbqzkrnlgphz.supabase.co/functions/v1/mw-support-admin",
+    archiveEndpoint: "https://jfzavijlkbqzkrnlgphz.supabase.co/functions/v1/archive-support-to-drive",
+  },
+};
+
+const ticketSources = new Map<string, SupportSource>();
+
+async function requestFrom(source: SupportSource, path = "", init: RequestInit = {}) {
   const jwt = await account.createJWT();
-  const res = await fetch(`${ENDPOINT}${path}`, {
+  const res = await fetch(`${SOURCES[source].endpoint}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -18,9 +30,14 @@ async function request(path = "", init: RequestInit = {}) {
   return data;
 }
 
+function resolveSource(ticketId: string): SupportSource {
+  return ticketSources.get(ticketId) || "rg";
+}
+
 async function archiveRequest(ticketId: string) {
+  const source = resolveSource(ticketId);
   const jwt = await account.createJWT();
-  const res = await fetch(ARCHIVE_ENDPOINT, {
+  const res = await fetch(SOURCES[source].archiveEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -69,21 +86,42 @@ export type SupportMessage = {
 
 export const supportService = {
   async list(status = "todos") {
-    return request(`?status=${encodeURIComponent(status)}`) as Promise<{ tickets: SupportTicket[] }>;
+    const results = await Promise.all(
+      (Object.keys(SOURCES) as SupportSource[]).map(async (source) => {
+        const data = await requestFrom(source, `?status=${encodeURIComponent(status)}`) as { tickets: SupportTicket[] };
+        (data.tickets || []).forEach((ticket) => ticketSources.set(ticket.id, source));
+        return data.tickets || [];
+      }),
+    );
+
+    return {
+      tickets: results
+        .flat()
+        .sort((a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime()),
+    };
   },
+
   async detail(ticketId: string) {
-    return request(`?ticket_id=${encodeURIComponent(ticketId)}`) as Promise<{ ticket: SupportTicket; messages: SupportMessage[] }>;
+    const source = resolveSource(ticketId);
+    const data = await requestFrom(source, `?ticket_id=${encodeURIComponent(ticketId)}`) as { ticket: SupportTicket; messages: SupportMessage[] };
+    ticketSources.set(data.ticket.id, source);
+    return data;
   },
+
   async sendMessage(ticketId: string, body: string) {
-    return request("", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
+    const source = resolveSource(ticketId);
+    return requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
   },
+
   async archive(ticketId: string) {
     return archiveRequest(ticketId) as Promise<{ success: boolean; ticket: SupportTicket; driveUrl?: string; archivedMessages?: number }>;
   },
+
   async updateStatus(ticketId: string, status: string) {
     if (status === "resolvido" || status === "fechado") {
       return archiveRequest(ticketId);
     }
-    return request("", { method: "POST", body: JSON.stringify({ action: "update_status", ticket_id: ticketId, status }) });
+    const source = resolveSource(ticketId);
+    return requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "update_status", ticket_id: ticketId, status }) });
   },
 };
