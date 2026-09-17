@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
-  Building2,
   CalendarDays,
   CheckCircle2,
   Clock3,
