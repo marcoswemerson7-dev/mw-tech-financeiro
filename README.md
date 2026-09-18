@@ -9,4 +9,6 @@ Plataforma administrativa geral da MW TECH construída com React, TypeScript, Vi
 3. Crie o primeiro usuário administrador em Auth > Users.
 4. Execute `npm install`, `npm run build` e `npm run dev`.
 
-O frontend usa somente variáveis `VITE_APPWRITE_*`, que são públicas. Nunca adicione `APPWRITE_API_KEY` ou qualquer segredo ao `.env`, `.env.local` versionado ou ao GitHub.\n<!-- deployment trigger: monitoring rollout 2026-09-17 -->\n
+O frontend usa somente variáveis `VITE_APPWRITE_*`, que são públicas. Nunca adicione `APPWRITE_API_KEY` ou qualquer segredo ao `.env`, `.env.local` versionado ou ao GitHub.
+
+<!-- deployment trigger: production retry 2026-09-18 -->
