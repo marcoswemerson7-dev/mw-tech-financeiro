@@ -127,7 +127,7 @@ function SmallRow({
 }: {
   icon: ReactNode;
   label: string;
-  value: string;
+  value: string | number;
   good?: boolean;
 }) {
   return (
