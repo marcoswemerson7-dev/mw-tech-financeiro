@@ -38,6 +38,7 @@ export default function SupportNotifier() {
   const originalTitle = useRef(document.title);
   const titleTimer = useRef<number | null>(null);
   const busy = useRef(false);
+  const suppressUntil = useRef(new Map<string, number>());
   const audioContext = useRef<AudioContext | null>(null);
   const audioUnlocked = useRef(false);
 
@@ -108,8 +109,16 @@ export default function SupportNotifier() {
     if (!session) {
       initialized.current = false;
       snapshot.current.clear();
+      suppressUntil.current.clear();
       return;
     }
+
+    const onStaffSent = (event: Event) => {
+      const detail = (event as CustomEvent<{ ticketId?: string; at?: number }>).detail;
+      if (!detail?.ticketId) return;
+      suppressUntil.current.set(detail.ticketId, (detail.at || Date.now()) + 10000);
+    };
+    window.addEventListener("mw-support-staff-sent", onStaffSent);
 
     let disposed = false;
 
@@ -163,11 +172,13 @@ export default function SupportNotifier() {
           const previousStamp = snapshot.current.get(ticket.id);
           nextSnapshot.set(ticket.id, currentStamp);
 
+          const localSuppression = (suppressUntil.current.get(ticket.id) || 0) > Date.now();
+
           if (previousStamp === undefined) {
-            changes.push({ ticket, isNew: true });
+            if (!localSuppression) changes.push({ ticket, isNew: true });
           } else if (currentStamp > previousStamp) {
             const cameFromStaff = ticket.last_message_is_staff === true;
-            if (!cameFromStaff) changes.push({ ticket, isNew: false });
+            if (!cameFromStaff && !localSuppression) changes.push({ ticket, isNew: false });
           }
         });
 
@@ -199,6 +210,7 @@ export default function SupportNotifier() {
       disposed = true;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("mw-support-staff-sent", onStaffSent);
       if (titleTimer.current) window.clearTimeout(titleTimer.current);
       document.title = originalTitle.current;
     };
