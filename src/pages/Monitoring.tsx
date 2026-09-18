@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
+  Filter,
   ArrowRight,
   Bell,
   CheckCircle2,
@@ -273,6 +274,14 @@ export default function Monitoring() {
   const [nextRefresh, setNextRefresh] = useState(refreshEveryMs / 1000);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [selectedKey, setSelectedKey] = useState<string>("");
+  const [orgFilter, setOrgFilter] = useState("todos");
+  const [statusFilter, setStatusFilter] = useState<"todos" | HealthState>("todos");
+
+  const visibleItems = useMemo(() => items.filter((item) => {
+    const matchesOrg = orgFilter === "todos" || item.key === orgFilter;
+    const matchesStatus = statusFilter === "todos" || item.overall === statusFilter;
+    return matchesOrg && matchesStatus;
+  }), [items, orgFilter, statusFilter]);
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -319,36 +328,36 @@ export default function Monitoring() {
   }, [load]);
 
   useEffect(() => {
-    if (!selectedKey && items.length) setSelectedKey(items[0].key);
-    if (selectedKey && !items.some((item) => item.key === selectedKey)) setSelectedKey(items[0]?.key || "");
-  }, [items, selectedKey]);
+    if (!selectedKey && visibleItems.length) setSelectedKey(visibleItems[0].key);
+    if (selectedKey && !visibleItems.some((item) => item.key === selectedKey)) setSelectedKey(visibleItems[0]?.key || "");
+  }, [visibleItems, selectedKey]);
 
-  const selectedItem = useMemo(() => items.find((item) => item.key === selectedKey) || items[0] || null, [items, selectedKey]);
+  const selectedItem = useMemo(() => visibleItems.find((item) => item.key === selectedKey) || visibleItems[0] || null, [visibleItems, selectedKey]);
 
   const summary = useMemo(() => {
-    const online = items.filter((item) => item.overall === "online").length;
-    const attention = items.filter((item) => item.overall === "attention").length;
-    const offline = items.filter((item) => item.overall === "offline").length;
-    const latencies = items.map((item) => item.app.latencyMs).filter((value): value is number => value !== null);
+    const online = visibleItems.filter((item) => item.overall === "online").length;
+    const attention = visibleItems.filter((item) => item.overall === "attention").length;
+    const offline = visibleItems.filter((item) => item.overall === "offline").length;
+    const latencies = visibleItems.map((item) => item.app.latencyMs).filter((value): value is number => value !== null);
     const average = latencies.length ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length) : null;
     return {
       online,
       attention,
       offline,
       average,
-      users: sumMetric(items, "users"),
-      activeUsers: sumMetric(items, "activeUsers"),
-      processes: sumMetric(items, "processes"),
-      contracts: sumMetric(items, "contracts"),
-      invoices: sumMetric(items, "invoices"),
-      payments: sumMetric(items, "payments"),
-      files: sumMetric(items, "files"),
+      users: sumMetric(visibleItems, "users"),
+      activeUsers: sumMetric(visibleItems, "activeUsers"),
+      processes: sumMetric(visibleItems, "processes"),
+      contracts: sumMetric(visibleItems, "contracts"),
+      invoices: sumMetric(visibleItems, "invoices"),
+      payments: sumMetric(visibleItems, "payments"),
+      files: sumMetric(visibleItems, "files"),
     };
-  }, [items]);
+  }, [visibleItems]);
 
   const alerts = useMemo(() => {
     const rows: Array<{ title: string; detail: string; level: "Alta" | "Média" | "Info"; tone: string }> = [];
-    items.forEach((item) => {
+    visibleItems.forEach((item) => {
       if (item.overall === "offline") rows.push({ title: "Sistema indisponível", detail: item.name, level: "Alta", tone: "rose" });
       else if (item.overall === "attention") rows.push({ title: "Sistema requer atenção", detail: item.name, level: "Média", tone: "amber" });
       if ((item.app.latencyMs || 0) > 2500) rows.push({ title: "Latência elevada", detail: `${item.name} · ${item.app.latencyMs} ms`, level: "Média", tone: "amber" });
@@ -364,7 +373,7 @@ export default function Monitoring() {
     { name: "Indisponíveis", value: summary.offline },
   ];
 
-  const totalSystems = items.length;
+  const totalSystems = visibleItems.length;
   const operationalPercent = totalSystems ? Math.round((summary.online / totalSystems) * 100) : 0;
 
   return (
@@ -387,6 +396,19 @@ export default function Monitoring() {
           </div>
         }
       />
+
+      <section className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-2 text-xs font-black text-[#07182d]"><Filter size={16} className="text-blue-700" /> Filtrar monitoramento</div>
+        <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
+          <option value="todos">Todos os órgãos</option>
+          {items.map((item) => <option key={item.key} value={item.key}>{item.shortName || item.name}</option>)}
+        </select>
+        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "todos" | HealthState)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
+          <option value="todos">Todos os status</option><option value="online">Operacionais</option><option value="attention">Em atenção</option><option value="offline">Indisponíveis</option>
+        </select>
+        {(orgFilter !== "todos" || statusFilter !== "todos") && <button type="button" onClick={() => { setOrgFilter("todos"); setStatusFilter("todos"); }} className="rounded-xl px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">Limpar filtros</button>}
+        <span className="ml-auto text-[10px] font-semibold text-slate-500">Atualização automática a cada 60 segundos</span>
+      </section>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} em atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
@@ -443,7 +465,7 @@ export default function Monitoring() {
           ) : items.length ? (
             <>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {items.map((item) => {
+                {visibleItems.map((item) => {
                   const selected = item.key === selectedItem?.key;
                   return (
                     <button key={item.key} type="button" onClick={() => setSelectedKey(item.key)} className={selected ? "text-left rounded-2xl border border-blue-500 bg-blue-50 p-3 shadow-md ring-2 ring-blue-100 transition" : "text-left rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/40"}>
@@ -458,7 +480,7 @@ export default function Monitoring() {
                       </div>
                       <div className="mt-3 flex items-center justify-between text-[9px] font-bold">
                         <span className={item.overall === "online" ? "text-emerald-700" : item.overall === "offline" ? "text-rose-700" : "text-amber-700"}>{stateLabel(item.overall)}</span>
-                        <span className="text-blue-700">{selected ? "Detalhes abertos" : "Ver detalhes →"}</span>
+                        <span className="text-blue-700">{selected ? "Detalhes abertos" : "Clique para abrir →"}</span>
                       </div>
                     </button>
                   );
