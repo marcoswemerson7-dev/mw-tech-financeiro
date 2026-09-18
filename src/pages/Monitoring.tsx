@@ -245,7 +245,8 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
             <MetricBox label="Notas fiscais" value={m?.invoices ?? "—"} icon={<Receipt size={12} />} />
             <MetricBox label="Pagamentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />
             <MetricBox label="Arquivos" value={m?.files ?? "—"} icon={<HardDrive size={12} />} />
-            <MetricBox label="Armazenamento" value={formatBytes(m?.fileBytes)} icon={<Database size={12} />} />
+            <MetricBox label={item.tenantKey === "bg" ? "Arquivos no Drive" : "Arquivos no sistema"} value={formatBytes(m?.fileBytes)} icon={<HardDrive size={12} />} />
+            <MetricBox label="Banco Supabase" value={formatBytes(m?.databaseBytes)} icon={<Database size={12} />} />
           </div>
         </div>
 
@@ -387,6 +388,35 @@ export default function Monitoring() {
         <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
         <SummaryCard label="Latência média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Tempo médio de resposta" icon={<Gauge size={20} />} tone="amber" />
       </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><HardDrive size={17} className="text-violet-700" /> Armazenamento por origem</h2>
+            <p className="mt-0.5 text-[10px] text-slate-500">Separação entre banco de dados e arquivos registrados em cada sistema.</p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-600">Atualizado junto com o monitoramento</span>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {items.map((item) => {
+            const metrics = item.metrics;
+            const source = item.tenantKey === "bg" ? "Google Drive · arquivos registrados" : "Supabase · arquivos registrados";
+            return (
+              <div key={item.key} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <b className="truncate text-[11px] font-black text-[#07182d]">{item.shortName || item.name}</b>
+                  <HardDrive size={14} className="shrink-0 text-violet-600" />
+                </div>
+                <p className="mt-1 text-[9px] text-slate-500">{source}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div><span className="block text-[9px] font-bold uppercase text-slate-400">Arquivos</span><b className="text-sm text-[#07182d]">{formatBytes(metrics?.fileBytes)}</b></div>
+                  <div><span className="block text-[9px] font-bold uppercase text-slate-400">Banco Supabase</span><b className="text-sm text-[#07182d]">{formatBytes(metrics?.databaseBytes)}</b></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]">
