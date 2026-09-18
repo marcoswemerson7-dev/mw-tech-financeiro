@@ -40,6 +40,7 @@ export type SystemHealthSnapshot = {
   accessUrl: string;
   vercelUrl: string;
   supabaseUrl: string;
+  logoUrl: string;
   app: EndpointHealth;
   database: EndpointHealth;
   backend: EndpointHealth;
@@ -273,6 +274,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
         accessUrl,
         vercelUrl,
         supabaseUrl,
+        logoUrl: stored.logo_url || "",
         app,
         database,
         backend,
