@@ -1,6 +1,7 @@
 import { getSystemHealth, type SystemHealthSnapshot } from "./systemMonitoring";
 import { getTechnicalMonitoring } from "./technicalMonitoring";
 import { getObservability } from "./observability";
+import { acknowledgeCentralIncident, listCentralIncidents, syncCentralIncidents } from "./centralMonitoring";
 
 export type IncidentSeverity = "critical" | "warning" | "info";
 export type IncidentSystem = "mw" | "rg" | "bg";
@@ -23,10 +24,12 @@ export type IncidentHistoryItem = MonitoringIncident & {
   lastSeenAt: string;
   occurrences: number;
   resolvedAt?: string | null;
+  acknowledged?: boolean;
+  acknowledgedAt?: string | null;
+  acknowledgedBy?: string;
 };
 
 const HISTORY_KEY = "mw-control:incident-history";
-const ACK_KEY = "mw-control:incident-ack";
 
 function nowIso() { return new Date().toISOString(); }
 function systemLabel(key: IncidentSystem) {
@@ -199,22 +202,32 @@ export async function getMonitoringIncidents() {
       return rank[a.severity] - rank[b.severity] || new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime();
     });
 
-  const history = persistHistory(unique);
-  return { active: unique, history };
+  const localHistory = persistHistory(unique);
+  try {
+    const centralHistory = await syncCentralIncidents(unique);
+    const centralActive = centralHistory.filter((item) => item.active);
+    return { active: centralActive, history: centralHistory, storage: "central" as const };
+  } catch {
+    return { active: unique, history: localHistory, storage: "local" as const };
+  }
 }
 
-export function getIncidentHistory() {
-  return readHistory();
+export async function getIncidentHistory() {
+  try {
+    return await listCentralIncidents();
+  } catch {
+    return readHistory();
+  }
 }
 
-export function acknowledgeIncident(id: string) {
-  const data = getAcknowledgedIncidents();
-  data[id] = Date.now();
-  localStorage.setItem(ACK_KEY, JSON.stringify(data));
-}
-
-export function getAcknowledgedIncidents(): Record<string, number> {
-  try { return JSON.parse(localStorage.getItem(ACK_KEY) || "{}"); } catch { return {}; }
+export async function acknowledgeIncident(id: string) {
+  try {
+    await acknowledgeCentralIncident(id);
+    return;
+  } catch {
+    const rows = readHistory().map((item) => item.id === id ? { ...item, acknowledged: true, acknowledgedAt: nowIso() } : item);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(rows));
+  }
 }
 
 export async function requestIncidentNotifications() {
