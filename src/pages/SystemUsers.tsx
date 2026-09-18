@@ -16,10 +16,19 @@ import {
   UserRound,
   UsersRound,
   X,
+  Plus,
+  Pencil,
+  UserX,
+  UserCheck,
+  RotateCcw,
 } from "lucide-react";
 import { ActionButton, PageHeader } from "../components/UI";
 import {
   getObservability,
+  createManagedSystemUser,
+  updateManagedSystemUser,
+  setManagedSystemUserStatus,
+  forceManagedSystemUserPasswordChange,
   type ObservabilityIncident,
   type ObservabilityTenant,
   type ObservabilityUser,
@@ -61,6 +70,10 @@ export default function SystemUsers() {
   const [users, setUsers] = useState<ObservabilityUser[]>([]);
   const [incidents, setIncidents] = useState<ObservabilityIncident[]>([]);
   const [selected, setSelected] = useState<ObservabilityUser | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editUser, setEditUser] = useState<ObservabilityUser | null>(null);
+  const [adminBusy, setAdminBusy] = useState(false);
+  const [adminMessage, setAdminMessage] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -82,6 +95,90 @@ export default function SystemUsers() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const refreshAfterAdmin = async (message: string) => {
+    setAdminMessage(message);
+    setSelected(null);
+    setEditUser(null);
+    setCreateOpen(false);
+    await load(true);
+    window.setTimeout(() => setAdminMessage(""), 3500);
+  };
+
+  async function handleCreate(values: Record<string, string>) {
+    setAdminBusy(true);
+    setError("");
+    try {
+      const target = values.tenant as ObservabilityTenant;
+      await createManagedSystemUser(target, {
+        fullName: values.fullName,
+        email: values.email,
+        temporaryPassword: values.temporaryPassword,
+        role: values.role,
+        phone: values.phone,
+        sector: values.sector,
+        functionName: values.functionName,
+        fiscalSecretaria: values.fiscalSecretaria,
+        cpf: values.cpf,
+        notes: values.notes,
+      });
+      await refreshAfterAdmin("Usuário criado com sucesso. A troca de senha ficará obrigatória no primeiro acesso.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível criar o usuário.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
+
+  async function handleUpdate(user: ObservabilityUser, values: Record<string, string>) {
+    setAdminBusy(true);
+    setError("");
+    try {
+      await updateManagedSystemUser(user.tenant, user.id, {
+        fullName: values.fullName,
+        role: values.role,
+        phone: values.phone,
+        sector: values.sector,
+        functionName: values.functionName,
+        fiscalSecretaria: values.fiscalSecretaria,
+        notes: values.notes,
+      });
+      await refreshAfterAdmin("Dados e perfil do usuário atualizados.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar o usuário.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
+
+  async function handleStatus(user: ObservabilityUser, status: "Ativo" | "Inativo" | "Suspenso") {
+    const label = status === "Ativo" ? "reativar" : status === "Suspenso" ? "suspender" : "inativar";
+    if (!window.confirm(`Confirma ${label} o usuário ${user.name} em ${tenantNames[user.tenant]}?`)) return;
+    setAdminBusy(true);
+    setError("");
+    try {
+      await setManagedSystemUserStatus(user.tenant, user.id, status);
+      await refreshAfterAdmin(`Usuário ${status.toLowerCase()} com sucesso.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível alterar o status.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
+
+  async function handleForcePassword(user: ObservabilityUser) {
+    if (!window.confirm(`Exigir troca de senha no próximo acesso de ${user.name}?`)) return;
+    setAdminBusy(true);
+    setError("");
+    try {
+      await forceManagedSystemUserPasswordChange(user.tenant, user.id);
+      await refreshAfterAdmin("Troca obrigatória de senha ativada.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar a segurança.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
 
   const setTenantFilter = (value: "all" | ObservabilityTenant) => {
     setTenant(value);
@@ -115,8 +212,9 @@ export default function SystemUsers() {
       <PageHeader
         title="Usuários dos sistemas"
         subtitle="Contas, acessos, atividade e incidentes dos sistemas de Ribeiro Gonçalves e Baixa Grande do Ribeiro."
-        actions={<div className="flex gap-2">
+        actions={<div className="flex flex-wrap gap-2">
           <ActionButton tone="outline" onClick={() => navigate("/monitoramento")}><ArrowLeft size={17}/>Monitoramento</ActionButton>
+          <ActionButton tone="outline" onClick={() => setCreateOpen(true)}><Plus size={17}/>Adicionar usuário</ActionButton>
           <ActionButton onClick={() => void load(true)} disabled={refreshing}><RefreshCw size={17} className={refreshing ? "animate-spin" : ""}/>{refreshing ? "Atualizando..." : "Atualizar"}</ActionButton>
         </div>}
       />
@@ -138,6 +236,7 @@ export default function SystemUsers() {
         <Summary label="Ações em 24h" value={totals.activity} icon={<Activity size={19}/>} tone="gold" />
       </div>
 
+      {adminMessage && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">{adminMessage}</div>}
       {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
 
       {tab === "users" ? (
@@ -208,12 +307,12 @@ export default function SystemUsers() {
         Este painel mostra informações administrativas e de uso necessárias para suporte e auditoria. CPF é mascarado e senha nunca é armazenada nem exibida aqui.
       </div>
 
-      {selected && <UserDrawer user={selected} onClose={() => setSelected(null)}/>}
+      {selected && <UserDrawer user={selected} busy={adminBusy} onClose={() => setSelected(null)} onEdit={() => { setEditUser(selected); setSelected(null); }} onStatus={(status) => void handleStatus(selected, status)} onForcePassword={() => void handleForcePassword(selected)}/>}\n      {createOpen && <UserFormModal mode="create" busy={adminBusy} initialTenant={tenant === "all" ? "rg" : tenant} onClose={() => setCreateOpen(false)} onSubmit={(values) => void handleCreate(values)}/>}\n      {editUser && <UserFormModal mode="edit" busy={adminBusy} user={editUser} initialTenant={editUser.tenant} onClose={() => setEditUser(null)} onSubmit={(values) => void handleUpdate(editUser, values)}/>} 
     </div>
   );
 }
 
-function UserDrawer({ user, onClose }: { user: ObservabilityUser; onClose: () => void }) {
+function UserDrawer({ user, busy, onClose, onEdit, onStatus, onForcePassword }: { user: ObservabilityUser; busy: boolean; onClose: () => void; onEdit: () => void; onStatus: (status: "Ativo" | "Inativo" | "Suspenso") => void; onForcePassword: () => void }) {
   return <div className="fixed inset-0 z-[90] grid place-items-center bg-[#061426]/70 p-3 backdrop-blur-[2px] sm:p-5">
     <button className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Fechar detalhes"/>
     <div
@@ -276,6 +375,20 @@ function UserDrawer({ user, onClose }: { user: ObservabilityUser; onClose: () =>
               </Section>
             </div>
 
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <h4 className="text-xs font-black uppercase tracking-wide text-slate-400">Administração</h4>
+              <p className="mt-1 text-xs leading-5 text-slate-500">As ações abaixo são registradas na auditoria do sistema.</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button disabled={busy} onClick={onEdit} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-black text-blue-700 hover:bg-blue-100 disabled:opacity-50"><Pencil size={15}/>Editar cadastro</button>
+                <button disabled={busy} onClick={onForcePassword} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-black text-amber-700 hover:bg-amber-100 disabled:opacity-50"><RotateCcw size={15}/>Exigir nova senha</button>
+                {user.status.toLowerCase() === "ativo" ? <>
+                  <button disabled={busy} onClick={() => onStatus("Suspenso")} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 text-xs font-black text-orange-700 hover:bg-orange-100 disabled:opacity-50"><UserX size={15}/>Suspender</button>
+                  <button disabled={busy} onClick={() => onStatus("Inativo")} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-black text-rose-700 hover:bg-rose-100 disabled:opacity-50"><UserX size={15}/>Inativar</button>
+                </> : <button disabled={busy} onClick={() => onStatus("Ativo")} className="sm:col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-black text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"><UserCheck size={15}/>Reativar usuário</button>}
+              </div>
+              <p className="mt-3 text-[10px] leading-4 text-slate-400">Não há exclusão definitiva aqui. Inativar preserva processos, auditoria e histórico ligados ao usuário.</p>
+            </div>
+
             {user.lastAction ? <div className="rounded-2xl border border-blue-100 bg-blue-50/65 p-5">
               <div className="flex items-start gap-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-blue-100"><Activity size={18}/></span>
@@ -293,6 +406,56 @@ function UserDrawer({ user, onClose }: { user: ObservabilityUser; onClose: () =>
         </div>
       </div>
     </div>
+  </div>;
+}
+
+function UserFormModal({ mode, busy, user, initialTenant, onClose, onSubmit }: { mode: "create" | "edit"; busy: boolean; user?: ObservabilityUser; initialTenant: ObservabilityTenant; onClose: () => void; onSubmit: (values: Record<string,string>) => void }) {
+  const [targetTenant, setTargetTenant] = useState<ObservabilityTenant>(initialTenant);
+  const roles = targetTenant === "bg"
+    ? ["usuario","comissao","visualizador","consultor","financeiro","fiscal","fornecedor","admin"]
+    : ["usuario","comissao","visualizador","consultor","financeiro","fiscal","admin"];
+
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    onSubmit({
+      tenant: targetTenant,
+      fullName: String(form.get("fullName") || ""),
+      email: String(form.get("email") || ""),
+      temporaryPassword: String(form.get("temporaryPassword") || ""),
+      role: String(form.get("role") || "usuario"),
+      phone: String(form.get("phone") || ""),
+      sector: String(form.get("sector") || ""),
+      functionName: String(form.get("functionName") || ""),
+      fiscalSecretaria: String(form.get("fiscalSecretaria") || ""),
+      cpf: String(form.get("cpf") || ""),
+      notes: String(form.get("notes") || ""),
+    });
+  }
+
+  return <div className="fixed inset-0 z-[95] grid place-items-center bg-[#061426]/70 p-3 backdrop-blur-[2px] sm:p-5">
+    <button className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Fechar"/>
+    <form onSubmit={submit} className="relative z-10 max-h-[94vh] w-full max-w-[820px] overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-[0_28px_90px_rgba(3,18,35,.35)]">
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 sm:px-7">
+        <div><h2 className="text-xl font-black text-[#07182d]">{mode === "create" ? "Adicionar usuário" : "Editar usuário"}</h2><p className="mt-1 text-xs text-slate-500">{mode === "create" ? "Crie a conta diretamente no sistema selecionado." : tenantNames[user!.tenant]}</p></div>
+        <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={19}/></button>
+      </div>
+      <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-7">
+        {mode === "create" && <label className="text-xs font-black text-slate-600">Sistema<select value={targetTenant} onChange={(e)=>setTargetTenant(e.target.value as ObservabilityTenant)} className="input mt-2"><option value="rg">Ribeiro Gonçalves</option><option value="bg">Baixa Grande do Ribeiro</option></select></label>}
+        <label className="text-xs font-black text-slate-600">Nome completo<input name="fullName" required defaultValue={user?.name || ""} className="input mt-2"/></label>
+        {mode === "create" && <label className="text-xs font-black text-slate-600">E-mail<input name="email" type="email" required className="input mt-2"/></label>}
+        {mode === "create" && <label className="text-xs font-black text-slate-600">Senha temporária<input name="temporaryPassword" type="password" minLength={8} required className="input mt-2" placeholder="Mínimo 8 caracteres"/></label>}
+        {mode === "create" && <label className="text-xs font-black text-slate-600">CPF<input name="cpf" inputMode="numeric" className="input mt-2" placeholder="000.000.000-00"/></label>}
+        <label className="text-xs font-black text-slate-600">Perfil<select name="role" defaultValue={user?.role || "usuario"} className="input mt-2">{roles.map((role)=><option key={role} value={role}>{role}</option>)}</select></label>
+        <label className="text-xs font-black text-slate-600">Telefone<input name="phone" defaultValue={user?.phone || ""} className="input mt-2"/></label>
+        <label className="text-xs font-black text-slate-600">Setor<input name="sector" defaultValue={user?.sector || ""} className="input mt-2"/></label>
+        <label className="text-xs font-black text-slate-600">Função<input name="functionName" defaultValue={user?.function || ""} className="input mt-2"/></label>
+        <label className="text-xs font-black text-slate-600">Secretaria/fiscalização<input name="fiscalSecretaria" defaultValue={user?.fiscalSecretaria || ""} className="input mt-2"/></label>
+        <label className="text-xs font-black text-slate-600 sm:col-span-2">Observações<textarea name="notes" defaultValue={user?.notes || ""} rows={3} className="input mt-2 h-auto py-3"/></label>
+        {mode === "create" && <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">A senha informada é usada apenas para criar a conta e não é armazenada no MW TECH Control. O usuário será marcado para trocar a senha no primeiro acesso.</div>}
+        <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={onClose} disabled={busy} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-600">Cancelar</button><button type="submit" disabled={busy} className="rounded-xl bg-[#082743] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">{busy ? "Salvando..." : mode === "create" ? "Criar usuário" : "Salvar alterações"}</button></div>
+      </div>
+    </form>
   </div>;
 }
 
