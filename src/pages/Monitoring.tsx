@@ -310,7 +310,19 @@ export default function Monitoring() {
     if (manual) setRefreshing(true);
     setError("");
     try {
-      const [data, technicalData] = await Promise.all([\n        getSystemHealth(),\n        getTechnicalMonitoring().catch((technicalFailure) => {\n          setTechnicalError(technicalFailure instanceof Error ? technicalFailure.message : "Falha ao carregar observabilidade técnica.");\n          return null;\n        }),\n      ]);\n      setItems(data);\n      if (technicalData) {\n        setTechnical(technicalData);\n        setTechnicalError("");\n      }\n      setNextRefresh(refreshEveryMs / 1000);
+      const [data, technicalData] = await Promise.all([
+        getSystemHealth(),
+        getTechnicalMonitoring().catch((technicalFailure) => {
+          setTechnicalError(technicalFailure instanceof Error ? technicalFailure.message : "Falha ao carregar observabilidade técnica.");
+          return null;
+        }),
+      ]);
+      setItems(data);
+      if (technicalData) {
+        setTechnical(technicalData);
+        setTechnicalError("");
+      }
+      setNextRefresh(refreshEveryMs / 1000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Não foi possível atualizar o monitoramento.");
     } finally {
@@ -386,7 +398,9 @@ export default function Monitoring() {
         </div>
       )}
 
-      <TechnicalObservabilityPanel data={technical} error={technicalError} />\n\n      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+      <TechnicalObservabilityPanel data={technical} error={technicalError} />
+
+      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
         <h3 className="text-[13px] font-black text-[#07182d]">Como interpretar o painel</h3>
         <p className="mt-1.5 text-xs leading-5 text-slate-600">
           O status operacional testa domínio e Supabase. Os indicadores de usuários e volume são snapshots agregados dos bancos de RG e BG.
