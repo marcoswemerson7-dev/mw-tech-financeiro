@@ -4,7 +4,7 @@ import { getObservability } from "./observability";
 import { acknowledgeCentralIncident, listCentralIncidents, syncCentralIncidents } from "./centralMonitoring";
 
 export type IncidentSeverity = "critical" | "warning" | "info";
-export type IncidentSystem = "mw" | "rg" | "bg";
+export type IncidentSystem = string;
 
 export type MonitoringIncident = {
   id: string;
@@ -35,17 +35,18 @@ function nowIso() { return new Date().toISOString(); }
 function systemLabel(key: IncidentSystem) {
   if (key === "rg") return "Gestão Licita RG";
   if (key === "bg") return "Gestão Licita BG";
-  return "MW TECH Control";
+  if (key === "mw") return "MW TECH Control";
+  return key || "Sistema monitorado";
 }
 
 function healthIncidents(items: SystemHealthSnapshot[]): MonitoringIncident[] {
   const result: MonitoringIncident[] = [];
   for (const item of items) {
-    const system = item.key;
+    const system: IncidentSystem = item.tenantKey || item.key;
     if (item.backend.state === "offline") {
       result.push({
         id: `health:${system}:backend-offline`,
-        system, systemLabel: systemLabel(system), severity: "critical", source: "health",
+        system, systemLabel: item.shortName || systemLabel(system), severity: "critical", source: "health",
         title: "Backend sem resposta",
         message: item.backend.message,
         occurredAt: item.backend.checkedAt || nowIso(),
@@ -54,7 +55,7 @@ function healthIncidents(items: SystemHealthSnapshot[]): MonitoringIncident[] {
     } else if (item.backend.state === "attention") {
       result.push({
         id: `health:${system}:backend-slow`,
-        system, systemLabel: systemLabel(system), severity: "warning", source: "health",
+        system, systemLabel: item.shortName || systemLabel(system), severity: "warning", source: "health",
         title: "Backend com lentidão",
         message: item.backend.latencyMs ? `Health check respondeu em ${item.backend.latencyMs} ms.` : item.backend.message,
         occurredAt: item.backend.checkedAt || nowIso(),
@@ -65,7 +66,7 @@ function healthIncidents(items: SystemHealthSnapshot[]): MonitoringIncident[] {
     if (item.app.state === "offline") {
       result.push({
         id: `health:${system}:app-offline`,
-        system, systemLabel: systemLabel(system), severity: "critical", source: "health",
+        system, systemLabel: item.shortName || systemLabel(system), severity: "critical", source: "health",
         title: "Sistema indisponível",
         message: item.app.message,
         occurredAt: item.app.checkedAt || nowIso(),
@@ -75,7 +76,7 @@ function healthIncidents(items: SystemHealthSnapshot[]): MonitoringIncident[] {
     } else if ((item.app.latencyMs || 0) > 2500) {
       result.push({
         id: `health:${system}:app-latency`,
-        system, systemLabel: systemLabel(system), severity: "warning", source: "health",
+        system, systemLabel: item.shortName || systemLabel(system), severity: "warning", source: "health",
         title: "Tempo de resposta elevado",
         message: `Aplicação respondeu em ${item.app.latencyMs} ms.`,
         occurredAt: item.app.checkedAt || nowIso(),
@@ -87,7 +88,7 @@ function healthIncidents(items: SystemHealthSnapshot[]): MonitoringIncident[] {
     if (item.database.state === "offline") {
       result.push({
         id: `health:${system}:database-offline`,
-        system, systemLabel: systemLabel(system), severity: "critical", source: "health",
+        system, systemLabel: item.shortName || systemLabel(system), severity: "critical", source: "health",
         title: "Banco Supabase indisponível",
         message: item.database.message,
         occurredAt: item.database.checkedAt || nowIso(),
