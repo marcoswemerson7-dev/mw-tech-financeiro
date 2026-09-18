@@ -11,21 +11,28 @@ type VercelResponse = {
 
 type TenantKey = "rg" | "bg";
 
-const TENANTS: Record<TenantKey, { projectRef: string; url: string; keyEnv: string }> = {
+const TENANTS: Record<TenantKey, {
+  projectRef: string;
+  url: string;
+  keyEnv: string;
+  publicKey: string;
+}> = {
   rg: {
     projectRef: "kiviwxonxeqmzqlmshpc",
     url: "https://kiviwxonxeqmzqlmshpc.supabase.co",
     keyEnv: "SUPABASE_RG_SERVICE_ROLE_KEY",
+    publicKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtpdml3eG9ueGVxbXpxbG1zaHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMDY3NzgsImV4cCI6MjA5NTU4Mjc3OH0.wBchG43tpsA8teNkK33AT8Vq5wtUl-JVTUJrIPXhkqM",
   },
   bg: {
     projectRef: "jfzavijlkbqzkrnlgphz",
     url: "https://jfzavijlkbqzkrnlgphz.supabase.co",
     keyEnv: "SUPABASE_BG_SERVICE_ROLE_KEY",
+    publicKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmemF2aWpsa2JxemtybmxncGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjkyNTgsImV4cCI6MjA5NjAwNTI1OH0.13-RRfTSeFuCg3pUYYnaQgFp93iKR4tBgVjaUDOFccU",
   },
 };
 
-async function getSnapshot(baseUrl: string, key: string) {
-  const response = await fetch(`${baseUrl}/rest/v1/rpc/mw_control_monitoring_snapshot`, {
+async function getSnapshot(baseUrl: string, key: string, rpc: string) {
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/${rpc}`, {
     method: "POST",
     headers: {
       apikey: key,
@@ -34,37 +41,37 @@ async function getSnapshot(baseUrl: string, key: string) {
     },
     body: "{}",
   });
-  if (!response.ok) throw new Error(`Supabase HTTP ${response.status}`);
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Supabase HTTP ${response.status}${detail ? `: ${detail.slice(0, 120)}` : ""}`);
+  }
   return await response.json();
 }
 
 async function tenantMetrics(tenant: TenantKey) {
   const config = TENANTS[tenant];
-  const key = process.env[config.keyEnv];
-  if (!key) {
-    return {
-      tenant,
-      configured: false,
-      processes: null,
-      users: null,
-      invoices: null,
-      payments: null,
-      databaseBytes: null,
-      errors24h: null,
-      message: `${config.keyEnv} não configurada na Vercel.`,
-    };
-  }
+  const serviceKey = process.env[config.keyEnv];
+  const key = serviceKey || config.publicKey;
+  const rpc = serviceKey ? "mw_control_monitoring_snapshot" : "mw_control_monitoring_snapshot_public";
 
   try {
-    const snapshot = await getSnapshot(config.url, key);
+    const snapshot = await getSnapshot(config.url, key, rpc);
     return {
       tenant,
       configured: true,
+      source: serviceKey ? "service" : "safe_public_snapshot",
       processes: Number(snapshot.processes ?? 0),
+      contracts: Number(snapshot.contracts ?? 0),
       users: Number(snapshot.users ?? 0),
+      activeUsers: Number(snapshot.activeUsers ?? snapshot.users ?? 0),
+      recent30m: Number(snapshot.recent30m ?? 0),
       active24h: Number(snapshot.active24h ?? 0),
+      active7d: Number(snapshot.active7d ?? 0),
+      latestLoginAt: snapshot.latestLoginAt || null,
       invoices: Number(snapshot.invoices ?? 0),
       payments: Number(snapshot.payments ?? 0),
+      files: Number(snapshot.files ?? 0),
+      fileBytes: Number(snapshot.fileBytes ?? 0),
       audit24h: Number(snapshot.audit24h ?? 0),
       databaseBytes: Number(snapshot.databaseBytes ?? 0),
       checkedAt: snapshot.generatedAt || new Date().toISOString(),
@@ -72,13 +79,22 @@ async function tenantMetrics(tenant: TenantKey) {
   } catch (error) {
     return {
       tenant,
-      configured: true,
+      configured: false,
+      source: serviceKey ? "service" : "safe_public_snapshot",
       processes: null,
+      contracts: null,
       users: null,
+      activeUsers: null,
+      recent30m: null,
+      active24h: null,
+      active7d: null,
+      latestLoginAt: null,
       invoices: null,
       payments: null,
+      files: null,
+      fileBytes: null,
+      audit24h: null,
       databaseBytes: null,
-      errors24h: null,
       message: error instanceof Error ? error.message : "Falha ao consultar Supabase.",
       checkedAt: new Date().toISOString(),
     };
@@ -89,16 +105,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
   if (req.method !== "GET") {
     res.status(405).json({ error: "Método não permitido." });
-    return;
-  }
-
-  const expected = process.env.MONITORING_ACCESS_KEY;
-  const provided = Array.isArray(req.headers["x-monitoring-key"])
-    ? req.headers["x-monitoring-key"][0]
-    : req.headers["x-monitoring-key"];
-
-  if (expected && provided !== expected) {
-    res.status(401).json({ error: "Não autorizado." });
     return;
   }
 
