@@ -270,6 +270,7 @@ export default function Monitoring() {
   const [error, setError] = useState("");
   const [nextRefresh, setNextRefresh] = useState(refreshEveryMs / 1000);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [selectedKey, setSelectedKey] = useState<string>("");
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -314,6 +315,13 @@ export default function Monitoring() {
       window.clearInterval(timerId);
     };
   }, [load]);
+
+  useEffect(() => {
+    if (!selectedKey && items.length) setSelectedKey(items[0].key);
+    if (selectedKey && !items.some((item) => item.key === selectedKey)) setSelectedKey(items[0]?.key || "");
+  }, [items, selectedKey]);
+
+  const selectedItem = useMemo(() => items.find((item) => item.key === selectedKey) || items[0] || null, [items, selectedKey]);
 
   const summary = useMemo(() => {
     const online = items.filter((item) => item.overall === "online").length;
@@ -393,28 +401,14 @@ export default function Monitoring() {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><HardDrive size={17} className="text-violet-700" /> Armazenamento por origem</h2>
-            <p className="mt-0.5 text-[10px] text-slate-500">Separação entre banco de dados e arquivos registrados em cada sistema.</p>
+            <p className="mt-0.5 text-[10px] text-slate-500">Totais gerais, sem misturar os órgãos. Os detalhes aparecem ao selecionar um sistema.</p>
           </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-600">Atualizado junto com o monitoramento</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-600">RG, BGR e câmaras separados</span>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {items.map((item) => {
-            const metrics = item.metrics;
-            const source = item.tenantKey === "bg" ? "Google Drive · arquivos registrados" : "Supabase · arquivos registrados";
-            return (
-              <div key={item.key} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <b className="truncate text-[11px] font-black text-[#07182d]">{item.shortName || item.name}</b>
-                  <HardDrive size={14} className="shrink-0 text-violet-600" />
-                </div>
-                <p className="mt-1 text-[9px] text-slate-500">{source}</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <div><span className="block text-[9px] font-bold uppercase text-slate-400">Arquivos</span><b className="text-sm text-[#07182d]">{formatBytes(metrics?.fileBytes)}</b></div>
-                  <div><span className="block text-[9px] font-bold uppercase text-slate-400">Banco Supabase</span><b className="text-sm text-[#07182d]">{formatBytes(metrics?.databaseBytes)}</b></div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid gap-2 sm:grid-cols-3">
+          <MetricBox label="Bancos Supabase" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))} icon={<Database size={12} />} />
+          <MetricBox label="Arquivos registrados" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.fileBytes || 0), 0))} icon={<HardDrive size={12} />} />
+          <MetricBox label="Órgãos monitorados" value={String(items.length)} icon={<Server size={12} />} />
         </div>
       </section>
 
@@ -444,9 +438,31 @@ export default function Monitoring() {
               {[0, 1].map((item) => <div key={item} className="h-[470px] animate-pulse rounded-2xl bg-slate-100" />)}
             </div>
           ) : items.length ? (
-            <div className="grid gap-4 xl:grid-cols-3">
-              {items.map((item) => <SystemCard key={item.key} item={item} />)}
-            </div>
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {items.map((item) => {
+                  const selected = item.key === selectedItem?.key;
+                  return (
+                    <button key={item.key} type="button" onClick={() => setSelectedKey(item.key)} className={selected ? "text-left rounded-2xl border border-blue-500 bg-blue-50 p-3 shadow-md ring-2 ring-blue-100 transition" : "text-left rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/40"}>
+                      <div className="flex items-center gap-3">
+                        <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
+                          {item.logoUrl ? <img src={item.logoUrl} alt="" className="size-full object-contain" /> : <span className="text-[10px] font-black text-blue-700">{item.tenantKey?.toUpperCase() || "ORG"}</span>}
+                        </span>
+                        <span className="min-w-0">
+                          <b className="block truncate text-xs text-[#07182d]">{item.name}</b>
+                          <span className="mt-0.5 block truncate text-[9px] text-slate-500">{item.tenantKey === "bg" || item.tenantKey === "rg" ? "Prefeitura" : "Órgão público"}</span>
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between text-[9px] font-bold">
+                        <span className={item.overall === "online" ? "text-emerald-700" : item.overall === "offline" ? "text-rose-700" : "text-amber-700"}>{stateLabel(item.overall)}</span>
+                        <span className="text-blue-700">{selected ? "Detalhes abertos" : "Ver detalhes →"}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedItem && <div className="mt-4"><SystemCard item={selectedItem} /></div>}
+            </>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
               <b className="text-sm text-[#07182d]">Nenhum sistema cadastrado para monitoramento.</b>
