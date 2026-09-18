@@ -308,21 +308,32 @@ export default function SupportCenter() {
     novo: tickets.filter((ticket) => ticket.status === "novo").length,
     em_atendimento: tickets.filter((ticket) => ["em_atendimento", "aguardando_usuario"].includes(ticket.status)).length,
     encerrados: tickets.filter((ticket) => ["resolvido", "fechado"].includes(ticket.status)).length,
+    aguardandoResposta: tickets.filter((ticket) =>
+      !["resolvido", "fechado"].includes(ticket.status) && ticket.last_message_is_staff === false
+    ).length,
   }), [tickets]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return tickets.filter((ticket) => {
-      if (filter === "novo" && ticket.status !== "novo") return false;
-      if (filter === "em_atendimento" && !["em_atendimento", "aguardando_usuario"].includes(ticket.status)) return false;
-      if (filter === "encerrados" && !["resolvido", "fechado"].includes(ticket.status)) return false;
-      if (filter === "todos" && ["resolvido", "fechado"].includes(ticket.status)) return false;
-      const org = getOrg(ticket.tenant_key);
-      if (orgFilter !== "todos" && org.key !== orgFilter) return false;
-      if (!q) return true;
-      return [ticket.ticket_number, ticket.subject, ticket.requester_name, ticket.requester_email, org.name, org.shortName]
-        .some((value) => String(value || "").toLowerCase().includes(q));
-    });
+    return tickets
+      .filter((ticket) => {
+        if (filter === "novo" && ticket.status !== "novo") return false;
+        if (filter === "em_atendimento" && !["em_atendimento", "aguardando_usuario"].includes(ticket.status)) return false;
+        if (filter === "encerrados" && !["resolvido", "fechado"].includes(ticket.status)) return false;
+        if (filter === "todos" && ["resolvido", "fechado"].includes(ticket.status)) return false;
+        const org = getOrg(ticket.tenant_key);
+        if (orgFilter !== "todos" && org.key !== orgFilter) return false;
+        if (!q) return true;
+        return [ticket.ticket_number, ticket.subject, ticket.requester_name, ticket.requester_email, org.name, org.shortName]
+          .some((value) => String(value || "").toLowerCase().includes(q));
+      })
+      .sort((a, b) => {
+        const aNeedsReply = !["resolvido", "fechado"].includes(a.status) && a.last_message_is_staff === false;
+        const bNeedsReply = !["resolvido", "fechado"].includes(b.status) && b.last_message_is_staff === false;
+        if (aNeedsReply !== bNeedsReply) return aNeedsReply ? -1 : 1;
+        return new Date(b.last_message_at || b.updated_at || b.created_at).getTime()
+          - new Date(a.last_message_at || a.updated_at || a.created_at).getTime();
+      });
   }, [tickets, filter, orgFilter, query]);
 
   const addFiles = (incoming: File[]) => {
@@ -434,9 +445,18 @@ export default function SupportCenter() {
                 <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#eef4fa] text-[#0a3158]">
                   <Headphones size={17} />
                 </div>
-                <div>
-                  <h2 className="text-[17px] font-black leading-none text-[#07182d] sm:text-[18px]">Chamados</h2>
-                  <p className="mt-1 text-[11px] font-medium text-slate-400">Acompanhe seus atendimentos</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[17px] font-black leading-none text-[#07182d] sm:text-[18px]">Chamados</h2>
+                    {counts.aguardandoResposta > 0 && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-black text-white shadow-sm">
+                        {counts.aguardandoResposta}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate text-[11px] font-medium text-slate-400">
+                    {counts.aguardandoResposta > 0 ? `${counts.aguardandoResposta} aguardando sua resposta` : "Acompanhe seus atendimentos"}
+                  </p>
                 </div>
               </div>
               <button
@@ -524,16 +544,25 @@ export default function SupportCenter() {
                 {filtered.map((ticket) => {
                   const org = getOrg(ticket.tenant_key);
                   const active = selected?.id === ticket.id;
+                  const needsReply = !["resolvido", "fechado"].includes(ticket.status) && ticket.last_message_is_staff === false;
                   return (
                     <button
                       key={ticket.id}
                       onClick={() => openTicket(ticket)}
-                      className={`group w-full rounded-[18px] border p-3.5 text-left transition duration-200 ${active ? "border-[#e8b94d] bg-gradient-to-br from-[#fffaf0] to-white shadow-[0_10px_28px_rgba(7,24,45,0.08)] ring-1 ring-amber-100" : "border-slate-200/80 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.03)] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_10px_24px_rgba(15,23,42,0.07)]"}`}
+                      className={`group w-full rounded-[18px] border p-3.5 text-left transition duration-200 ${active ? "border-[#e8b94d] bg-gradient-to-br from-[#fffaf0] to-white shadow-[0_10px_28px_rgba(7,24,45,0.08)] ring-1 ring-amber-100" : needsReply ? "border-blue-200 bg-blue-50/35 shadow-[0_6px_18px_rgba(37,99,235,0.08)] ring-1 ring-blue-100 hover:-translate-y-0.5 hover:border-blue-300" : "border-slate-200/80 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.03)] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_10px_24px_rgba(15,23,42,0.07)]"}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <b className="text-[13px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                          <div className="flex items-center gap-1.5">
+                            {needsReply && <span className="size-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]" />}
+                            <b className="text-[13px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                          </div>
                           <p className="mt-1 line-clamp-2 text-[14px] font-black leading-5 text-slate-800">{ticket.subject}</p>
+                          {needsReply && (
+                            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-blue-700">
+                              <MessageSquare size={10} /> Nova mensagem
+                            </span>
+                          )}
                         </div>
                         <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${statusClass[ticket.status] || statusClass.fechado}`}>
                           {ticket.status === "em_atendimento" && <Clock3 size={12} />}
@@ -740,8 +769,8 @@ export default function SupportCenter() {
                 {selected.category && <div><p className="text-[11px] font-semibold text-slate-500">Categoria</p><p className="mt-2 text-[12px] font-semibold text-slate-700">{selected.category}</p></div>}
                 {selected.source_path && <div><p className="text-[11px] font-semibold text-slate-500">Origem</p><p className="mt-2 text-[12px] font-semibold text-slate-700">{selected.source_path}</p></div>}
 
-                <div className="border-t border-slate-100 pt-4">
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Ações</p>
+                <div className="sticky bottom-0 z-10 -mx-3.5 border-t border-slate-200 bg-white/95 px-3.5 pb-1 pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.05)] backdrop-blur sm:-mx-4 sm:px-4">
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Ações rápidas</p>
                   <div className="space-y-2">
                     <button onClick={() => void finishAttendance()} disabled={closing || isFinished} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#0b355d] disabled:opacity-50"><CheckCircle2 size={17} />{closing ? "Resolvendo..." : "Resolver chamado"}</button>
                     <button onClick={() => void changeStatus("fechado")} disabled={isFinished} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 text-[14px] font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><XCircle size={16} />Encerrar atendimento</button>
