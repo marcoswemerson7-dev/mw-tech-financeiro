@@ -61,13 +61,6 @@ function stateLabel(state: HealthState) {
   return "Não configurado";
 }
 
-function stateClasses(state: HealthState) {
-  if (state === "online") return "border-emerald-200 bg-emerald-50 text-emerald-700";
-  if (state === "attention") return "border-amber-200 bg-amber-50 text-amber-700";
-  if (state === "offline") return "border-rose-200 bg-rose-50 text-rose-700";
-  return "border-slate-200 bg-slate-50 text-slate-600";
-}
-
 function lastChecked(items: SystemHealthSnapshot[]) {
   const stamps = items
     .flatMap((item) => [item.app.checkedAt, item.database.checkedAt, item.metrics?.checkedAt || ""])
