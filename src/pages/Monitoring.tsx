@@ -244,8 +244,10 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
             <MetricBox label="Contratos" value={m?.contracts ?? "—"} icon={<FileText size={12} />} />
             <MetricBox label="Notas fiscais" value={m?.invoices ?? "—"} icon={<Receipt size={12} />} />
             <MetricBox label="Pagamentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />
-            <MetricBox label="Arquivos" value={m?.files ?? "—"} icon={<HardDrive size={12} />} />
-            <MetricBox label={item.tenantKey === "bg" ? "Arquivos no Drive" : "Arquivos no sistema"} value={formatBytes(m?.fileBytes)} icon={<HardDrive size={12} />} />
+            <MetricBox label="Arquivos registrados" value={m?.files ?? "—"} icon={<HardDrive size={12} />} />
+            <MetricBox label="Volume dos anexos" value={formatBytes(m?.fileBytes)} icon={<HardDrive size={12} />} />
+            <MetricBox label="Arquivos no Supabase" value={m?.supabaseStorageFiles ?? "—"} icon={<HardDrive size={12} />} />
+            <MetricBox label="Storage Supabase" value={formatBytes(m?.supabaseStorageBytes)} icon={<HardDrive size={12} />} />
             <MetricBox label="Banco Supabase" value={formatBytes(m?.databaseBytes)} icon={<Database size={12} />} />
           </div>
         </div>
@@ -405,9 +407,10 @@ export default function Monitoring() {
           </div>
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-600">RG, BGR e câmaras separados</span>
         </div>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <MetricBox label="Bancos Supabase" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))} icon={<Database size={12} />} />
-          <MetricBox label="Arquivos registrados" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.fileBytes || 0), 0))} icon={<HardDrive size={12} />} />
+          <MetricBox label="Storage Supabase" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))} icon={<HardDrive size={12} />} />
+          <MetricBox label="Arquivos no Storage" value={String(items.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))} icon={<HardDrive size={12} />} />
           <MetricBox label="Órgãos monitorados" value={String(items.length)} icon={<Server size={12} />} />
         </div>
       </section>
