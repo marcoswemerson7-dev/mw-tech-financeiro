@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "../lib/auth";
 import { supportService, type SupportTicket } from "../services/support";
 
-const CHECK_INTERVAL_MS = 1200;
+const CHECK_INTERVAL_MS = 2500;
 const TITLE_RESET_MS = 9000;
 
 const stamp = (ticket: SupportTicket) =>
