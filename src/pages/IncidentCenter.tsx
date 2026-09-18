@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, BellRing, CheckCircle2, ExternalLink, RefreshCw, ShieldAlert, Siren, Wrench } from "lucide-react";
+import { AlertTriangle, BellRing, CheckCircle2, ExternalLink, RefreshCw, ShieldAlert, Siren, Wrench, CalendarDays, BarChart3 } from "lucide-react";
 import { ActionButton, PageHeader } from "../components/UI";
 import {
   acknowledgeIncident,
-  getAcknowledgedIncidents,
   getMonitoringIncidents,
   requestIncidentNotifications,
   type IncidentHistoryItem,
   type MonitoringIncident,
 } from "../services/incidents";
+import { getMonthlyAvailability, type MonthlyAvailabilityRow } from "../services/centralMonitoring";
 
 function fmt(value: string) {
   const date = new Date(value);
@@ -24,6 +24,10 @@ export default function IncidentCenter() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [permission, setPermission] = useState(() => "Notification" in window ? Notification.permission : "unsupported");
+  const [storage, setStorage] = useState<"central"|"local">("local");
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0,7));
+  const [reportRows, setReportRows] = useState<MonthlyAvailabilityRow[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const load = useCallback(async () => {
     setError("");
@@ -31,6 +35,7 @@ export default function IncidentCenter() {
       const result = await getMonitoringIncidents();
       setActive(result.active);
       setHistory(result.history);
+      setStorage(result.storage || "local");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar incidentes.");
     } finally {
@@ -60,6 +65,23 @@ export default function IncidentCenter() {
     setPermission(result);
   }
 
+  async function loadMonthlyReport(month = reportMonth) {
+    setReportLoading(true);
+    try {
+      const report = await getMonthlyAvailability(month);
+      setReportRows(report.systems);
+      setStorage("central");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível gerar o relatório mensal.");
+    } finally {
+      setReportLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadMonthlyReport(reportMonth);
+  }, []);
+
   return <div className="mx-auto w-full max-w-[1700px] space-y-5">
     <PageHeader title="Central de Incidentes" subtitle="Alertas operacionais e técnicos dos sistemas MW TECH, Gestão Licita RG e Gestão Licita BG."
       actions={<div className="flex flex-wrap gap-2">
@@ -82,11 +104,15 @@ export default function IncidentCenter() {
       </div>
     </div>
 
+    <div className={`rounded-xl border px-4 py-3 text-xs font-semibold ${storage==="central"?"border-emerald-200 bg-emerald-50 text-emerald-800":"border-amber-200 bg-amber-50 text-amber-800"}`}>
+      Histórico: <b>{storage==="central" ? "Banco central MW TECH" : "modo local temporário"}</b>. {storage==="central" ? "Os mesmos dados aparecem em qualquer dispositivo autorizado." : "A central continuará tentando sincronizar automaticamente quando o backend estiver disponível."}
+    </div>
+
     {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
 
     {loading ? <div className="h-64 animate-pulse rounded-2xl bg-white shadow-sm"/> : rows.length ? <div className="space-y-3">
       {rows.map((item:any)=>{
-        const acknowledged = Boolean(getAcknowledgedIncidents()[item.id]);
+        const acknowledged = Boolean(item.acknowledged);
         const critical = item.severity==="critical";
         return <article key={item.id} className={`rounded-2xl border bg-white p-4 shadow-sm ${critical?"border-rose-200":"border-amber-200"}`}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -98,12 +124,43 @@ export default function IncidentCenter() {
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-black text-slate-600 hover:bg-slate-50">Abrir <ExternalLink size={12}/></a>}
-              {item.active && !acknowledged && <button onClick={()=>{acknowledgeIncident(item.id);void load();}} className="rounded-lg bg-[#082743] px-3 py-2 text-[10px] font-black text-white">Reconhecer</button>}
+              {item.active && !acknowledged && <button onClick={()=>void acknowledgeIncident(item.id).then(()=>load())} className="rounded-lg bg-[#082743] px-3 py-2 text-[10px] font-black text-white">Reconhecer</button>}
             </div>
           </div>
         </article>
       })}
     </div> : <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-10 text-center"><CheckCircle2 className="mx-auto text-emerald-600" size={30}/><b className="mt-3 block text-emerald-800">Nenhum incidente ativo</b><p className="mt-1 text-sm text-emerald-700">Os sistemas monitorados não apresentam alertas no momento.</p></div>}
+
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-100 bg-[#07182d] px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-xl bg-white/10"><BarChart3 size={19}/></span>
+          <div><h2 className="text-sm font-black">Relatório mensal de disponibilidade</h2><p className="mt-0.5 text-[10px] text-blue-100">Consolidado do histórico central de incidentes.</p></div>
+        </div>
+        <div className="flex gap-2">
+          <input type="month" value={reportMonth} onChange={(e)=>setReportMonth(e.target.value)} className="rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none"/>
+          <button onClick={()=>void loadMonthlyReport()} disabled={reportLoading} className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-black text-[#07182d] disabled:opacity-60"><CalendarDays size={14}/>{reportLoading?"Gerando...":"Gerar"}</button>
+        </div>
+      </div>
+      <div className="grid gap-3 p-4 lg:grid-cols-3">
+        {(reportRows.length ? reportRows : (["mw","rg","bg"] as const).map((system)=>({system,incidents:0,criticalIncidents:0,downtimeMinutes:0,availability:100}))).map((row)=>(
+          <div key={row.system} className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Sistema</span><b className="mt-1 block text-sm text-[#07182d]">{row.system==="mw"?"MW TECH Control":row.system==="rg"?"Gestão Licita RG":"Gestão Licita BG"}</b></div>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${row.availability>=99.9?"bg-emerald-50 text-emerald-700":row.availability>=99?"bg-amber-50 text-amber-700":"bg-rose-50 text-rose-700"}`}>{row.availability.toFixed(3)}%</span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase text-slate-400">Incidentes</span><b className="mt-1 block text-lg text-[#07182d]">{row.incidents}</b></div>
+              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase text-slate-400">Críticos</span><b className="mt-1 block text-lg text-[#07182d]">{row.criticalIncidents}</b></div>
+              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase text-slate-400">Indisponível</span><b className="mt-1 block text-sm text-[#07182d]">{row.downtimeMinutes.toFixed(1)} min</b></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-slate-100 px-5 py-3 text-[10px] leading-5 text-slate-500">
+        A disponibilidade é estimada a partir dos incidentes críticos de saúde registrados no banco central. Períodos sobrepostos são consolidados para não contar a mesma indisponibilidade duas vezes.
+      </div>
+    </section>
 
     <div className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:flex-row sm:items-center">
       <Wrench size={19} className="text-blue-700"/>
