@@ -23,6 +23,7 @@ import {
   KeyRound,
   Monitor,
   Activity,
+  Siren,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -44,6 +45,7 @@ const financeItems = [
 const managementItems = [
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/monitoramento", "Monitoramento", Activity],
+  ["/monitoramento/incidentes", "Central de Incidentes", Siren],
   ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
   ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
