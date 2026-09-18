@@ -132,6 +132,7 @@ export default function SupportCenter() {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
   const detailCacheRef = useRef(new Map<string, SupportMessage[]>());
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -166,8 +167,10 @@ export default function SupportCenter() {
     try {
       const data = await supportService.detail(ticket.id);
       detailCacheRef.current.set(ticket.id, data.messages);
-      setSelected((current) => current?.id === ticket.id ? data.ticket : current);
-      setMessages((current) => selected?.id === ticket.id || !selected ? data.messages : current);
+      if (selectedIdRef.current === ticket.id) {
+        setSelected(data.ticket);
+        setMessages(data.messages);
+      }
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar conversa");
@@ -177,6 +180,10 @@ export default function SupportCenter() {
   };
 
   useEffect(() => { void loadTickets(); }, []);
+
+  useEffect(() => {
+    selectedIdRef.current = selected?.id || null;
+  }, [selected?.id]);
 
   useEffect(() => {
     if (!selected) return;
@@ -227,6 +234,7 @@ export default function SupportCenter() {
 
   const openTicket = (ticket: SupportTicket) => {
     if (selected?.id === ticket.id) return;
+    selectedIdRef.current = ticket.id;
     setSelected(ticket);
     setError("");
     const cached = detailCacheRef.current.get(ticket.id);
