@@ -153,6 +153,12 @@ function MetricBox({ label, value, icon }: { label: string; value: string | numb
   );
 }
 
+function systemFilterLabel(item: SystemHealthSnapshot) {
+  if (item.tenantKey === "rg") return "Gestão Licita RG";
+  if (item.tenantKey === "bg") return "Gestão Licita BG";
+  return item.name || item.shortName || "Órgão monitorado";
+}
+
 function getSystemTheme(item: SystemHealthSnapshot) {
   const haystack = `${item.name} ${item.shortName}`.toLowerCase();
   if (item.tenantKey === "bg" || haystack.includes("baixa grande")) {
@@ -401,7 +407,7 @@ export default function Monitoring() {
         <div className="flex items-center gap-2 text-xs font-black text-[#07182d]"><Filter size={16} className="text-blue-700" /> Filtrar monitoramento</div>
         <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
           <option value="todos">Todos os órgãos</option>
-          {items.map((item) => <option key={item.key} value={item.key}>{item.shortName || item.name}</option>)}
+          {items.map((item) => <option key={item.key} value={item.key}>{systemFilterLabel(item)}</option>)}
         </select>
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "todos" | HealthState)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
           <option value="todos">Todos os status</option><option value="online">Operacionais</option><option value="attention">Em atenção</option><option value="offline">Indisponíveis</option>
