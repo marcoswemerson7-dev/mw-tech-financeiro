@@ -19,6 +19,9 @@ import {
   UserCheck,
   UsersRound,
   WifiOff,
+  Bug,
+  GitCommitHorizontal,
+  CloudCog,
 } from "lucide-react";
 import { ActionButton, PageHeader } from "../components/UI";
 import {
@@ -28,6 +31,7 @@ import {
   type MonitoringMetrics,
   type SystemHealthSnapshot,
 } from "../services/systemMonitoring";
+import { getTechnicalMonitoring, type TechnicalMonitoring } from "../services/technicalMonitoring";
 
 const refreshEveryMs = 60000;
 
@@ -170,7 +174,7 @@ function UsersPanel({ metrics, tenant }: { metrics: MonitoringMetrics; tenant: "
         </div>
         <Link to={`/monitoramento/usuarios?tenant=${tenant}`} className="rounded-full bg-[#082743] px-3 py-1.5 text-[10px] font-black text-white transition hover:bg-[#0b355d]">Ver usuários</Link>
       </div>
-      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile icon={<UsersRound size={17} />} label="Cadastrados" value={metrics.users ?? "—"} tone="blue" />
         <StatTile icon={<UserCheck size={17} />} label="Habilitados" value={metrics.activeUsers ?? "—"} tone="emerald" />
         <StatTile icon={<Activity size={17} />} label="Acesso em 30 min" value={metrics.recent30m ?? "—"} hint="atividade recente" tone="violet" />
@@ -299,14 +303,14 @@ export default function Monitoring() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [nextRefresh, setNextRefresh] = useState(refreshEveryMs / 1000);
+  const [technical, setTechnical] = useState<TechnicalMonitoring | null>(null);
+  const [technicalError, setTechnicalError] = useState("");
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
     setError("");
     try {
-      const data = await getSystemHealth();
-      setItems(data);
-      setNextRefresh(refreshEveryMs / 1000);
+      const [data, technicalData] = await Promise.all([\n        getSystemHealth(),\n        getTechnicalMonitoring().catch((technicalFailure) => {\n          setTechnicalError(technicalFailure instanceof Error ? technicalFailure.message : "Falha ao carregar observabilidade técnica.");\n          return null;\n        }),\n      ]);\n      setItems(data);\n      if (technicalData) {\n        setTechnical(technicalData);\n        setTechnicalError("");\n      }\n      setNextRefresh(refreshEveryMs / 1000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Não foi possível atualizar o monitoramento.");
     } finally {
@@ -339,7 +343,7 @@ export default function Monitoring() {
   }, [items]);
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto w-full max-w-[1800px] space-y-5">
       <PageHeader
         title="Monitoramento dos sistemas"
         subtitle="Saúde, disponibilidade e uso real do Gestão Licita de Ribeiro Gonçalves e Baixa Grande do Ribeiro."
@@ -351,7 +355,7 @@ export default function Monitoring() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online}/${items.length || 2}`} icon={<CheckCircle2 size={19} />} tone="emerald" hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} em atenção` : "Tudo normal"} />
         <Link to="/monitoramento/usuarios" className="block"><SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} icon={<UsersRound size={19} />} tone="blue" hint={`${summary.activeUsers} habilitados · clique para ver`} /></Link>
         <SummaryCard label="Atividade recente" value={loading ? "—" : String(summary.recent30m)} icon={<Activity size={19} />} tone="violet" hint="acessos nos últimos 30 min" />
@@ -373,16 +377,16 @@ export default function Monitoring() {
       {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
 
       {loading ? (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-5 2xl:grid-cols-2">
           {[0, 1].map((item) => <div key={item} className="h-[620px] animate-pulse rounded-2xl border border-slate-200 bg-white shadow-sm" />)}
         </div>
       ) : (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid gap-5 2xl:grid-cols-2">
           {items.map((item) => <SystemCard key={item.key} item={item} />)}
         </div>
       )}
 
-      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+      <TechnicalObservabilityPanel data={technical} error={technicalError} />\n\n      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
         <h3 className="text-[13px] font-black text-[#07182d]">Como interpretar o painel</h3>
         <p className="mt-1.5 text-xs leading-5 text-slate-600">
           O status operacional testa domínio e Supabase. Os indicadores de usuários e volume são snapshots agregados dos bancos de RG e BG.
@@ -391,6 +395,77 @@ export default function Monitoring() {
         </p>
       </div>
     </div>
+  );
+}
+
+
+function TechnicalObservabilityPanel({ data, error }: { data: TechnicalMonitoring | null; error: string }) {
+  const issues = data?.systems.flatMap((system) => system.sentry.issues.map((issue) => ({ ...issue, system: system.label }))) || [];
+  const latestDeployments = data?.systems.map((system) => ({ system, deployment: system.vercel.deployments?.[0] || null })) || [];
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-[#06192d] to-[#0a3155] px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="grid size-9 place-items-center rounded-lg bg-white/10"><Bug size={18}/></span>
+          <div><h2 className="text-base font-black">Observabilidade técnica</h2><p className="text-[11px] text-blue-100">Erros do Sentry, deploys da Vercel e estado das integrações.</p></div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full border border-white/15 bg-white/[.08] px-3 py-1.5 text-[10px] font-black">Sentry: {data?.integrations.sentryConfigured ? data.summary.unresolved + " erro(s) aberto(s)" : "conector pendente"}</span>
+          <span className="rounded-full border border-white/15 bg-white/[.08] px-3 py-1.5 text-[10px] font-black">Vercel: {data?.integrations.vercelConfigured ? data.summary.failedDeploys + " deploy(s) com falha" : "leitura limitada"}</span>
+        </div>
+      </div>
+
+      <div className="space-y-5 p-4 sm:p-5">
+        {error && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">{error}</div>}
+
+        <div className="grid gap-3 lg:grid-cols-3">
+          {(data?.systems || []).map((system) => {
+            const deployment = system.vercel.deployments?.[0] || null;
+            const sentryCount = system.sentry.issues?.length || 0;
+            const currentState = deployment?.state || system.vercel.current?.state || (system.vercel.configured ? "Sem leitura" : "Pendente");
+            return (
+              <div key={system.key} className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Sistema</span><b className="mt-0.5 block text-sm text-[#07182d]">{system.label}</b></div>
+                  <span className="grid size-9 place-items-center rounded-lg bg-white text-[#0b355d] shadow-sm ring-1 ring-slate-200"><CloudCog size={17}/></span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase tracking-wide text-slate-400">Vercel</span><b className="mt-1 block text-xs text-[#07182d]">{currentState}</b>{deployment?.commitSha && <span className="mt-1 block truncate text-[9px] text-slate-400">{deployment.commitSha.slice(0, 8)}</span>}</div>
+                  <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase tracking-wide text-slate-400">Sentry</span><b className={sentryCount ? "mt-1 block text-xs text-rose-700" : "mt-1 block text-xs text-emerald-700"}>{system.sentry.configured ? sentryCount + " aberto(s)" : "Pendente"}</b></div>
+                </div>
+              </div>
+            );
+          })}
+          {!data && !error && <div className="col-span-full rounded-xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">Carregando observabilidade técnica...</div>}
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
+          <div className="rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3"><div><b className="text-sm text-[#07182d]">Erros técnicos recentes</b><p className="text-[10px] text-slate-500">Issues não resolvidas retornadas pelo Sentry.</p></div><Bug size={17} className="text-rose-500"/></div>
+            <div className="max-h-[320px] overflow-y-auto">
+              {issues.length ? issues.slice(0, 12).map((issue) => (
+                <div key={issue.id} className="border-b border-slate-100 px-4 py-3 last:border-0">
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><b className="block truncate text-xs text-[#07182d]">{issue.title}</b><p className="mt-0.5 text-[10px] text-slate-500">{issue.system} · {issue.count} ocorrência(s) · último evento {formatDateTime(issue.lastSeen)}</p></div>{issue.permalink && <a href={issue.permalink} target="_blank" rel="noreferrer" className="shrink-0 text-blue-700"><ExternalLink size={14}/></a>}</div>
+                </div>
+              )) : <div className="px-4 py-8 text-center text-xs text-slate-500">{data?.integrations.sentryConfigured ? "Nenhum erro não resolvido retornado pelo Sentry." : "Configure a credencial de leitura do Sentry para listar erros aqui."}</div>}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3"><div><b className="text-sm text-[#07182d]">Deploys recentes</b><p className="text-[10px] text-slate-500">Estado mais recente de cada projeto Vercel.</p></div><GitCommitHorizontal size={17} className="text-blue-700"/></div>
+            <div className="divide-y divide-slate-100">
+              {latestDeployments.map(({ system, deployment }) => (
+                <div key={system.key} className="px-4 py-3"><div className="flex items-center justify-between gap-3"><div className="min-w-0"><b className="block text-xs text-[#07182d]">{system.label}</b><p className="mt-0.5 truncate text-[10px] text-slate-500">{deployment?.commitMessage || (system.vercel.configured ? "Sem deploy retornado" : "Credencial/projeto ainda não configurado")}</p></div><span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[9px] font-black text-slate-600">{deployment?.state || system.vercel.current?.state || "Pendente"}</span></div></div>
+              ))}
+              {!latestDeployments.length && <div className="px-4 py-8 text-center text-xs text-slate-500">Carregando deploys...</div>}
+            </div>
+          </div>
+        </div>
+
+        {data && (!data.integrations.sentryConfigured || !data.integrations.vercelConfigured) && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-5 text-amber-900">A tela já está preparada para leitura contínua. Para liberar todos os eventos, configure na Vercel as credenciais somente de leitura do Sentry e da API da Vercel. Nenhum token é enviado ao navegador.</div>}
+      </div>
+    </section>
   );
 }
 
