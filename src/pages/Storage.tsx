@@ -8,7 +8,7 @@ export default function Storage() {
   const [error, setError] = useState("");
 
   const load = (force = false) => {
-    if (!data) setLoading(true);
+    if (force || !data) setLoading(true);
     setError("");
     getDriveStorageUsage(force)
       .then(setData)
