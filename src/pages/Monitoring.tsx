@@ -532,7 +532,7 @@ export default function Monitoring() {
                   );
                 })}
               </div>
-              {selectedItem && <div className="mx-auto mt-4 w-full max-w-4xl"><SystemCard item={selectedItem} /></div>}
+              {selectedItem && <div className="mx-auto mt-4 w-full max-w-3xl"><SystemCard item={selectedItem} /></div>}
             </>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
@@ -542,7 +542,7 @@ export default function Monitoring() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
               <h2 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><Bell size={17} className="text-rose-500" /> Alertas e pendências</h2>
@@ -570,7 +570,7 @@ export default function Monitoring() {
         </section>
       </div>
 
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.35fr)_420px_350px]">
+      <div className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1.2fr)_380px_320px]">
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
@@ -595,7 +595,7 @@ export default function Monitoring() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-black text-[#07182d]">Distribuição operacional</h3>
           <p className="mt-0.5 text-[10px] text-slate-500">Situação de todos os sistemas cadastrados.</p>
           <div className="mt-2 grid grid-cols-[170px_1fr] items-center gap-3">
@@ -622,7 +622,7 @@ export default function Monitoring() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div>
             <h3 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><Zap size={17} className="text-amber-500" /> Acesso rápido</h3>
             <p className="mt-0.5 text-[10px] text-slate-500">Atalhos administrativos.</p>
