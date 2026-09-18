@@ -96,3 +96,63 @@ export async function getObservability(tenant?: ObservabilityTenant) {
   }
   return ok;
 }
+
+
+const ADMIN_ENDPOINTS: Record<ObservabilityTenant, string> = {
+  rg: "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-control-user-admin",
+  bg: "https://jfzavijlkbqzkrnlgphz.supabase.co/functions/v1/mw-control-user-admin",
+};
+
+async function adminAction(tenant: ObservabilityTenant, payload: Record<string, unknown>) {
+  const jwt = await getJwt();
+  const response = await fetch(ADMIN_ENDPOINTS[tenant], {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-appwrite-jwt": jwt,
+    },
+    body: JSON.stringify(payload),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(body.error || "Não foi possível concluir a ação administrativa.");
+  return body;
+}
+
+export async function createManagedSystemUser(tenant: ObservabilityTenant, values: {
+  fullName: string;
+  email: string;
+  temporaryPassword: string;
+  role: string;
+  phone?: string;
+  sector?: string;
+  functionName?: string;
+  fiscalSecretaria?: string;
+  cpf?: string;
+  notes?: string;
+}) {
+  return adminAction(tenant, { action: "create_user", ...values });
+}
+
+export async function updateManagedSystemUser(tenant: ObservabilityTenant, userId: string, values: {
+  fullName: string;
+  role: string;
+  phone?: string;
+  sector?: string;
+  functionName?: string;
+  fiscalSecretaria?: string;
+  notes?: string;
+}) {
+  return adminAction(tenant, { action: "update_user", userId, ...values });
+}
+
+export async function setManagedSystemUserStatus(
+  tenant: ObservabilityTenant,
+  userId: string,
+  status: "Ativo" | "Inativo" | "Suspenso",
+) {
+  return adminAction(tenant, { action: "set_status", userId, status });
+}
+
+export async function forceManagedSystemUserPasswordChange(tenant: ObservabilityTenant, userId: string) {
+  return adminAction(tenant, { action: "force_password_change", userId });
+}
