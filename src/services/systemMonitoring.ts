@@ -12,11 +12,19 @@ export type EndpointHealth = {
 
 export type MonitoringMetrics = {
   configured: boolean;
+  source?: string;
   processes: number | null;
+  contracts: number | null;
   users: number | null;
+  activeUsers: number | null;
+  recent30m: number | null;
   active24h: number | null;
+  active7d: number | null;
+  latestLoginAt: string | null;
   invoices: number | null;
   payments: number | null;
+  files: number | null;
+  fileBytes: number | null;
   audit24h: number | null;
   databaseBytes: number | null;
   checkedAt?: string;
@@ -106,7 +114,7 @@ async function loadMetrics() {
     if (!response.ok) return new Map<"rg" | "bg", MonitoringMetrics>();
     const data = await response.json();
     return new Map<"rg" | "bg", MonitoringMetrics>(
-      (data.systems || []).map((item: any) => [item.tenant, item as MonitoringMetrics]),
+      (data.systems || []).map((item: MonitoringMetrics & { tenant: "rg" | "bg" }) => [item.tenant, item]),
     );
   } catch {
     return new Map<"rg" | "bg", MonitoringMetrics>();
