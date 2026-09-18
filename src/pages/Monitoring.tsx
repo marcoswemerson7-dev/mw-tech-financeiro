@@ -365,7 +365,7 @@ export default function Monitoring() {
     });
     if (!rows.length) rows.push({ title: "Nenhuma pendência crítica", detail: "Todos os sistemas monitorados estão estáveis.", level: "Info", tone: "blue" });
     return rows.slice(0, 6);
-  }, [items]);
+  }, [visibleItems]);
 
   const distribution = [
     { name: "Operacionais", value: summary.online },
