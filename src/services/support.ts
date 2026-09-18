@@ -79,6 +79,14 @@ export type SupportTicket = {
   archive_error?: string | null;
 };
 
+export type SupportAttachment = {
+  path: string;
+  name: string;
+  mime_type?: string | null;
+  size?: number | null;
+  url?: string | null;
+};
+
 export type SupportMessage = {
   id: string;
   ticket_id: string;
@@ -86,6 +94,7 @@ export type SupportMessage = {
   body: string;
   is_staff: boolean;
   created_at: string;
+  attachments?: SupportAttachment[];
 };
 
 export const supportService = {
@@ -123,9 +132,28 @@ export const supportService = {
     return data;
   },
 
-  async sendMessage(ticketId: string, body: string) {
+  async sendMessage(ticketId: string, body: string, files: File[] = []) {
     const source = resolveSource(ticketId);
-    return requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
+
+    if (!files.length) {
+      return requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
+    }
+
+    const jwt = await account.createJWT();
+    const form = new FormData();
+    form.append("action", "send_message");
+    form.append("ticket_id", ticketId);
+    form.append("body", body);
+    files.forEach((file) => form.append("files", file, file.name));
+
+    const res = await fetch(SOURCES[source].endpoint, {
+      method: "POST",
+      headers: { "x-appwrite-jwt": jwt.jwt },
+      body: form,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || "Falha ao enviar mensagem/anexo");
+    return data;
   },
 
   async archive(ticketId: string) {
