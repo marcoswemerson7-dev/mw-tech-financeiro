@@ -22,7 +22,7 @@ export type DriveStorageUsage = {
 
 const DRIVE_STORAGE_ENDPOINT = "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-drive-storage-summary";
 const MW_TECH_DRIVE_KEY = "ADJ9w5w15Tinci91aHGav4vWjpqDqhq2NBeHqqOoQH4";
-const CACHE_KEY = "drive-storage-summary";
+const CACHE_KEY = "drive-storage-summary:v2";
 const CACHE_TTL = 15 * 60 * 1000;
 let memoryCache = readFastCache<DriveStorageUsage>(CACHE_KEY, CACHE_TTL);
 let memoryCacheAt = memoryCache ? Date.now() : 0;
