@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "../lib/auth";
 import { supportService, type SupportTicket } from "../services/support";
 
-const CHECK_INTERVAL_MS = 2000;
+const CHECK_INTERVAL_MS = 1200;
 const TITLE_RESET_MS = 9000;
 
 const stamp = (ticket: SupportTicket) =>
@@ -15,10 +15,18 @@ function organizationName(tenantKey?: string) {
   return "Órgão não identificado";
 }
 
-function emitToast(message: string) {
+function emitToast(message: string, ticket: SupportTicket, isNewTicket: boolean) {
+  const number = String(ticket.ticket_number || "").padStart(4, "0");
   window.dispatchEvent(
     new CustomEvent("mw-tech-toast", {
-      detail: { message, kind: "info" },
+      detail: {
+        message,
+        kind: "info",
+        support: true,
+        title: isNewTicket ? `🔔 Novo chamado #${number}` : `💬 Nova mensagem no chamado #${number}`,
+        actionHref: `/suporte?ticket=${ticket.id}`,
+        actionLabel: "Abrir conversa agora",
+      },
     }),
   );
 }
@@ -115,8 +123,10 @@ export default function SupportNotifier() {
       const preview = String(ticket.last_message_body || "").trim();
       emitToast(
         isNewTicket
-          ? `🔔 Novo chamado #${number} — ${org}\n${subject}\nSolicitante: ${requester}`
-          : `💬 Nova mensagem no chamado #${number} — ${org}\n${preview || subject}`,
+          ? `${org}\n${subject}\nSolicitante: ${requester}`
+          : `${org}\n${preview || subject}`,
+        ticket,
+        isNewTicket,
       );
 
       document.title = `🔔 Novo suporte · ${org}`;
