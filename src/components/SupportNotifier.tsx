@@ -115,7 +115,6 @@ export default function SupportNotifier() {
 
     const notify = (ticket: SupportTicket, isNewTicket: boolean) => {
       const org = organizationName(ticket.tenant_key);
-      const number = String(ticket.ticket_number || "").padStart(4, "0");
       const subject = ticket.subject || "Atendimento de suporte";
       const requester = ticket.requester_name || "Usuário";
 
