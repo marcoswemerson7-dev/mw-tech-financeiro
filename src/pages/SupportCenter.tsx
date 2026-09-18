@@ -132,7 +132,9 @@ export default function SupportCenter() {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const detailCacheRef = useRef(new Map<string, SupportMessage[]>());
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState("");
@@ -155,27 +157,30 @@ export default function SupportCenter() {
   };
 
   const loadDetail = async (ticket: SupportTicket, silent = false) => {
-    if (!silent) setMessages([]);
+    if (!silent) {
+      const cached = detailCacheRef.current.get(ticket.id);
+      setMessages(cached || []);
+      setDetailLoading(!cached);
+    }
+
     try {
       const data = await supportService.detail(ticket.id);
-      setSelected(data.ticket);
-      setMessages(data.messages);
+      detailCacheRef.current.set(ticket.id, data.messages);
+      setSelected((current) => current?.id === ticket.id ? data.ticket : current);
+      setMessages((current) => selected?.id === ticket.id || !selected ? data.messages : current);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar conversa");
+    } finally {
+      if (!silent) setDetailLoading(false);
     }
   };
 
   useEffect(() => { void loadTickets(); }, []);
 
   useEffect(() => {
-    const id = window.setInterval(() => void loadTickets(true), 4000);
-    return () => window.clearInterval(id);
-  }, [selected?.id]);
-
-  useEffect(() => {
     if (!selected) return;
-    const id = window.setInterval(() => void loadDetail(selected, true), 1800);
+    const id = window.setInterval(() => void loadDetail(selected, true), 5000);
     return () => window.clearInterval(id);
   }, [selected?.id]);
 
@@ -217,8 +222,18 @@ export default function SupportCenter() {
     const ticketId = searchParams.get("ticket");
     if (!ticketId || selected?.id === ticketId) return;
     const match = tickets.find((ticket) => ticket.id === ticketId);
-    if (match) void loadDetail(match);
+    if (match) openTicket(match);
   }, [tickets, searchParams, selected?.id]);
+
+  const openTicket = (ticket: SupportTicket) => {
+    if (selected?.id === ticket.id) return;
+    setSelected(ticket);
+    setError("");
+    const cached = detailCacheRef.current.get(ticket.id);
+    setMessages(cached || []);
+    setDetailLoading(!cached);
+    void loadDetail(ticket, Boolean(cached));
+  };
 
   const organizations = useMemo(() => {
     const map = new Map<string, OrgConfig>();
@@ -402,7 +417,7 @@ export default function SupportCenter() {
                   const org = getOrg(ticket.tenant_key);
                   const active = selected?.id === ticket.id;
                   return (
-                    <button key={ticket.id} onClick={() => void loadDetail(ticket)} className={`w-full rounded-2xl border p-4 text-left transition sm:p-5 ${active ? "border-[#e1b04b] bg-[#fffaf0] shadow-[0_8px_24px_rgba(7,24,45,0.07)]" : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm"}`}>
+                    <button key={ticket.id} onClick={() => openTicket(ticket)} className={`w-full rounded-2xl border p-4 text-left transition sm:p-5 ${active ? "border-[#e1b04b] bg-[#fffaf0] shadow-[0_8px_24px_rgba(7,24,45,0.07)]" : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm"}`}>
                       <div className="flex items-center justify-between gap-2">
                         <b className="text-[16px] font-black text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
                         <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${statusClass[ticket.status] || statusClass.fechado}`}>{statusLabels[ticket.status] || ticket.status}</span>
@@ -450,7 +465,14 @@ export default function SupportCenter() {
 
               <div className="flex-1 overflow-y-auto bg-[#fbfcfe] px-4 py-5 sm:px-6 sm:py-6">
                 <div className="mb-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Conversa<span className="h-px flex-1 bg-slate-200" /></div>
-                {messages.length === 0 ? (
+                {detailLoading && messages.length === 0 ? (
+                  <div className="grid min-h-[360px] place-items-center">
+                    <div className="flex items-center gap-3 text-[14px] font-semibold text-slate-500">
+                      <span className="size-5 animate-spin rounded-full border-2 border-slate-200 border-t-[#082743]" />
+                      Carregando conversa...
+                    </div>
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="grid min-h-[360px] place-items-center text-[14px] text-slate-400">Nenhuma mensagem neste chamado.</div>
                 ) : (
                   <div className="space-y-5">
