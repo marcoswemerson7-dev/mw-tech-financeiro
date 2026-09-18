@@ -34,6 +34,10 @@ function resolveSource(ticketId: string): SupportSource {
   return ticketSources.get(ticketId) || "rg";
 }
 
+function signalStaffSend(ticketId: string) {
+  window.dispatchEvent(new CustomEvent("mw-support-staff-sent", { detail: { ticketId, at: Date.now() } }));
+}
+
 async function archiveRequest(ticketId: string) {
   const source = resolveSource(ticketId);
   const jwt = await account.createJWT();
@@ -136,7 +140,10 @@ export const supportService = {
     const source = resolveSource(ticketId);
 
     if (!files.length) {
-      return requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
+      signalStaffSend(ticketId);
+      const result = await requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
+      signalStaffSend(ticketId);
+      return result;
     }
 
     const jwt = await account.createJWT();
@@ -146,6 +153,7 @@ export const supportService = {
     form.append("body", body);
     files.forEach((file) => form.append("files", file, file.name));
 
+    signalStaffSend(ticketId);
     const res = await fetch(SOURCES[source].endpoint, {
       method: "POST",
       headers: { "x-appwrite-jwt": jwt.jwt },
@@ -153,6 +161,7 @@ export const supportService = {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data?.error || "Falha ao enviar mensagem/anexo");
+    signalStaffSend(ticketId);
     return data;
   },
 
