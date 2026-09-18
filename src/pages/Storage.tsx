@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Cloud, FolderOpen, RefreshCw } from "lucide-react";
-import { getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
+import { getCachedDriveStorageUsage, getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 
 export default function Storage() {
-  const [data, setData] = useState<DriveStorageUsage | null>(null);
+  const [data, setData] = useState<DriveStorageUsage | null>(() => getCachedDriveStorageUsage());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const load = (force = false) => {
-    setLoading(true);
+    if (!data) setLoading(true);
     setError("");
     getDriveStorageUsage(force)
       .then(setData)
