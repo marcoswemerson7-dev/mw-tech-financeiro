@@ -112,10 +112,11 @@ export default function SupportNotifier() {
       const requester = ticket.requester_name || "Usuário";
 
       playSupportChime();
+      const preview = String(ticket.last_message_body || "").trim();
       emitToast(
         isNewTicket
           ? `🔔 Novo chamado #${number} — ${org}\n${subject}\nSolicitante: ${requester}`
-          : `💬 Nova mensagem no chamado #${number} — ${org}\n${subject}`,
+          : `💬 Nova mensagem no chamado #${number} — ${org}\n${preview || subject}`,
       );
 
       document.title = `🔔 Novo suporte · ${org}`;
@@ -156,7 +157,8 @@ export default function SupportNotifier() {
           if (previousStamp === undefined) {
             changes.push({ ticket, isNew: true });
           } else if (currentStamp > previousStamp) {
-            changes.push({ ticket, isNew: false });
+            const cameFromStaff = ticket.last_message_is_staff === true;
+            if (!cameFromStaff) changes.push({ ticket, isNew: false });
           }
         });
 
