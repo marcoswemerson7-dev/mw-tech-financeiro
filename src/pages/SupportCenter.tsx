@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
@@ -129,6 +129,8 @@ export default function SupportCenter() {
   const [orgFilter, setOrgFilter] = useState("todos");
   const [query, setQuery] = useState("");
   const [text, setText] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -213,12 +215,20 @@ export default function SupportCenter() {
     });
   }, [tickets, filter, orgFilter, query]);
 
+  const addFiles = (incoming: File[]) => {
+    const valid = incoming.filter((file) => file.size <= 10 * 1024 * 1024);
+    if (valid.length !== incoming.length) setError("Cada anexo pode ter no máximo 10 MB.");
+    setFiles((current) => [...current, ...valid].slice(0, 5));
+  };
+
   const send = async () => {
-    if (!selected || !text.trim() || sending) return;
+    if (!selected || (!text.trim() && files.length === 0) || sending) return;
     setSending(true);
     try {
-      await supportService.sendMessage(selected.id, text.trim());
+      await supportService.sendMessage(selected.id, text.trim(), files);
       setText("");
+      setFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       await loadDetail(selected, true);
       await loadTickets(true);
     } catch (e) {
@@ -394,6 +404,24 @@ export default function SupportCenter() {
                             <div className={`mb-1.5 flex items-center gap-2 text-[12px] font-semibold text-slate-500 ${staff ? "justify-end" : "justify-start"}`}><span>{staff ? "MW TECH" : selected.requester_name || "Usuário"}</span><span>•</span><span>{fmt(message.created_at)}</span></div>
                             <div className={`rounded-2xl px-4 py-3.5 shadow-sm ${staff ? "rounded-br-md bg-[#dbeafe] text-[#153b64]" : "rounded-bl-md border border-slate-200 bg-white text-slate-800"}`}>
                               <p className="whitespace-pre-wrap text-[15px] font-medium leading-6 sm:text-[16px]">{message.body}</p>
+                              {!!message.attachments?.length && (
+                                <div className="mt-3 space-y-2">
+                                  {message.attachments.map((attachment, index) => (
+                                    <a
+                                      key={`${attachment.path || attachment.name}-${index}`}
+                                      href={attachment.url || "#"}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className={`block overflow-hidden rounded-xl border p-2 text-left text-[12px] font-semibold ${staff ? "border-blue-200 bg-white/70 text-[#153b64]" : "border-slate-200 bg-slate-50 text-slate-700"}`}
+                                    >
+                                      {attachment.mime_type?.startsWith("image/") && attachment.url ? (
+                                        <img src={attachment.url} alt={attachment.name} className="mb-2 max-h-56 w-auto rounded-lg object-contain" />
+                                      ) : null}
+                                      <span className="break-all">📎 {attachment.name}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                           {staff && <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#07182d] text-[11px] font-black text-[#f0b83f]">MW</div>}
@@ -408,10 +436,44 @@ export default function SupportCenter() {
                 {isFinished ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-[14px] font-bold text-emerald-800">Atendimento encerrado.</div>
                 ) : (
-                  <div className="flex items-end gap-2 sm:gap-3">
-                    <button type="button" className="grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-400" title="Anexos em breve"><Paperclip size={18} /></button>
-                    <textarea value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }} placeholder="Digite sua mensagem aqui..." rows={2} className="min-h-[62px] flex-1 resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14px] outline-none transition focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10 sm:text-[15px]" />
-                    <button onClick={() => void send()} disabled={!text.trim() || sending} className="flex h-[62px] min-w-[108px] items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white transition hover:bg-[#0b355d] disabled:opacity-50"><Send size={17} />{sending ? "Enviando" : "Enviar"}</button>
+                  <div>
+                    {files.length > 0 && (
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {files.map((file, index) => (
+                          <div key={`${file.name}-${index}`} className="flex max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-semibold text-slate-700">
+                            <span className="truncate">📎 {file.name}</span>
+                            <button type="button" onClick={() => setFiles((current) => current.filter((_, i) => i !== index))} className="text-rose-500">×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-end gap-2 sm:gap-3">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                        className="hidden"
+                        onChange={(event) => addFiles(Array.from(event.target.files || []))}
+                      />
+                      <button type="button" onClick={() => fileInputRef.current?.click()} className="grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50" title="Adicionar anexo"><Paperclip size={18} /></button>
+                      <textarea
+                        value={text}
+                        onChange={(event) => setText(event.target.value)}
+                        onPaste={(event) => {
+                          const pasted = Array.from(event.clipboardData?.files || []);
+                          if (pasted.length) {
+                            event.preventDefault();
+                            addFiles(pasted);
+                          }
+                        }}
+                        onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }}
+                        placeholder="Digite sua mensagem ou cole um print aqui..."
+                        rows={2}
+                        className="min-h-[62px] flex-1 resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14px] outline-none transition focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10 sm:text-[15px]"
+                      />
+                      <button onClick={() => void send()} disabled={(!text.trim() && files.length === 0) || sending} className="flex h-[62px] min-w-[108px] items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white transition hover:bg-[#0b355d] disabled:opacity-50"><Send size={17} />{sending ? "Enviando" : "Enviar"}</button>
+                    </div>
                   </div>
                 )}
               </footer>
