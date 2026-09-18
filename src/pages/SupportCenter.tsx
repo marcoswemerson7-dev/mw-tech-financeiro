@@ -16,6 +16,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { supportService, type SupportMessage, type SupportTicket } from "../services/support";
+import { useAuth } from "../lib/auth";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -122,6 +123,13 @@ function initials(name?: string | null) {
 
 export default function SupportCenter() {
   const [searchParams] = useSearchParams();
+  const { session } = useAuth();
+  const prefs = ((session as { prefs?: Record<string, unknown> } | null)?.prefs || {}) as Record<string, unknown>;
+  const staffIdentity = {
+    name: String(session?.name || session?.email?.split("@")[0] || "MW TECH"),
+    role: String(prefs.cargo || "Administrador"),
+    avatarUrl: String(prefs.avatar_url || ""),
+  };
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -266,10 +274,21 @@ export default function SupportCenter() {
     selectedIdRef.current = ticket.id;
     setSelected(ticket);
     setError("");
+
     const cached = detailCacheRef.current.get(ticket.id);
     setMessages(cached || []);
     setDetailLoading(!cached);
     void loadDetail(ticket, Boolean(cached));
+
+    if (!["resolvido", "fechado"].includes(ticket.status)) {
+      void supportService.openTicket(ticket.id, staffIdentity).then((result) => {
+        if (result.greeted && selectedIdRef.current === ticket.id) {
+          detailCacheRef.current.delete(ticket.id);
+          void loadDetail(ticket, true);
+          void loadTickets(true);
+        }
+      }).catch(() => undefined);
+    }
   };
 
   const organizations = useMemo(() => {
@@ -320,6 +339,9 @@ export default function SupportCenter() {
       body,
       is_staff: true,
       created_at: new Date().toISOString(),
+      sender_name: staffIdentity.name,
+      sender_role: staffIdentity.role,
+      sender_avatar_url: staffIdentity.avatarUrl,
       attachments: files.map((file, index) => ({
         path: `local-${index}`,
         name: file.name,
@@ -337,7 +359,7 @@ export default function SupportCenter() {
     setError("");
 
     try {
-      await supportService.sendMessage(selected.id, body, pendingFiles);
+      await supportService.sendMessage(selected.id, body, pendingFiles, staffIdentity);
       await Promise.all([loadDetail(selected, true), loadTickets(true)]);
     } catch (e) {
       setMessages((current) => current.filter((message) => message.id !== tempId));
@@ -517,9 +539,18 @@ export default function SupportCenter() {
                       const staff = message.is_staff;
                       return (
                         <div key={message.id} className={`flex items-end gap-2 ${staff ? "justify-end" : "justify-start"}`}>
-                          {!staff && <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#0a3158] text-[12px] font-black text-white">{initials(selected.requester_name)}</div>}
+                          {!staff && (
+                            message.sender_avatar_url || selected.requester_avatar_url
+                              ? <img src={message.sender_avatar_url || selected.requester_avatar_url || ""} alt={message.sender_name || selected.requester_name || "Usuário"} className="size-10 shrink-0 rounded-full border border-slate-200 object-cover" />
+                              : <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#0a3158] text-[12px] font-black text-white">{initials(message.sender_name || selected.requester_name)}</div>
+                          )}
                           <div className={`max-w-[82%] ${staff ? "text-right" : "text-left"}`}>
-                            <div className={`mb-1.5 flex items-center gap-2 text-[12px] font-semibold text-slate-500 ${staff ? "justify-end" : "justify-start"}`}><span>{staff ? "MW TECH" : selected.requester_name || "Usuário"}</span><span>•</span><span>{fmt(message.created_at)}</span></div>
+                            <div className={`mb-1.5 flex items-center gap-2 text-[12px] font-semibold text-slate-500 ${staff ? "justify-end" : "justify-start"}`}>
+                              <span className="font-bold text-slate-700">{message.sender_name || (staff ? staffIdentity.name : selected.requester_name || "Usuário")}</span>
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{message.sender_role || (staff ? staffIdentity.role : selected.requester_role || selected.requester_sector || "Usuário")}</span>
+                              <span>•</span>
+                              <span>{fmt(message.created_at)}</span>
+                            </div>
                             <div className={`rounded-2xl px-4 py-3.5 shadow-sm ${staff ? "rounded-br-md bg-[#dbeafe] text-[#153b64]" : "rounded-bl-md border border-slate-200 bg-white text-slate-800"}`}>
                               <p className="whitespace-pre-wrap text-[15px] font-medium leading-6 sm:text-[16px]">{message.body}</p>
                               {!!message.attachments?.length && (
@@ -542,7 +573,11 @@ export default function SupportCenter() {
                               )}
                             </div>
                           </div>
-                          {staff && <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#07182d] text-[11px] font-black text-[#f0b83f]">MW</div>}
+                          {staff && (
+                            message.sender_avatar_url || staffIdentity.avatarUrl
+                              ? <img src={message.sender_avatar_url || staffIdentity.avatarUrl} alt={message.sender_name || staffIdentity.name} className="size-10 shrink-0 rounded-full border border-blue-200 object-cover" />
+                              : <div className="grid size-10 shrink-0 place-items-center rounded-full bg-[#07182d] text-[11px] font-black text-[#f0b83f]">{initials(message.sender_name || staffIdentity.name)}</div>
+                          )}
                         </div>
                       );
                     })}
