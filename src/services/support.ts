@@ -63,6 +63,10 @@ export type SupportTicket = {
   status: string;
   source_path?: string | null;
   last_message_at: string;
+  last_message_is_staff?: boolean | null;
+  last_message_body?: string | null;
+  last_message_sender_id?: string | null;
+  last_message_created_at?: string | null;
   created_at: string;
   updated_at: string;
   archive_status?: "active" | "archiving" | "archived" | "error";
