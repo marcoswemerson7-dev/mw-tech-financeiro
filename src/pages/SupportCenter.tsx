@@ -743,9 +743,9 @@ export default function SupportCenter() {
                 <div className="border-t border-slate-100 pt-4">
                   <p className="mb-3 text-[12px] font-black uppercase tracking-[0.12em] text-slate-400">Ações</p>
                   <div className="space-y-2">
-                    <button onClick={() => void finishAttendance()} disabled={closing || isFinished} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white disabled:opacity-50"><CheckCircle2 size={17} />{closing ? "Resolvendo..." : "Resolver chamado"}</button>
-                    <button onClick={() => void changeStatus("aguardando_usuario")} disabled={isFinished} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-[14px] font-semibold text-slate-700 disabled:opacity-50">Aguardar retorno</button>
-                    <button onClick={() => void changeStatus("fechado")} disabled={isFinished} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-[14px] font-semibold text-rose-600 disabled:opacity-50"><XCircle size={16} />Cancelar chamado</button>
+                    <button onClick={() => void finishAttendance()} disabled={closing || isFinished} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#0b355d] disabled:opacity-50"><CheckCircle2 size={17} />{closing ? "Resolvendo..." : "Resolver chamado"}</button>
+                    <button onClick={() => void changeStatus("fechado")} disabled={isFinished} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 text-[14px] font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><XCircle size={16} />Encerrar atendimento</button>
+                    <button onClick={() => void changeStatus("aguardando_usuario")} disabled={isFinished} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-[14px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Aguardar retorno</button>
                   </div>
                 </div>
               </div>
