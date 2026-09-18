@@ -72,7 +72,15 @@ export default function IncidentCenter() {
       setReportRows(report.systems);
       setStorage("central");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Não foi possível gerar o relatório mensal.");
+      // O relatório central depende do Appwrite; se a função estiver sem escopos,
+      // mantemos a central utilizável com os incidentes locais e uma mensagem amigável.
+      const message = e instanceof Error ? e.message : "";
+      if (/missing scopes|tables\.read|collections\.read|não concluída/i.test(message)) {
+        setReportRows([]);
+        setStorage("local");
+        return;
+      }
+      setError(message || "Não foi possível gerar o relatório mensal.");
     } finally {
       setReportLoading(false);
     }
