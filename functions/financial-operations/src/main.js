@@ -1,4 +1,4 @@
-import { Client, ID, Query, TablesDB } from "node-appwrite";
+import { Client, ID, Query, TablesDB, Users } from "node-appwrite";
 
 const T = {
   accounts: "contas_financeiras",
@@ -150,6 +150,7 @@ export default async ({ req, res, error }) => {
 
   const client = new Client().setEndpoint(endpoint).setProject(projectId).setKey(apiKey);
   const db = new TablesDB(client);
+  const users = new Users(client);
 
   const configuredAdmins = String(process.env.CONTROL_ADMIN_USER_IDS || "").split(",").map((x) => x.trim()).filter(Boolean);
   const isAdmin = configuredAdmins.length === 0 || configuredAdmins.includes(userId);
@@ -177,7 +178,18 @@ export default async ({ req, res, error }) => {
       if (action === "listStaff") {
         requireAdmin();
         const result = await db.listRows({ databaseId, tableId: T.staff, queries: [Query.orderAsc("nome"), Query.limit(200)] });
-        return res.json({ ok: true, rows: result.rows });
+        const authUsers = await users.list({ queries: [Query.limit(500)] });
+        const byEmail = new Map((authUsers.users || []).map((user) => [String(user.email || "").toLowerCase(), user]));
+        const rows = result.rows.map((row) => {
+          const authUser = byEmail.get(String(row.email || "").toLowerCase());
+          return {
+            ...row,
+            cpf: String(authUser?.prefs?.cpf || ""),
+            auth_user_id: authUser?.$id || "",
+            login_criado: Boolean(authUser?.$id),
+          };
+        });
+        return res.json({ ok: true, rows });
       }
 
       requireAdmin();
@@ -217,9 +229,45 @@ export default async ({ req, res, error }) => {
       if (action === "saveStaff") {
         if (!String(input.nome || "").trim()) throw new Error("Informe o nome do usuário.");
         if (!String(input.email || "").trim()) throw new Error("Informe o e-mail do usuário.");
+        const email = String(input.email || "").trim().toLowerCase();
+        const cpf = String(input.cpf || "").replace(/\D/g, "");
+        const senhaInicial = String(input.senha_inicial || "");
+        if (cpf && cpf.length !== 11) throw new Error("Informe um CPF válido com 11 dígitos.");
+
+        const authMatches = await users.list({ queries: [Query.equal("email", email), Query.limit(1)] });
+        let authUser = authMatches.users?.[0] || null;
+
+        if (!authUser && !input.id) {
+          if (senhaInicial.length < 8) throw new Error("Informe uma senha inicial com pelo menos 8 caracteres para criar o login.");
+          authUser = await users.create({
+            userId: ID.unique(),
+            email,
+            password: senhaInicial,
+            name: String(input.nome || "").trim(),
+          });
+        }
+
+        if (authUser) {
+          const allUsers = await users.list({ queries: [Query.limit(500)] });
+          if (cpf) {
+            const duplicate = (allUsers.users || []).find((user) => user.$id !== authUser.$id && String(user.prefs?.cpf || "").replace(/\D/g, "") === cpf);
+            if (duplicate) throw new Error("Este CPF já está vinculado a outro usuário.");
+          }
+          await users.updateName({ userId: authUser.$id, name: String(input.nome || "").trim() });
+          await users.updatePrefs({
+            userId: authUser.$id,
+            prefs: {
+              ...(authUser.prefs || {}),
+              cpf,
+              cargo: input.cargo || "Colaborador",
+              mw_control_status: input.status || "ativo",
+            },
+          });
+        }
+
         const data = {
           nome: String(input.nome || "").trim(),
-          email: String(input.email || "").trim().toLowerCase(),
+          email,
           cargo: input.cargo || "Colaborador",
           status: input.status || "ativo",
           modulos: JSON.stringify(input.modulos || []),
@@ -229,7 +277,7 @@ export default async ({ req, res, error }) => {
           ? await db.updateRow({ databaseId, tableId: T.staff, rowId: input.id, data })
           : await db.createRow({ databaseId, tableId: T.staff, rowId: ID.unique(), data: { ...data, created_at: now } });
         await db.createRow({ databaseId, tableId: T.ops, rowId: idempotencyKey, data: { action, user_id: userId, result_id: row.$id, created_at: now } });
-        return res.json({ ok: true, row });
+        return res.json({ ok: true, row: { ...row, cpf, auth_user_id: authUser?.$id || "", login_criado: Boolean(authUser?.$id) } });
       }
 
       if (action === "deleteStaff") {
