@@ -8,6 +8,7 @@ const T = {
   ops: "operacoes_idempotentes",
   systems: "sistemas_orgaos",
   staff: "usuarios_acessos",
+  incidents: "monitoring_incidents",
 };
 
 const gb = (value) => Math.round((Number(value || 0) / 1024 / 1024 / 1024) * 100) / 100;
@@ -110,6 +111,72 @@ async function getDriveStorage() {
   };
 }
 
+
+async function ensureIncidentTable(db, databaseId) {
+  try {
+    await db.getTable({ databaseId, tableId: T.incidents });
+    return;
+  } catch (e) {
+    if (e.code !== 404) throw e;
+  }
+
+  await db.createTable({
+    databaseId,
+    tableId: T.incidents,
+    name: "Incidentes de monitoramento",
+    permissions: [],
+    rowSecurity: false,
+    columns: [
+      { key: "incident_key", type: "varchar", size: 255, required: true },
+      { key: "system", type: "varchar", size: 20, required: true },
+      { key: "system_label", type: "varchar", size: 120, required: true },
+      { key: "severity", type: "varchar", size: 20, required: true },
+      { key: "source", type: "varchar", size: 30, required: true },
+      { key: "title", type: "varchar", size: 255, required: true },
+      { key: "message", type: "text", required: false },
+      { key: "action_url", type: "varchar", size: 2048, required: false },
+      { key: "active", type: "boolean", required: false, default: true },
+      { key: "first_seen_at", type: "datetime", required: true },
+      { key: "last_seen_at", type: "datetime", required: true },
+      { key: "occurrences", type: "integer", required: false, default: 1 },
+      { key: "acknowledged", type: "boolean", required: false, default: false },
+      { key: "acknowledged_at", type: "datetime", required: false },
+      { key: "acknowledged_by", type: "varchar", size: 64, required: false },
+      { key: "resolved_at", type: "datetime", required: false },
+      { key: "updated_at", type: "datetime", required: true }
+    ],
+    indexes: [
+      { key: "incident_key_unique", type: "unique", attributes: ["incident_key"] },
+      { key: "incident_system", type: "key", attributes: ["system"] },
+      { key: "incident_active", type: "key", attributes: ["active"] },
+      { key: "incident_last_seen", type: "key", attributes: ["last_seen_at"] }
+    ]
+  });
+}
+
+function overlapMinutes(start, end, monthStart, monthEnd) {
+  const a = Math.max(new Date(start).getTime(), monthStart.getTime());
+  const b = Math.min(new Date(end).getTime(), monthEnd.getTime());
+  return Math.max(0, (b - a) / 60000);
+}
+
+function unionMinutes(intervals) {
+  if (!intervals.length) return 0;
+  const sorted = intervals
+    .map(([a,b]) => [new Date(a).getTime(), new Date(b).getTime()])
+    .filter(([a,b]) => Number.isFinite(a) && Number.isFinite(b) && b > a)
+    .sort((x,y) => x[0] - y[0]);
+  if (!sorted.length) return 0;
+  let total = 0;
+  let [start,end] = sorted[0];
+  for (const [nextStart,nextEnd] of sorted.slice(1)) {
+    if (nextStart <= end) end = Math.max(end, nextEnd);
+    else { total += end - start; start = nextStart; end = nextEnd; }
+  }
+  total += end - start;
+  return total / 60000;
+}
+
 export default async ({ req, res, error }) => {
   const userId = req.headers["x-appwrite-user-id"];
   if (!userId) return res.json({ error: "Usuário não autenticado." }, 401);
@@ -137,9 +204,10 @@ export default async ({ req, res, error }) => {
     }
   }
 
-  const adminActions = ["listSystems", "saveSystem", "deleteSystem", "listStaff", "saveStaff", "deleteStaff"];
-  const readOnlyActions = ["listSystems", "listStaff"];
-  const mutationActions = !readOnlyActions.includes(action);
+  const adminActions = ["listSystems", "saveSystem", "deleteSystem", "listStaff", "saveStaff", "deleteStaff", "listIncidents", "syncIncidents", "acknowledgeIncident", "monthlyAvailability"];
+  const readOnlyActions = ["listSystems", "listStaff", "listIncidents", "monthlyAvailability"];
+  const noIdempotencyActions = ["syncIncidents", "acknowledgeIncident"];
+  const mutationActions = !readOnlyActions.includes(action) && !noIdempotencyActions.includes(action);
   if (mutationActions && !idempotencyKey) return res.json({ error: "Chave de idempotência obrigatória." }, 400);
 
   const endpoint = process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
@@ -190,6 +258,115 @@ export default async ({ req, res, error }) => {
           };
         });
         return res.json({ ok: true, rows });
+      }
+
+      if (["listIncidents","syncIncidents","acknowledgeIncident","monthlyAvailability"].includes(action)) {
+        requireAdmin();
+        await ensureIncidentTable(db, databaseId);
+
+        if (action === "listIncidents") {
+          const result = await db.listRows({
+            databaseId,
+            tableId: T.incidents,
+            queries: [Query.orderDesc("last_seen_at"), Query.limit(300)]
+          });
+          return res.json({ ok: true, rows: result.rows });
+        }
+
+        if (action === "syncIncidents") {
+          const incoming = Array.isArray(input.incidents) ? input.incidents.slice(0, 100) : [];
+          const activeKeys = new Set(incoming.map((item) => String(item.id || "")).filter(Boolean));
+          const current = await db.listRows({ databaseId, tableId: T.incidents, queries: [Query.limit(300)] });
+          const byKey = new Map(current.rows.map((row) => [String(row.incident_key), row]));
+          const now = nowIso();
+
+          for (const item of incoming) {
+            const incidentKey = String(item.id || "").slice(0,255);
+            if (!incidentKey) continue;
+            const previous = byKey.get(incidentKey);
+            const data = {
+              incident_key: incidentKey,
+              system: String(item.system || "mw").slice(0,20),
+              system_label: String(item.systemLabel || item.system || "MW TECH").slice(0,120),
+              severity: String(item.severity || "warning").slice(0,20),
+              source: String(item.source || "health").slice(0,30),
+              title: String(item.title || "Incidente").slice(0,255),
+              message: String(item.message || "").slice(0,12000),
+              action_url: String(item.actionUrl || "").slice(0,2048),
+              active: true,
+              first_seen_at: previous?.first_seen_at || item.occurredAt || now,
+              last_seen_at: now,
+              occurrences: Number(previous?.occurrences || 0) + 1,
+              acknowledged: Boolean(previous?.acknowledged),
+              acknowledged_at: previous?.acknowledged_at || "",
+              acknowledged_by: previous?.acknowledged_by || "",
+              resolved_at: "",
+              updated_at: now,
+            };
+            if (previous) await db.updateRow({ databaseId, tableId: T.incidents, rowId: previous.$id, data });
+            else await db.createRow({ databaseId, tableId: T.incidents, rowId: ID.unique(), data });
+          }
+
+          for (const row of current.rows) {
+            if (row.active && !activeKeys.has(String(row.incident_key))) {
+              await db.updateRow({
+                databaseId,
+                tableId: T.incidents,
+                rowId: row.$id,
+                data: { active: false, resolved_at: now, last_seen_at: now, updated_at: now }
+              });
+            }
+          }
+
+          const refreshed = await db.listRows({ databaseId, tableId: T.incidents, queries: [Query.orderDesc("last_seen_at"), Query.limit(300)] });
+          return res.json({ ok: true, rows: refreshed.rows });
+        }
+
+        if (action === "acknowledgeIncident") {
+          const incidentKey = String(input.incidentKey || "");
+          if (!incidentKey) throw new Error("Incidente não informado.");
+          const found = await db.listRows({ databaseId, tableId: T.incidents, queries: [Query.equal("incident_key", incidentKey), Query.limit(1)] });
+          const row = found.rows[0];
+          if (!row) throw new Error("Incidente não encontrado.");
+          const now = nowIso();
+          const updated = await db.updateRow({
+            databaseId,
+            tableId: T.incidents,
+            rowId: row.$id,
+            data: { acknowledged: true, acknowledged_at: now, acknowledged_by: userId, updated_at: now }
+          });
+          return res.json({ ok: true, row: updated });
+        }
+
+        if (action === "monthlyAvailability") {
+          const month = String(input.month || nowIso().slice(0,7));
+          if (!/^\d{4}-\d{2}$/.test(month)) throw new Error("Competência inválida.");
+          const [year, monthNumber] = month.split("-").map(Number);
+          const start = new Date(Date.UTC(year, monthNumber - 1, 1, 0, 0, 0));
+          const end = new Date(Date.UTC(year, monthNumber, 1, 0, 0, 0));
+          const effectiveEnd = Math.min(Date.now(), end.getTime());
+          const periodMinutes = Math.max(1, (effectiveEnd - start.getTime()) / 60000);
+          const result = await db.listRows({ databaseId, tableId: T.incidents, queries: [Query.limit(500)] });
+          const systems = ["mw","rg","bg"].map((system) => {
+            const rows = result.rows.filter((row) => String(row.system) === system && new Date(row.first_seen_at).getTime() < end.getTime() && new Date(row.resolved_at || nowIso()).getTime() >= start.getTime());
+            const critical = rows.filter((row) => row.severity === "critical");
+            const healthCritical = critical.filter((row) => row.source === "health");
+            const intervals = healthCritical.map((row) => [
+              new Date(Math.max(new Date(row.first_seen_at).getTime(), start.getTime())).toISOString(),
+              new Date(Math.min(new Date(row.resolved_at || nowIso()).getTime(), effectiveEnd)).toISOString()
+            ]);
+            const downtimeMinutes = Math.round(unionMinutes(intervals) * 10) / 10;
+            const availability = Math.max(0, Math.min(100, 100 - (downtimeMinutes / periodMinutes) * 100));
+            return {
+              system,
+              incidents: rows.length,
+              criticalIncidents: critical.length,
+              downtimeMinutes,
+              availability: Math.round(availability * 1000) / 1000,
+            };
+          });
+          return res.json({ ok: true, month, periodMinutes, systems });
+        }
       }
 
       requireAdmin();
