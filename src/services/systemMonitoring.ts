@@ -41,6 +41,7 @@ export type SystemHealthSnapshot = {
   supabaseUrl: string;
   app: EndpointHealth;
   database: EndpointHealth;
+  backend: EndpointHealth;
   overall: HealthState;
   metrics: MonitoringMetrics | null;
 };
@@ -53,6 +54,7 @@ const FALLBACKS = {
     city: "Ribeiro Gonçalves - PI",
     accessUrl: "https://gestaolicitarg.com.br",
     supabaseUrl: "https://kiviwxonxeqmzqlmshpc.supabase.co/rest/v1/",
+    healthUrl: "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-health",
   },
   bg: {
     key: "bg" as const,
@@ -61,6 +63,7 @@ const FALLBACKS = {
     city: "Baixa Grande do Ribeiro - PI",
     accessUrl: "https://gestaolicitabrg.com.br",
     supabaseUrl: "https://jfzavijlkbqzkrnlgphz.supabase.co/rest/v1/",
+    healthUrl: "https://jfzavijlkbqzkrnlgphz.supabase.co/functions/v1/mw-health",
   },
 };
 
@@ -108,6 +111,39 @@ async function probe(url: string, timeoutMs = 8000): Promise<EndpointHealth> {
   }
 }
 
+
+async function probeHealth(url: string, timeoutMs = 8000): Promise<EndpointHealth> {
+  const checkedAt = new Date().toISOString();
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const started = performance.now();
+  try {
+    const response = await fetch(url, { method: "GET", cache: "no-store", signal: controller.signal });
+    const latencyMs = Math.round(performance.now() - started);
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || body.ok !== true) {
+      return { state: "offline", latencyMs, checkedAt, url, message: body.error || "Health check interno falhou" };
+    }
+    return {
+      state: latencyMs > 1800 ? "attention" : "online",
+      latencyMs,
+      checkedAt: body.checkedAt || checkedAt,
+      url,
+      message: latencyMs > 1800 ? "Backend respondendo com lentidão" : "Backend e banco operacionais",
+    };
+  } catch {
+    return {
+      state: "offline",
+      latencyMs: null,
+      checkedAt,
+      url,
+      message: controller.signal.aborted ? "Health check excedeu o tempo limite" : "Backend não respondeu",
+    };
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 async function loadMetrics() {
   try {
     const response = await fetch("/api/monitoring", { cache: "no-store" });
@@ -121,10 +157,10 @@ async function loadMetrics() {
   }
 }
 
-function combine(app: EndpointHealth, database: EndpointHealth): HealthState {
-  if (app.state === "offline" || database.state === "offline") return "offline";
-  if (app.state === "attention" || database.state === "attention") return "attention";
-  if (app.state === "online" && database.state === "online") return "online";
+function combine(app: EndpointHealth, database: EndpointHealth, backend: EndpointHealth): HealthState {
+  if (app.state === "offline" || database.state === "offline" || backend.state === "offline") return "offline";
+  if (app.state === "attention" || database.state === "attention" || backend.state === "attention") return "attention";
+  if (app.state === "online" && database.state === "online" && backend.state === "online") return "online";
   return "attention";
 }
 
@@ -140,7 +176,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
     const accessUrl = safeUrl(stored?.acesso_url || stored?.dominio_url || fallback.accessUrl);
     const supabaseUrl = projectRestUrl(stored?.supabase_url || fallback.supabaseUrl);
     const vercelUrl = safeUrl(stored?.vercel_url || "");
-    const [app, database] = await Promise.all([probe(accessUrl), probe(supabaseUrl)]);
+    const [app, database, backend] = await Promise.all([probe(accessUrl), probe(supabaseUrl), probeHealth(fallback.healthUrl)]);
 
     return {
       key,
@@ -152,7 +188,8 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       supabaseUrl,
       app,
       database,
-      overall: combine(app, database),
+      backend,
+      overall: combine(app, database, backend),
       metrics: metrics.get(key) || null,
     };
   }));
