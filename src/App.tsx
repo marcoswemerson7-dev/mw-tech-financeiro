@@ -40,6 +40,7 @@ const Accounts = lazyWithRecovery(() => import("./pages/Accounts"), "accounts");
 const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "support");
 const Systems = lazyWithRecovery(() => import("./pages/Systems"), "systems");
 const Monitoring = lazyWithRecovery(() => import("./pages/Monitoring"), "monitoring");
+const TechnicalMonitoring = lazyWithRecovery(() => import("./pages/TechnicalMonitoring"), "technical-monitoring");
 const SystemUsers = lazyWithRecovery(() => import("./pages/SystemUsers"), "system-users");
 const UsersAccess = lazyWithRecovery(() => import("./pages/UsersAccess"), "users");
 const Storage = lazyWithRecovery(() => import("./pages/Storage"), "storage");
@@ -161,6 +162,7 @@ export default function App() {
               <Route path="suporte" element={<SupportCenter />} />
               <Route path="sistemas" element={<Systems />} />
               <Route path="monitoramento" element={<Monitoring />} />
+              <Route path="monitoramento/tecnico" element={<TechnicalMonitoring />} />
               <Route path="monitoramento/usuarios" element={<SystemUsers />} />
               <Route path="usuarios" element={<UsersAccess />} />
               <Route path="configuracoes" element={<Settings />} />
