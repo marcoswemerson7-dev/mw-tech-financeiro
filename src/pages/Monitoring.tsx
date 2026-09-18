@@ -159,27 +159,71 @@ function MetricBox({ label, value, icon }: { label: string; value: string | numb
   );
 }
 
+function getSystemTheme(item: SystemHealthSnapshot) {
+  const haystack = `${item.name} ${item.shortName}`.toLowerCase();
+  if (item.tenantKey === "bg" || haystack.includes("baixa grande")) {
+    return {
+      header: "bg-gradient-to-br from-[#061426] via-[#073523] to-[#0b5b38]",
+      accent: "bg-emerald-500",
+      soft: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      button: "bg-emerald-600 hover:bg-emerald-700",
+      fallback: "bg-emerald-700",
+    };
+  }
+  if (item.tenantKey === "rg" || haystack.includes("ribeiro gonçalves") || haystack.includes("ribeiro goncalves")) {
+    return {
+      header: "bg-gradient-to-br from-[#061426] via-[#0b2d5b] to-[#174d8f]",
+      accent: "bg-amber-400",
+      soft: "bg-blue-50 text-blue-700 border-blue-200",
+      button: "bg-blue-600 hover:bg-blue-700",
+      fallback: "bg-blue-700",
+    };
+  }
+  return {
+    header: "bg-gradient-to-br from-[#07182d] via-[#20364f] to-[#334155]",
+    accent: "bg-slate-400",
+    soft: "bg-slate-50 text-slate-700 border-slate-200",
+    button: "bg-slate-700 hover:bg-slate-800",
+    fallback: "bg-slate-700",
+  };
+}
+
 function SystemCard({ item }: { item: SystemHealthSnapshot }) {
   const m = item.metrics;
   const metricsAvailable = Boolean(m?.configured);
+  const theme = getSystemTheme(item);
   const badge = item.tenantKey?.toUpperCase() || item.shortName.slice(0, 2).toUpperCase() || "SI";
-  const badgeClass = item.tenantKey === "rg" ? "bg-blue-600" : item.tenantKey === "bg" ? "bg-violet-600" : "bg-slate-700";
+  const displayName = item.tenantKey === "rg"
+    ? "Gestão Licita RG"
+    : item.tenantKey === "bg"
+      ? "Gestão Licita BG"
+      : (item.shortName || item.name);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_30px_rgba(7,24,45,.05)]">
-      <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white p-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-sm font-black text-white ${badgeClass}`}>{badge}</span>
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-black text-[#07182d]">{item.shortName || item.name}</h3>
-            <p className="mt-0.5 truncate text-[10px] text-slate-400">{item.name}</p>
-            <p className="mt-0.5 truncate text-[9px] text-slate-400">{item.accessUrl.replace(/^https?:\/\//, "") || "Domínio não informado"}</p>
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(7,24,45,.12)]">
+      <div className={`h-1.5 w-full ${theme.accent}`} />
+      <div className={`relative overflow-hidden p-4 text-white ${theme.header}`}>
+        <div className="pointer-events-none absolute -right-10 -top-14 size-36 rounded-full bg-white/[.07] blur-2xl" />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,.18)]">
+              {item.logoUrl ? (
+                <img src={item.logoUrl} alt={`Logomarca ${item.name}`} className="size-full object-contain" />
+              ) : (
+                <span className={`grid size-full place-items-center rounded-xl text-xs font-black text-white ${theme.fallback}`}>{badge}</span>
+              )}
+            </span>
+            <div className="min-w-0">
+              <h3 className="truncate text-sm font-black">{displayName}</h3>
+              <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-white/75">{item.name}</p>
+              <p className="mt-1 truncate text-[9px] text-white/60">{item.accessUrl.replace(/^https?:\/\//, "") || "Domínio não informado"}</p>
+            </div>
           </div>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[9px] font-black text-white`}>
+            <span className={`size-1.5 rounded-full ${item.overall === "online" ? "bg-emerald-300" : item.overall === "offline" ? "bg-rose-300" : "bg-amber-300"}`} />
+            {stateLabel(item.overall)}
+          </span>
         </div>
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-black ${stateClasses(item.overall)}`}>
-          <span className={`size-1.5 rounded-full ${item.overall === "online" ? "bg-emerald-500" : item.overall === "offline" ? "bg-rose-500" : "bg-amber-500"}`} />
-          {stateLabel(item.overall)}
-        </span>
       </div>
 
       <div className="p-4">
@@ -187,16 +231,18 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
           <SmallRow icon={<Gauge size={14} />} label="Latência" value={item.app.latencyMs !== null ? `${item.app.latencyMs} ms` : "—"} />
           <SmallRow icon={<Server size={14} />} label="Aplicação / domínio" value={stateLabel(item.app.state)} good={item.app.state === "online"} />
           <SmallRow icon={<Database size={14} />} label="Banco Supabase" value={stateLabel(item.database.state)} good={item.database.state === "online"} />
+          <SmallRow icon={<ShieldCheck size={14} />} label="Backend interno" value={stateLabel(item.backend.state)} good={item.backend.state === "online"} />
           <SmallRow icon={<UsersRound size={14} />} label="Usuários cadastrados" value={m?.users ?? "—"} />
           <SmallRow icon={<Activity size={14} />} label="Ativos 24h" value={m?.active24h ?? "—"} />
           <SmallRow icon={<Activity size={14} />} label="Ações 24h" value={m?.audit24h ?? "—"} />
+          <SmallRow icon={<Clock3 size={14} />} label="Ativos 7 dias" value={m?.active7d ?? "—"} />
         </div>
 
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
               <h4 className="text-[11px] font-black text-[#07182d]">Volume operacional</h4>
-              <p className="text-[9px] text-slate-400">Dados cadastrados no sistema.</p>
+              <p className="text-[9px] text-slate-400">Dados reais cadastrados no sistema.</p>
             </div>
             {!metricsAvailable && <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-black text-amber-700">Integração de métricas pendente</span>}
           </div>
@@ -211,8 +257,8 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#082743] px-3 py-2.5 text-[10px] font-black text-white hover:bg-[#0b355d]">Abrir sistema <ExternalLink size={12} /></a>}
-          {item.tenantKey && <Link to={`/monitoramento/usuarios?tenant=${item.tenantKey}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-black text-slate-700 hover:bg-slate-50"><UsersRound size={12} /> Usuários</Link>}
+          {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black text-white transition ${theme.button}`}>Abrir sistema <ExternalLink size={12} /></a>}
+          {item.tenantKey && <Link to={`/monitoramento/usuarios?tenant=${item.tenantKey}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-black transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
         </div>
       </div>
     </article>
