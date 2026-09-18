@@ -131,6 +131,7 @@ export default function SupportCenter() {
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -168,15 +169,49 @@ export default function SupportCenter() {
   useEffect(() => { void loadTickets(); }, []);
 
   useEffect(() => {
-    const id = window.setInterval(() => void loadTickets(true), 10000);
+    const id = window.setInterval(() => void loadTickets(true), 4000);
     return () => window.clearInterval(id);
   }, [selected?.id]);
 
   useEffect(() => {
     if (!selected) return;
-    const id = window.setInterval(() => void loadDetail(selected, true), 5000);
+    const id = window.setInterval(() => void loadDetail(selected, true), 1800);
     return () => window.clearInterval(id);
   }, [selected?.id]);
+
+  useEffect(() => {
+    const onUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ tickets?: SupportTicket[] }>).detail;
+      if (!detail?.tickets) return;
+      setTickets(detail.tickets);
+      if (selected) {
+        const fresh = detail.tickets.find((ticket) => ticket.id === selected.id);
+        if (fresh) {
+          const changed = String(fresh.last_message_at || "") !== String(selected.last_message_at || "");
+          setSelected(fresh);
+          if (changed && fresh.last_message_is_staff === false) void loadDetail(fresh, true);
+        }
+      }
+    };
+
+    const onNotification = (event: Event) => {
+      const detail = (event as CustomEvent<{ ticket?: SupportTicket }>).detail;
+      if (detail?.ticket?.id && detail.ticket.id === selected?.id) {
+        void loadDetail(detail.ticket, true);
+      }
+    };
+
+    window.addEventListener("mw-support-updated", onUpdated);
+    window.addEventListener("mw-support-notification", onNotification);
+    return () => {
+      window.removeEventListener("mw-support-updated", onUpdated);
+      window.removeEventListener("mw-support-notification", onNotification);
+    };
+  }, [selected?.id, selected?.last_message_at]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length, selected?.id]);
 
   useEffect(() => {
     const ticketId = searchParams.get("ticket");
@@ -223,15 +258,39 @@ export default function SupportCenter() {
 
   const send = async () => {
     if (!selected || (!text.trim() && files.length === 0) || sending) return;
+
+    const body = text.trim() || (files.length ? "Anexo enviado" : "");
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: SupportMessage = {
+      id: tempId,
+      ticket_id: selected.id,
+      sender_id: "mw-tech",
+      body,
+      is_staff: true,
+      created_at: new Date().toISOString(),
+      attachments: files.map((file, index) => ({
+        path: `local-${index}`,
+        name: file.name,
+        mime_type: file.type || "application/octet-stream",
+        size: file.size,
+      })),
+    };
+
+    const pendingFiles = files;
+    setMessages((current) => [...current, optimistic]);
+    setText("");
+    setFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     setSending(true);
+    setError("");
+
     try {
-      await supportService.sendMessage(selected.id, text.trim(), files);
-      setText("");
-      setFiles([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      await loadDetail(selected, true);
-      await loadTickets(true);
+      await supportService.sendMessage(selected.id, body, pendingFiles);
+      await Promise.all([loadDetail(selected, true), loadTickets(true)]);
     } catch (e) {
+      setMessages((current) => current.filter((message) => message.id !== tempId));
+      setText(body === "Anexo enviado" ? "" : body);
+      setFiles(pendingFiles);
       setError(e instanceof Error ? e.message : "Falha ao enviar mensagem");
     } finally {
       setSending(false);
@@ -430,6 +489,7 @@ export default function SupportCenter() {
                     })}
                   </div>
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               <footer className="border-t border-slate-100 bg-white p-4 sm:p-5">
