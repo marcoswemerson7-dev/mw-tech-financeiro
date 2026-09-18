@@ -25,6 +25,8 @@ export type MonitoringMetrics = {
   payments: number | null;
   files: number | null;
   fileBytes: number | null;
+  supabaseStorageFiles: number | null;
+  supabaseStorageBytes: number | null;
   audit24h: number | null;
   databaseBytes: number | null;
   checkedAt?: string;
