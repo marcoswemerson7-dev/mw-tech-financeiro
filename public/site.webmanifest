@@ -1,0 +1,19 @@
+{
+  "name": "MW TECH Control",
+  "short_name": "MW TECH",
+  "description": "Plataforma administrativa da MW TECH Sistemas e Soluções Digitais.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#06192d",
+  "icons": [
+    {
+      "src": "/mw-tech-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
