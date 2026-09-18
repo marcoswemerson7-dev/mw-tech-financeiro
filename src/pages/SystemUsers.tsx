@@ -214,49 +214,85 @@ export default function SystemUsers() {
 }
 
 function UserDrawer({ user, onClose }: { user: ObservabilityUser; onClose: () => void }) {
-  return <div className="fixed inset-0 z-[90] flex justify-end bg-slate-950/55">
-    <button className="flex-1" onClick={onClose} aria-label="Fechar detalhes"/>
-    <aside className="h-full w-full max-w-xl overflow-y-auto bg-white shadow-2xl">
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
-        <div><h2 className="text-xl font-black text-[#07182d]">Detalhes do usuário</h2><p className="text-xs text-slate-500">{tenantNames[user.tenant]}</p></div>
-        <button onClick={onClose} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={20}/></button>
-      </div>
-      <div className="space-y-5 p-6">
-        <div className="flex items-center gap-4">
-          {user.photoUrl ? <img src={user.photoUrl} alt="" className="size-16 rounded-2xl object-cover"/> : <span className="grid size-16 place-items-center rounded-2xl bg-[#07182d] text-white"><UserRound size={27}/></span>}
-          <div><h3 className="text-lg font-black text-[#07182d]">{user.name}</h3><p className="text-sm text-slate-500">{user.email}</p><span className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black ${statusClass(user.status)}`}>{user.status || "—"}</span></div>
+  return <div className="fixed inset-0 z-[90] grid place-items-center bg-[#061426]/70 p-3 backdrop-blur-[2px] sm:p-5">
+    <button className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Fechar detalhes"/>
+    <div
+      className="relative z-10 flex max-h-[94vh] w-full max-w-[980px] flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_28px_90px_rgba(3,18,35,.35)]"
+      style={{ background: "#ffffff", color: "#0f172a" }}
+    >
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#06192d] via-[#0a3155] to-[#0b416d] px-5 py-5 text-white sm:px-7">
+        <div className="absolute -right-12 -top-16 size-56 rounded-full bg-white/[.06] blur-2xl"/>
+        <div className="relative flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            {user.photoUrl ? <img src={user.photoUrl} alt="" className="size-16 shrink-0 rounded-2xl border border-white/20 object-cover shadow-lg sm:size-20"/> : <span className="grid size-16 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/10 text-white sm:size-20"><UserRound size={30}/></span>}
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[.16em] text-white/55">Detalhes do usuário · {tenantNames[user.tenant]}</p>
+              <h2 className="mt-1 truncate text-xl font-black sm:text-2xl">{user.name}</h2>
+              <p className="mt-1 truncate text-xs text-blue-100 sm:text-sm">{user.email}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/15 px-2.5 py-1 text-[10px] font-black text-emerald-100">{user.status || "—"}</span>
+                {(user.role || user.function) && <span className="rounded-full border border-white/15 bg-white/[.08] px-2.5 py-1 text-[10px] font-bold text-white/85">{user.role || user.function}</span>}
+                {(user.sector || user.fiscalSecretaria) && <span className="rounded-full border border-white/15 bg-white/[.08] px-2.5 py-1 text-[10px] font-bold text-white/85">{user.sector || user.fiscalSecretaria}</span>}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[.06] text-white transition hover:bg-white/[.14]" aria-label="Fechar"><X size={20}/></button>
         </div>
-
-        <Section title="Cadastro">
-          <Info icon={<Mail size={15}/>} label="E-mail" value={user.email || "—"}/>
-          <Info icon={<Phone size={15}/>} label="Telefone" value={user.phone || "—"}/>
-          <Info icon={<UserRound size={15}/>} label="CPF" value={user.cpfMasked || "Não informado"}/>
-          <Info icon={<ShieldCheck size={15}/>} label="Perfil" value={user.role || "—"}/>
-          <Info icon={<UsersRound size={15}/>} label="Setor" value={user.sector || user.fiscalSecretaria || "—"}/>
-          <Info icon={<KeyRound size={15}/>} label="Função" value={user.function || "—"}/>
-        </Section>
-
-        <Section title="Acesso e atividade">
-          <Info icon={<Clock3 size={15}/>} label="Último login" value={dateTime(user.lastSignInAt)}/>
-          <Info icon={<Activity size={15}/>} label="Ações nas últimas 24h" value={String(user.actions24h)}/>
-          <Info icon={<Activity size={15}/>} label="Ações em 7 dias" value={String(user.actions7d)}/>
-          <Info icon={<CalendarClock size={15}/>} label="Última ação" value={dateTime(user.lastActionAt)}/>
-          <Info icon={<Mail size={15}/>} label="E-mail confirmado" value={dateTime(user.emailConfirmedAt)}/>
-          <Info icon={<CalendarClock size={15}/>} label="Conta criada" value={dateTime(user.createdAt)}/>
-        </Section>
-
-        {user.lastAction && <div className="rounded-xl border border-slate-200 bg-slate-50 p-4"><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Última atividade registrada</span><b className="mt-1 block text-sm text-[#07182d]">{user.lastAction.type || "Ação"} · {user.lastAction.module || "Sistema"}</b><p className="mt-1 text-xs leading-5 text-slate-600">{user.lastAction.description || "Sem descrição."}</p></div>}
-
-        <Section title="Segurança e aceite">
-          <Info icon={<KeyRound size={15}/>} label="Troca de senha obrigatória" value={user.mustChangePassword ? "Sim" : "Não"}/>
-          <Info icon={<CheckCircle2 size={15}/>} label="Termos aceitos" value={user.termsAccepted ? "Sim" : "Não"}/>
-          <Info icon={<CheckCircle2 size={15}/>} label="Privacidade aceita" value={user.privacyAccepted ? "Sim" : "Não"}/>
-          <Info icon={<AlertTriangle size={15}/>} label="Bloqueio" value={user.bannedUntil ? dateTime(user.bannedUntil) : "Sem bloqueio"}/>
-        </Section>
-
-        {user.notes && <div className="rounded-xl border border-slate-200 p-4"><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Observações</span><p className="mt-1 text-sm leading-6 text-slate-600">{user.notes}</p></div>}
       </div>
-    </aside>
+
+      <div className="overflow-y-auto bg-[#f6f8fb] p-4 sm:p-6">
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <Section title="Cadastro">
+                <Info icon={<Mail size={15}/>} label="E-mail" value={user.email || "—"}/>
+                <Info icon={<Phone size={15}/>} label="Telefone" value={user.phone || "—"}/>
+                <Info icon={<UserRound size={15}/>} label="CPF" value={user.cpfMasked || "Não informado"}/>
+                <Info icon={<ShieldCheck size={15}/>} label="Perfil" value={user.role || "—"}/>
+                <Info icon={<UsersRound size={15}/>} label="Setor" value={user.sector || user.fiscalSecretaria || "—"}/>
+                <Info icon={<KeyRound size={15}/>} label="Função" value={user.function || "—"}/>
+              </Section>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <Section title="Acesso e atividade">
+                <Info icon={<Clock3 size={15}/>} label="Último login" value={dateTime(user.lastSignInAt)}/>
+                <Info icon={<Activity size={15}/>} label="Ações nas últimas 24h" value={String(user.actions24h)}/>
+                <Info icon={<Activity size={15}/>} label="Ações em 7 dias" value={String(user.actions7d)}/>
+                <Info icon={<CalendarClock size={15}/>} label="Última ação" value={dateTime(user.lastActionAt)}/>
+                <Info icon={<Mail size={15}/>} label="E-mail confirmado" value={dateTime(user.emailConfirmedAt)}/>
+                <Info icon={<CalendarClock size={15}/>} label="Conta criada" value={dateTime(user.createdAt)}/>
+              </Section>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <Section title="Segurança e aceite">
+                <Info icon={<KeyRound size={15}/>} label="Troca de senha obrigatória" value={user.mustChangePassword ? "Sim" : "Não"}/>
+                <Info icon={<CheckCircle2 size={15}/>} label="Termos aceitos" value={user.termsAccepted ? "Sim" : "Não"}/>
+                <Info icon={<CheckCircle2 size={15}/>} label="Privacidade aceita" value={user.privacyAccepted ? "Sim" : "Não"}/>
+                <Info icon={<AlertTriangle size={15}/>} label="Bloqueio" value={user.bannedUntil ? dateTime(user.bannedUntil) : "Sem bloqueio"}/>
+              </Section>
+            </div>
+
+            {user.lastAction ? <div className="rounded-2xl border border-blue-100 bg-blue-50/65 p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-blue-100"><Activity size={18}/></span>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-black uppercase tracking-wide text-blue-500">Última atividade registrada</span>
+                  <b className="mt-1 block text-sm text-[#07182d]">{user.lastAction.type || "Ação"} · {user.lastAction.module || "Sistema"}</b>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{user.lastAction.description || "Sem descrição."}</p>
+                  <p className="mt-2 text-[10px] font-semibold text-slate-400">{dateTime(user.lastActionAt)}</p>
+                </div>
+              </div>
+            </div> : <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Nenhuma atividade registrada para este usuário.</div>}
+
+            {user.notes && <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Observações</span><p className="mt-2 text-sm leading-6 text-slate-600">{user.notes}</p></div>}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>;
 }
 
