@@ -472,6 +472,11 @@ export default function Monitoring() {
               <div className="min-w-0 flex-1"><b className="block text-[11px] text-[#07182d]">Ver detalhes</b><p className="truncate text-[9px] text-slate-500">Sistemas e integrações</p></div>
               <ArrowRight size={14} className="text-slate-400" />
             </Link>
+            <Link to="/monitoramento/incidentes" className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-rose-200 hover:bg-rose-50/50">
+              <span className="grid size-9 place-items-center rounded-lg bg-rose-50 text-rose-700"><Bell size={17} /></span>
+              <div className="min-w-0 flex-1"><b className="block text-[11px] text-[#07182d]">Central de Incidentes</b><p className="truncate text-[9px] text-slate-500">Alertas, indisponibilidade e histórico</p></div>
+              <ArrowRight size={14} className="text-slate-400" />
+            </Link>
             <Link to="/monitoramento/tecnico" className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-200 hover:bg-blue-50/50">
               <span className="grid size-9 place-items-center rounded-lg bg-amber-50 text-amber-700"><Wrench size={17} /></span>
               <div className="min-w-0 flex-1"><b className="block text-[11px] text-[#07182d]">Abrir observabilidade técnica</b><p className="truncate text-[9px] text-slate-500">Erros, deploys e integrações</p></div>
