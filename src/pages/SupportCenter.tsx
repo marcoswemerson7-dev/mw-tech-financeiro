@@ -146,8 +146,9 @@ export default function SupportCenter() {
       const data = await supportService.list("todos");
       setTickets(data.tickets);
       setError("");
-      if (selected) {
-        const fresh = data.tickets.find((ticket) => ticket.id === selected.id);
+      const currentSelectedId = selectedIdRef.current;
+      if (currentSelectedId) {
+        const fresh = data.tickets.find((ticket) => ticket.id === currentSelectedId);
         if (fresh) setSelected(fresh);
       }
     } catch (e) {
@@ -175,11 +176,39 @@ export default function SupportCenter() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao carregar conversa");
     } finally {
-      if (!silent) setDetailLoading(false);
+      if (!silent && selectedIdRef.current === ticket.id) setDetailLoading(false);
     }
   };
 
-  useEffect(() => { void loadTickets(); }, []);
+  const prefetchOpenTickets = async (items: SupportTicket[]) => {
+    const candidates = items
+      .filter((ticket) => !["resolvido", "fechado"].includes(ticket.status))
+      .filter((ticket) => !detailCacheRef.current.has(ticket.id))
+      .slice(0, 12);
+
+    await Promise.allSettled(
+      candidates.map(async (ticket) => {
+        const data = await supportService.detail(ticket.id);
+        detailCacheRef.current.set(ticket.id, data.messages);
+      }),
+    );
+  };
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      try {
+        const data = await supportService.list("todos");
+        setTickets(data.tickets);
+        setError("");
+        void prefetchOpenTickets(data.tickets);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Falha ao carregar chamados");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     selectedIdRef.current = selected?.id || null;
@@ -350,16 +379,16 @@ export default function SupportCenter() {
   const isFinished = selected ? ["resolvido", "fechado"].includes(selected.status) : false;
 
   return (
-    <div className="mx-auto w-full max-w-[1760px] space-y-5 text-slate-900">
-      <section className="flex flex-col gap-4 rounded-[26px] border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_34px_rgba(7,24,45,0.05)] sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="mx-auto flex w-full max-w-[1760px] flex-col gap-3 text-slate-900 xl:h-[calc(100dvh-92px)] xl:min-h-0">
+      <section className="flex shrink-0 flex-col gap-3 rounded-[22px] border border-slate-200 bg-white px-4 py-3 shadow-[0_12px_34px_rgba(7,24,45,0.05)] sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
-          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#082743] text-[#f0b83f] shadow-sm sm:size-16"><Headphones size={30} /></div>
+          <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#082743] text-[#f0b83f] shadow-sm sm:size-12"><Headphones size={24} /></div>
           <div>
-            <h1 className="text-[28px] font-black leading-tight tracking-[-0.03em] text-[#07182d] sm:text-[34px] xl:text-[38px]">Central de Suporte</h1>
-            <p className="mt-1 text-[14px] font-medium text-slate-500 sm:text-[15px]">Atendimento técnico e operacional dos sistemas atendidos.</p>
+            <h1 className="text-[24px] font-black leading-tight tracking-[-0.03em] text-[#07182d] sm:text-[28px]">Central de Suporte</h1>
+            <p className="mt-0.5 text-[12px] font-medium text-slate-500 sm:text-[13px]">Atendimento técnico e operacional dos sistemas atendidos.</p>
           </div>
         </div>
-        <div className="rounded-2xl border border-amber-100 bg-amber-50/80 px-5 py-3 text-right">
+        <div className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-2 text-right">
           <p className="text-[13px] font-black text-[#8c681d]">MW TECH</p>
           <p className="text-[12px] text-slate-500">Sistemas e Soluções Digitais</p>
         </div>
@@ -371,9 +400,9 @@ export default function SupportCenter() {
         </div>
       )}
 
-      <div className="grid min-h-[760px] grid-cols-1 gap-4 lg:grid-cols-[330px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(480px,1fr)_280px] 2xl:grid-cols-[390px_minmax(620px,1fr)_320px]">
-        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
-          <div className="border-b border-slate-100 p-4 sm:p-5">
+      <div className="grid min-h-[620px] flex-1 grid-cols-1 gap-3 xl:min-h-0 xl:grid-cols-[300px_minmax(0,1fr)_280px] 2xl:grid-cols-[340px_minmax(0,1fr)_300px]">
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
+          <div className="shrink-0 border-b border-slate-100 p-3 sm:p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-[18px] font-black text-[#07182d] sm:text-[20px]">Chamados</h2>
               <button onClick={() => void loadTickets()} className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50" title="Atualizar chamados"><RefreshCw size={16} /></button>
@@ -412,7 +441,7 @@ export default function SupportCenter() {
             </div>
           </div>
 
-          <div className="max-h-[590px] overflow-y-auto bg-white p-3 sm:p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white p-3">
             {loading ? (
               <div className="grid min-h-[280px] place-items-center text-[14px] text-slate-400">Carregando chamados...</div>
             ) : filtered.length === 0 ? (
@@ -445,9 +474,9 @@ export default function SupportCenter() {
           </div>
         </div>
 
-        <section className="min-w-0 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
+        <section className="min-h-0 min-w-0 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
           {!selected ? (
-            <div className="grid h-full min-h-[760px] place-items-center p-8 text-center">
+            <div className="grid h-full min-h-[520px] place-items-center p-8 text-center xl:min-h-0">
               <div>
                 <div className="mx-auto grid size-20 place-items-center rounded-[24px] bg-[#07182d] text-[#f4c45a]"><Headphones size={34} /></div>
                 <h3 className="mt-6 text-[24px] font-black text-[#07182d]">Selecione um chamado</h3>
@@ -455,23 +484,23 @@ export default function SupportCenter() {
               </div>
             </div>
           ) : (
-            <div className="flex h-full min-h-[760px] flex-col">
-              <div className="border-b border-slate-100 bg-white px-5 py-5 sm:px-6" style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
+            <div className="flex h-full min-h-[520px] flex-col xl:min-h-0">
+              <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-3 sm:px-5" style={{ backgroundColor: "#ffffff", color: "#0f172a" }}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
                       <h3 className="text-[20px] font-black text-[#07182d] sm:text-[22px]">#{String(selected.ticket_number).padStart(4, "0")}</h3>
                       <span className={`rounded-full border px-3 py-1 text-[12px] font-bold ${statusClass[selected.status] || statusClass.fechado}`}>{statusLabels[selected.status] || selected.status}</span>
                     </div>
-                    <h2 className="mt-2 truncate text-[24px] font-black tracking-[-0.02em] text-[#07182d] sm:text-[28px]">{selected.subject}</h2>
-                    <div className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-slate-600"><Landmark size={16} /><span className="truncate">{selectedOrg?.name || selected.tenant_key}</span></div>
-                    <p className="mt-2 text-[12px] text-slate-400">Aberto por {selected.requester_name || selected.requester_email || "Usuário"} em {fmt(selected.created_at)}</p>
+                    <h2 className="mt-1 truncate text-[20px] font-black tracking-[-0.02em] text-[#07182d] sm:text-[22px]">{selected.subject}</h2>
+                    <div className="mt-1 flex items-center gap-2 text-[13px] font-semibold text-slate-600"><Landmark size={16} /><span className="truncate">{selectedOrg?.name || selected.tenant_key}</span></div>
+                    <p className="mt-1 text-[11px] text-slate-400">Aberto por {selected.requester_name || selected.requester_email || "Usuário"} em {fmt(selected.created_at)}</p>
                   </div>
                   <button onClick={() => void loadDetail(selected, true)} className="grid size-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50" title="Atualizar conversa"><RefreshCw size={16} /></button>
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto bg-[#fbfcfe] px-4 py-5 sm:px-6 sm:py-6">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-[#fbfcfe] px-4 py-4 sm:px-5">
                 <div className="mb-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Conversa<span className="h-px flex-1 bg-slate-200" /></div>
                 {detailLoading && messages.length === 0 ? (
                   <div className="grid min-h-[360px] place-items-center">
@@ -522,7 +551,7 @@ export default function SupportCenter() {
                 <div ref={messagesEndRef} />
               </div>
 
-              <footer className="border-t border-slate-100 bg-white p-4 sm:p-5">
+              <footer className="shrink-0 border-t border-slate-100 bg-white p-3 sm:p-4">
                 {isFinished ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-[14px] font-bold text-emerald-800">Atendimento encerrado.</div>
                 ) : (
@@ -560,9 +589,9 @@ export default function SupportCenter() {
                         onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void send(); } }}
                         placeholder="Digite sua mensagem ou cole um print aqui..."
                         rows={2}
-                        className="min-h-[62px] flex-1 resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14px] outline-none transition focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10 sm:text-[15px]"
+                        className="min-h-[52px] flex-1 resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[14px] outline-none transition focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10 sm:text-[15px]"
                       />
-                      <button onClick={() => void send()} disabled={(!text.trim() && files.length === 0) || sending} className="flex h-[62px] min-w-[108px] items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white transition hover:bg-[#0b355d] disabled:opacity-50"><Send size={17} />{sending ? "Enviando" : "Enviar"}</button>
+                      <button onClick={() => void send()} disabled={(!text.trim() && files.length === 0) || sending} className="flex h-[52px] min-w-[108px] items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white transition hover:bg-[#0b355d] disabled:opacity-50"><Send size={17} />{sending ? "Enviando" : "Enviar"}</button>
                     </div>
                   </div>
                 )}
@@ -571,14 +600,14 @@ export default function SupportCenter() {
           )}
         </section>
 
-        <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)] lg:col-span-2 xl:col-span-1">
+        <div className="min-h-0 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)] xl:col-span-1">
           {!selected ? (
-            <div className="grid min-h-[280px] place-items-center px-6 text-center text-[14px] text-slate-400 xl:min-h-[760px]">Os detalhes do chamado aparecerão aqui.</div>
+            <div className="grid min-h-[280px] place-items-center px-6 text-center text-[14px] text-slate-400 xl:h-full">Os detalhes do chamado aparecerão aqui.</div>
           ) : (
-            <div className="p-5 sm:p-6">
+            <div className="p-4 sm:p-5">
               <h2 className="text-[18px] font-black text-[#07182d] sm:text-[20px]">Detalhes do chamado</h2>
 
-              <div className="mt-5 space-y-5">
+              <div className="mt-4 space-y-4">
                 <div>
                   <label className="mb-2 block text-[12px] font-semibold text-slate-500">Status</label>
                   <select value={selected.status} onChange={(event) => void changeStatus(event.target.value)} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-[14px] font-semibold text-slate-700 outline-none">
