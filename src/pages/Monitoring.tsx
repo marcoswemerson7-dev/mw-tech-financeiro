@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import {
   Activity,
   AlertTriangle,
@@ -157,7 +158,7 @@ function StatTile({
   );
 }
 
-function UsersPanel({ metrics }: { metrics: MonitoringMetrics }) {
+function UsersPanel({ metrics, tenant }: { metrics: MonitoringMetrics; tenant: "rg" | "bg" }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-[#f8fbff] p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -167,9 +168,7 @@ function UsersPanel({ metrics }: { metrics: MonitoringMetrics }) {
           </h3>
           <p className="mt-0.5 text-[11px] text-slate-500">Leitura agregada do Supabase, sem expor dados pessoais.</p>
         </div>
-        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">
-          {metrics.source === "safe_public_snapshot" ? "Snapshot seguro" : "Conexão segura"}
-        </span>
+        <Link to={`/monitoramento/usuarios?tenant=${tenant}`} className="rounded-full bg-[#082743] px-3 py-1.5 text-[10px] font-black text-white transition hover:bg-[#0b355d]">Ver usuários</Link>
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile icon={<UsersRound size={17} />} label="Cadastrados" value={metrics.users ?? "—"} tone="blue" />
@@ -251,7 +250,7 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
 
         {metricsOk && item.metrics ? (
           <>
-            <UsersPanel metrics={item.metrics} />
+            <UsersPanel metrics={item.metrics} tenant={item.key} />
             <OperationalPanel metrics={item.metrics} />
           </>
         ) : (
@@ -354,7 +353,7 @@ export default function Monitoring() {
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online}/${items.length || 2}`} icon={<CheckCircle2 size={19} />} tone="emerald" hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} em atenção` : "Tudo normal"} />
-        <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} icon={<UsersRound size={19} />} tone="blue" hint={`${summary.activeUsers} habilitados`} />
+        <Link to="/monitoramento/usuarios" className="block"><SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} icon={<UsersRound size={19} />} tone="blue" hint={`${summary.activeUsers} habilitados · clique para ver`} /></Link>
         <SummaryCard label="Atividade recente" value={loading ? "—" : String(summary.recent30m)} icon={<Activity size={19} />} tone="violet" hint="acessos nos últimos 30 min" />
         <SummaryCard label="Processos monitorados" value={loading ? "—" : String(summary.processes)} icon={<FileStack size={19} />} tone="amber" hint="RG + BG" />
         <SummaryCard label="Resposta média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} icon={<Gauge size={19} />} tone="blue" hint={summary.average !== null && summary.average <= 800 ? "boa resposta" : "acompanhar latência"} />
@@ -388,7 +387,7 @@ export default function Monitoring() {
         <p className="mt-1.5 text-xs leading-5 text-slate-600">
           O status operacional testa domínio e Supabase. Os indicadores de usuários e volume são snapshots agregados dos bancos de RG e BG.
           “Acesso em 30 min” indica usuários que fizeram login recentemente — não significa necessariamente que continuam com a tela aberta.
-          Nenhum nome, e-mail, CPF ou senha é retornado para o MW TECH Control.
+          Os números agregados não expõem dados pessoais. Detalhes de usuários só são carregados na área administrativa autenticada; senha nunca é exibida.
         </p>
       </div>
     </div>
