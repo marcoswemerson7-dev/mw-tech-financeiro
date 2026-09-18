@@ -34,6 +34,12 @@ function resolveSource(ticketId: string): SupportSource {
   return ticketSources.get(ticketId) || "rg";
 }
 
+export type SupportSenderIdentity = {
+  name?: string | null;
+  role?: string | null;
+  avatarUrl?: string | null;
+};
+
 function signalStaffSend(ticketId: string) {
   window.dispatchEvent(new CustomEvent("mw-support-staff-sent", { detail: { ticketId, at: Date.now() } }));
 }
@@ -61,6 +67,8 @@ export type SupportTicket = {
   requester_name?: string | null;
   requester_email?: string | null;
   requester_sector?: string | null;
+  requester_role?: string | null;
+  requester_avatar_url?: string | null;
   subject: string;
   category: string;
   priority: string;
@@ -98,6 +106,9 @@ export type SupportMessage = {
   body: string;
   is_staff: boolean;
   created_at: string;
+  sender_name?: string | null;
+  sender_role?: string | null;
+  sender_avatar_url?: string | null;
   attachments?: SupportAttachment[];
 };
 
@@ -136,12 +147,22 @@ export const supportService = {
     return data;
   },
 
-  async sendMessage(ticketId: string, body: string, files: File[] = []) {
+  async sendMessage(ticketId: string, body: string, files: File[] = [], sender: SupportSenderIdentity = {}) {
     const source = resolveSource(ticketId);
 
     if (!files.length) {
       signalStaffSend(ticketId);
-      const result = await requestFrom(source, "", { method: "POST", body: JSON.stringify({ action: "send_message", ticket_id: ticketId, body }) });
+      const result = await requestFrom(source, "", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "send_message",
+          ticket_id: ticketId,
+          body,
+          sender_name: sender.name || "MW TECH",
+          sender_role: sender.role || "Administrador",
+          sender_avatar_url: sender.avatarUrl || "",
+        }),
+      });
       signalStaffSend(ticketId);
       return result;
     }
@@ -151,6 +172,9 @@ export const supportService = {
     form.append("action", "send_message");
     form.append("ticket_id", ticketId);
     form.append("body", body);
+    form.append("sender_name", sender.name || "MW TECH");
+    form.append("sender_role", sender.role || "Administrador");
+    form.append("sender_avatar_url", sender.avatarUrl || "");
     files.forEach((file) => form.append("files", file, file.name));
 
     signalStaffSend(ticketId);
@@ -163,6 +187,20 @@ export const supportService = {
     if (!res.ok) throw new Error(data?.error || "Falha ao enviar mensagem/anexo");
     signalStaffSend(ticketId);
     return data;
+  },
+
+  async openTicket(ticketId: string, sender: SupportSenderIdentity = {}) {
+    const source = resolveSource(ticketId);
+    return requestFrom(source, "", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "open_ticket",
+        ticket_id: ticketId,
+        sender_name: sender.name || "MW TECH",
+        sender_role: sender.role || "Administrador",
+        sender_avatar_url: sender.avatarUrl || "",
+      }),
+    }) as Promise<{ greeted: boolean; message?: SupportMessage }>;
   },
 
   async archive(ticketId: string) {
