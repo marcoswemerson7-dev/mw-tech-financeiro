@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   CartesianGrid,
+  Cell,
   Legend,
   Line,
   LineChart,
@@ -248,8 +249,8 @@ export default function Monitoring() {
 
       const rg = data.find((item) => item.key === "rg")?.app.latencyMs ?? null;
       const bg = data.find((item) => item.key === "bg")?.app.latencyMs ?? null;
-      const avg = [rg, bg].filter((value): value is number => value !== null);
-      const mw = avg.length ? Math.round(avg.reduce((sum, value) => sum + value, 0) / avg.length) : null;
+      const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+      const mw = navigation?.duration ? Math.round(navigation.duration) : null;
       const point: HistoryPoint = {
         time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
         mw,
@@ -436,9 +437,9 @@ export default function Monitoring() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={distribution} dataKey="value" nameKey="name" innerRadius={52} outerRadius={72} startAngle={90} endAngle={-270}>
-                    <cell fill="#10b981" />
-                    <cell fill="#f59e0b" />
-                    <cell fill="#ef4444" />
+                    <Cell fill="#10b981" />
+                    <Cell fill="#f59e0b" />
+                    <Cell fill="#ef4444" />
                   </Pie>
                   <Tooltip />
                 </PieChart>
