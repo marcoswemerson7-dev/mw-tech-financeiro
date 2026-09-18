@@ -40,6 +40,7 @@ const Accounts = lazyWithRecovery(() => import("./pages/Accounts"), "accounts");
 const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "support");
 const Systems = lazyWithRecovery(() => import("./pages/Systems"), "systems");
 const Monitoring = lazyWithRecovery(() => import("./pages/Monitoring"), "monitoring");
+const SystemUsers = lazyWithRecovery(() => import("./pages/SystemUsers"), "system-users");
 const UsersAccess = lazyWithRecovery(() => import("./pages/UsersAccess"), "users");
 const Storage = lazyWithRecovery(() => import("./pages/Storage"), "storage");
 const RemoteAccess = lazyWithRecovery(() => import("./pages/RemoteAccess"), "remote-access");
@@ -115,6 +116,7 @@ function Private() {
         import("./pages/Reports"),
         import("./pages/Systems"),
         import("./pages/Monitoring"),
+        import("./pages/SystemUsers"),
         import("./pages/UsersAccess"),
         import("./pages/Storage"),
         import("./pages/RemoteAccess"),
@@ -159,6 +161,7 @@ export default function App() {
               <Route path="suporte" element={<SupportCenter />} />
               <Route path="sistemas" element={<Systems />} />
               <Route path="monitoramento" element={<Monitoring />} />
+              <Route path="monitoramento/usuarios" element={<SystemUsers />} />
               <Route path="usuarios" element={<UsersAccess />} />
               <Route path="configuracoes" element={<Settings />} />
               <Route path="receitas" element={<DataPage kind="receitas" />} />
