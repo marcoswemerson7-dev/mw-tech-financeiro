@@ -5,8 +5,12 @@ import {
   Building2,
   CalendarDays,
   CheckCircle2,
+  Clock3,
+  FileText,
+  Grid2X2,
   Headphones,
   Landmark,
+  MapPin,
   MessageSquare,
   Paperclip,
   RefreshCw,
@@ -424,38 +428,83 @@ export default function SupportCenter() {
 
       <div className="grid min-h-[620px] flex-1 grid-cols-1 gap-3 xl:min-h-0 xl:grid-cols-[300px_minmax(0,1fr)_280px] 2xl:grid-cols-[340px_minmax(0,1fr)_300px]">
         <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
-          <div className="shrink-0 border-b border-slate-100 p-3 sm:p-4">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-[18px] font-black text-[#07182d] sm:text-[20px]">Chamados</h2>
-              <button onClick={() => void loadTickets()} className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50" title="Atualizar chamados"><RefreshCw size={16} /></button>
+          <div className="shrink-0 border-b border-slate-100 bg-gradient-to-b from-white to-slate-50/60 p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#eef4fa] text-[#0a3158]">
+                  <Headphones size={19} />
+                </div>
+                <div>
+                  <h2 className="text-[19px] font-black leading-none text-[#07182d] sm:text-[21px]">Chamados</h2>
+                  <p className="mt-1 text-[11px] font-medium text-slate-400">Gerencie e acompanhe os atendimentos</p>
+                </div>
+              </div>
+              <button
+                onClick={() => void loadTickets()}
+                className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-[#315779] shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md"
+                title="Atualizar chamados"
+              >
+                <RefreshCw size={17} />
+              </button>
             </div>
 
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6683a1]" size={18} />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Buscar chamado, assunto ou solicitante..."
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-[14px] font-medium text-slate-800 outline-none transition focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10"
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-10 pr-3 text-[13px] font-medium text-slate-800 shadow-[0_4px_14px_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-400 focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10"
               />
             </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1.5">
-              {[
-                ["novo", `Novo ${counts.novo}`],
-                ["em_atendimento", `Em atendimento ${counts.em_atendimento}`],
-                ["encerrados", `Encerrados ${counts.encerrados}`],
-              ].map(([key, label]) => (
-                <button key={key} onClick={() => setFilter(key)} className={`min-h-10 rounded-lg px-2 py-2 text-[12px] font-bold transition sm:text-[13px] ${filter === key ? "bg-[#082743] text-white shadow-sm" : "text-slate-600 hover:bg-white"}`}>{label}</button>
-              ))}
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setFilter("novo")}
+                className={`rounded-2xl border px-2 py-3 text-center transition ${filter === "novo" ? "border-blue-300 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"}`}
+              >
+                <span className="mx-auto grid size-8 place-items-center rounded-full bg-blue-100 text-blue-700"><FileText size={15} /></span>
+                <span className="mt-2 block text-[11px] font-bold text-slate-500">Novo</span>
+                <span className="mt-0.5 block text-[19px] font-black leading-none text-[#07182d]">{counts.novo}</span>
+              </button>
+
+              <button
+                onClick={() => setFilter("em_atendimento")}
+                className={`rounded-2xl border px-2 py-3 text-center transition ${filter === "em_atendimento" ? "border-amber-300 bg-amber-50 shadow-sm ring-1 ring-amber-100" : "border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/40"}`}
+              >
+                <span className="mx-auto grid size-8 place-items-center rounded-full bg-amber-100 text-amber-700"><Clock3 size={16} /></span>
+                <span className="mt-2 block text-[10px] font-bold leading-3 text-slate-500">Em atendimento</span>
+                <span className="mt-0.5 block text-[19px] font-black leading-none text-[#07182d]">{counts.em_atendimento}</span>
+              </button>
+
+              <button
+                onClick={() => setFilter("encerrados")}
+                className={`rounded-2xl border px-2 py-3 text-center transition ${filter === "encerrados" ? "border-emerald-300 bg-emerald-50 shadow-sm ring-1 ring-emerald-100" : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"}`}
+              >
+                <span className="mx-auto grid size-8 place-items-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 size={16} /></span>
+                <span className="mt-2 block text-[11px] font-bold text-slate-500">Encerrados</span>
+                <span className="mt-0.5 block text-[19px] font-black leading-none text-[#07182d]">{counts.encerrados}</span>
+              </button>
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">Filtrar por órgão</p>
+              <div className="mb-2 flex items-center gap-2">
+                <Building2 size={14} className="text-slate-400" />
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Filtrar por órgão</p>
+              </div>
               <div className="flex gap-2 overflow-x-auto pb-1">
-                <button onClick={() => setOrgFilter("todos")} className={`whitespace-nowrap rounded-xl border px-3 py-2 text-[12px] font-bold ${orgFilter === "todos" ? "border-[#082743] bg-[#082743] text-white" : "border-slate-200 bg-white text-slate-600"}`}>Todos</button>
+                <button
+                  onClick={() => setOrgFilter("todos")}
+                  className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl border px-3 py-2 text-[12px] font-bold transition ${orgFilter === "todos" ? "border-[#082743] bg-[#082743] text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <Grid2X2 size={14} /> Todos
+                </button>
                 {organizations.map((org) => (
-                  <button key={org.key} onClick={() => setOrgFilter(org.key)} className={`whitespace-nowrap rounded-xl border px-3 py-2 text-[12px] font-bold ${orgFilter === org.key ? org.badge : "border-slate-200 bg-white text-slate-600"}`}>
+                  <button
+                    key={org.key}
+                    onClick={() => setOrgFilter(org.key)}
+                    className={`inline-flex items-center whitespace-nowrap rounded-xl border px-3 py-2 text-[12px] font-bold transition ${orgFilter === org.key ? org.badge : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
                     <span className={`mr-1.5 inline-block size-2 rounded-full ${org.dot}`} />{org.key.toUpperCase()}
                   </button>
                 ))}
@@ -476,17 +525,41 @@ export default function SupportCenter() {
                   const org = getOrg(ticket.tenant_key);
                   const active = selected?.id === ticket.id;
                   return (
-                    <button key={ticket.id} onClick={() => openTicket(ticket)} className={`w-full rounded-2xl border p-4 text-left transition sm:p-5 ${active ? "border-[#e1b04b] bg-[#fffaf0] shadow-[0_8px_24px_rgba(7,24,45,0.07)]" : "border-slate-100 bg-white hover:border-slate-200 hover:shadow-sm"}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <b className="text-[16px] font-black text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
-                        <span className={`rounded-full border px-2.5 py-1 text-[11px] font-bold ${statusClass[ticket.status] || statusClass.fechado}`}>{statusLabels[ticket.status] || ticket.status}</span>
+                    <button
+                      key={ticket.id}
+                      onClick={() => openTicket(ticket)}
+                      className={`group w-full rounded-[20px] border p-4 text-left transition duration-200 sm:p-4 ${active ? "border-[#e8b94d] bg-gradient-to-br from-[#fffaf0] to-white shadow-[0_10px_28px_rgba(7,24,45,0.08)] ring-1 ring-amber-100" : "border-slate-200/80 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.03)] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_10px_24px_rgba(15,23,42,0.07)]"}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <b className="text-[17px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                          <p className="mt-1 line-clamp-2 text-[16px] font-black leading-5 text-slate-800">{ticket.subject}</p>
+                        </div>
+                        <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${statusClass[ticket.status] || statusClass.fechado}`}>
+                          {ticket.status === "em_atendimento" && <Clock3 size={12} />}
+                          {["resolvido", "fechado"].includes(ticket.status) && <CheckCircle2 size={12} />}
+                          {statusLabels[ticket.status] || ticket.status}
+                        </span>
                       </div>
-                      <p className="mt-2 line-clamp-2 text-[16px] font-black leading-5 text-slate-800 sm:text-[17px]">{ticket.subject}</p>
-                      <div className="mt-2 flex items-center gap-2 text-[13px] font-medium text-slate-500"><UserRound size={14} /><span className="truncate">{ticket.requester_name || ticket.requester_email || "Usuário"}</span></div>
-                      <div className="mt-2 flex items-center gap-2 text-[12px] text-slate-500"><Landmark size={13} className="shrink-0" /><span className="truncate">{org.name}</span></div>
-                      <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className={`inline-flex min-w-0 items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-bold ${org.badge}`}><span className={`size-1.5 shrink-0 rounded-full ${org.dot}`} />{org.shortName}</span>
-                        <span className="shrink-0 text-[11px] font-semibold text-slate-400">{shortFmt(ticket.last_message_at)}</span>
+
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2 text-[12px] font-semibold text-slate-500">
+                          <UserRound size={14} className="shrink-0 text-[#69829a]" />
+                          <span className="truncate">{ticket.requester_name || ticket.requester_email || "Usuário"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[12px] text-slate-500">
+                          <Landmark size={14} className="shrink-0 text-[#69829a]" />
+                          <span className="truncate">{org.name}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                        <span className={`inline-flex min-w-0 items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[10px] font-bold ${org.badge}`}>
+                          <MapPin size={11} className="shrink-0" />{org.shortName}
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-400">
+                          <CalendarDays size={12} />{shortFmt(ticket.last_message_at)}
+                        </span>
                       </div>
                     </button>
                   );
