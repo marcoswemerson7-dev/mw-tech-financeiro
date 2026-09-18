@@ -461,7 +461,7 @@ export default function Monitoring() {
                   );
                 })}
               </div>
-              {selectedItem && <div className="mt-4"><SystemCard item={selectedItem} /></div>}
+              {selectedItem && <div className="mx-auto mt-4 w-full max-w-4xl"><SystemCard item={selectedItem} /></div>}
             </>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
