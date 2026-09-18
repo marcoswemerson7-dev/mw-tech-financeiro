@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./lib/auth";
 import Layout from "./components/Layout";
 import SupportNotifier from "./components/SupportNotifier";
 import SidebarCollapseControl from "./components/SidebarCollapseControl";
+import IncidentNotifier from "./components/IncidentNotifier";
 
 function lazyWithRecovery<T extends ComponentType<any>>(
   importer: () => Promise<{ default: T }>,
@@ -41,6 +42,7 @@ const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "s
 const Systems = lazyWithRecovery(() => import("./pages/Systems"), "systems");
 const Monitoring = lazyWithRecovery(() => import("./pages/Monitoring"), "monitoring");
 const TechnicalMonitoring = lazyWithRecovery(() => import("./pages/TechnicalMonitoring"), "technical-monitoring");
+const IncidentCenter = lazyWithRecovery(() => import("./pages/IncidentCenter"), "incident-center");
 const SystemUsers = lazyWithRecovery(() => import("./pages/SystemUsers"), "system-users");
 const UsersAccess = lazyWithRecovery(() => import("./pages/UsersAccess"), "users");
 const Storage = lazyWithRecovery(() => import("./pages/Storage"), "storage");
@@ -117,6 +119,7 @@ function Private() {
         import("./pages/Reports"),
         import("./pages/Systems"),
         import("./pages/Monitoring"),
+        import("./pages/IncidentCenter"),
         import("./pages/SystemUsers"),
         import("./pages/UsersAccess"),
         import("./pages/Storage"),
@@ -146,6 +149,7 @@ export default function App() {
     <AppErrorBoundary>
       <AuthProvider>
         <SupportNotifier />
+        <IncidentNotifier />
         <SidebarCollapseControl />
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
@@ -163,6 +167,7 @@ export default function App() {
               <Route path="sistemas" element={<Systems />} />
               <Route path="monitoramento" element={<Monitoring />} />
               <Route path="monitoramento/tecnico" element={<TechnicalMonitoring />} />
+              <Route path="monitoramento/incidentes" element={<IncidentCenter />} />
               <Route path="monitoramento/usuarios" element={<SystemUsers />} />
               <Route path="usuarios" element={<UsersAccess />} />
               <Route path="configuracoes" element={<Settings />} />
