@@ -231,20 +231,13 @@ export default async ({ req, res, error }) => {
         if (!String(input.email || "").trim()) throw new Error("Informe o e-mail do usuário.");
         const email = String(input.email || "").trim().toLowerCase();
         const cpf = String(input.cpf || "").replace(/\D/g, "");
-        const senhaInicial = String(input.senha_inicial || "");
         if (cpf && cpf.length !== 11) throw new Error("Informe um CPF válido com 11 dígitos.");
 
         const authMatches = await users.list({ queries: [Query.equal("email", email), Query.limit(1)] });
         let authUser = authMatches.users?.[0] || null;
 
-        if (!authUser && !input.id) {
-          if (senhaInicial.length < 8) throw new Error("Informe uma senha inicial com pelo menos 8 caracteres para criar o login.");
-          authUser = await users.create({
-            userId: ID.unique(),
-            email,
-            password: senhaInicial,
-            name: String(input.nome || "").trim(),
-          });
+        if (!authUser) {
+          throw new Error("A conta de login deste e-mail ainda não existe no Appwrite Auth. Crie a conta Auth e depois salve o CPF aqui.");
         }
 
         if (authUser) {
