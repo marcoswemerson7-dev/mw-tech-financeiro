@@ -383,7 +383,7 @@ export default function Monitoring() {
   const operationalPercent = totalSystems ? Math.round((summary.online / totalSystems) * 100) : 0;
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] space-y-4">
+    <div className="mx-auto w-full max-w-[1480px] space-y-5">
       <PageHeader
         title="Monitoramento dos sistemas"
         subtitle="Visão consolidada dos sistemas dos órgãos atendidos pela MW TECH."
@@ -403,9 +403,9 @@ export default function Monitoring() {
         }
       />
 
-      <section className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-black text-[#07182d]"><Filter size={16} className="text-blue-700" /> Filtrar monitoramento</div>
-        <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
+      <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(7,24,45,.04)]">
+        <div className="mr-2 flex items-center gap-2 text-sm font-black text-[#07182d]"><span className="grid size-8 place-items-center rounded-lg bg-blue-50 text-blue-700"><Filter size={16} /></span> Filtros do monitoramento</div>
+        <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="min-w-[175px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
           <option value="todos">Todos os órgãos</option>
           {items.map((item) => <option key={item.key} value={item.key}>{systemFilterLabel(item)}</option>)}
         </select>
@@ -413,10 +413,10 @@ export default function Monitoring() {
           <option value="todos">Todos os status</option><option value="online">Operacionais</option><option value="attention">Em atenção</option><option value="offline">Indisponíveis</option>
         </select>
         {(orgFilter !== "todos" || statusFilter !== "todos") && <button type="button" onClick={() => { setOrgFilter("todos"); setStatusFilter("todos"); }} className="rounded-xl px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">Limpar filtros</button>}
-        <span className="ml-auto text-[10px] font-semibold text-slate-500">Atualização automática a cada 60 segundos</span>
+        <span className="ml-auto flex items-center gap-2 text-[10px] font-semibold text-slate-500"><span className="size-2 rounded-full bg-emerald-500" /> Atualização automática a cada 60 segundos</span>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} em atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
         <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
         <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
@@ -427,7 +427,7 @@ export default function Monitoring() {
         <SummaryCard label="Latência média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Tempo médio de resposta" icon={<Gauge size={20} />} tone="amber" />
       </div>
 
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50/60 p-5 shadow-[0_14px_40px_rgba(7,24,45,.07)]">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50/60 p-6 shadow-[0_14px_40px_rgba(7,24,45,.07)]">
         <div className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-blue-200/20 blur-3xl" />
         <div className="relative mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
@@ -435,7 +435,7 @@ export default function Monitoring() {
               <HardDrive size={21} />
             </span>
             <div>
-              <h2 className="text-base font-black tracking-tight text-[#07182d]">Armazenamento por origem</h2>
+              <h2 className="text-lg font-black tracking-tight text-[#07182d]">Armazenamento por origem</h2>
               <p className="mt-1 text-[11px] text-slate-500">Acompanhe o espaço utilizado e a quantidade de arquivos em cada camada.</p>
             </div>
           </div>
@@ -443,17 +443,17 @@ export default function Monitoring() {
             <ShieldCheck size={13} /> {visibleItems.length} órgão(s) monitorado(s)
           </span>
         </div>
-        <div className="relative grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-violet-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div className="relative grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-violet-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={18} /></span>
               <span className="text-[9px] font-black uppercase tracking-wider text-violet-500">Dados</span>
             </div>
             <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Banco de dados</p>
-            <b className="mt-1 block text-xl font-black text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))}</b>
+            <b className="mt-1 block text-2xl font-black tracking-tight text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))}</b>
             <p className="mt-1 text-[10px] text-slate-500">Supabase Database</p>
           </div>
-          <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="rounded-2xl border border-blue-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700"><HardDrive size={18} /></span>
               <span className="text-[9px] font-black uppercase tracking-wider text-blue-500">Arquivos</span>
@@ -462,7 +462,7 @@ export default function Monitoring() {
             <b className="mt-1 block text-xl font-black text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))}</b>
             <p className="mt-1 text-[10px] text-slate-500">Arquivos hospedados no Supabase</p>
           </div>
-          <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="rounded-2xl border border-emerald-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><FileStack size={18} /></span>
               <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600">Quantidade</span>
@@ -471,7 +471,7 @@ export default function Monitoring() {
             <b className="mt-1 block text-xl font-black text-[#07182d]">{String(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))}</b>
             <p className="mt-1 text-[10px] text-slate-500">Total no Storage Supabase</p>
           </div>
-          <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          <div className="rounded-2xl border border-amber-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-700"><Server size={18} /></span>
               <span className="text-[9px] font-black uppercase tracking-wider text-amber-600">Ativos</span>
