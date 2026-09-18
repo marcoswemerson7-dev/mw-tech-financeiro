@@ -421,19 +421,59 @@ export default function Monitoring() {
         <SummaryCard label="Latência média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Tempo médio de resposta" icon={<Gauge size={20} />} tone="amber" />
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><HardDrive size={17} className="text-violet-700" /> Armazenamento por origem</h2>
-            <p className="mt-0.5 text-[10px] text-slate-500">Totais gerais, sem misturar os órgãos. Os detalhes aparecem ao selecionar um sistema.</p>
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50/60 p-5 shadow-[0_14px_40px_rgba(7,24,45,.07)]">
+        <div className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-blue-200/20 blur-3xl" />
+        <div className="relative mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-blue-200">
+              <HardDrive size={21} />
+            </span>
+            <div>
+              <h2 className="text-base font-black tracking-tight text-[#07182d]">Armazenamento por origem</h2>
+              <p className="mt-1 text-[11px] text-slate-500">Acompanhe o espaço utilizado e a quantidade de arquivos em cada camada.</p>
+            </div>
           </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-black text-slate-600">RG, BGR e câmaras separados</span>
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3 py-1.5 text-[10px] font-black text-blue-700 shadow-sm">
+            <ShieldCheck size={13} /> {visibleItems.length} órgão(s) monitorado(s)
+          </span>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricBox label="Bancos Supabase" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))} icon={<Database size={12} />} />
-          <MetricBox label="Storage Supabase" value={formatBytes(items.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))} icon={<HardDrive size={12} />} />
-          <MetricBox label="Arquivos no Storage" value={String(items.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))} icon={<HardDrive size={12} />} />
-          <MetricBox label="Órgãos monitorados" value={String(items.length)} icon={<Server size={12} />} />
+        <div className="relative grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-violet-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={18} /></span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-violet-500">Dados</span>
+            </div>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Banco de dados</p>
+            <b className="mt-1 block text-xl font-black text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))}</b>
+            <p className="mt-1 text-[10px] text-slate-500">Supabase Database</p>
+          </div>
+          <div className="rounded-2xl border border-blue-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700"><HardDrive size={18} /></span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-blue-500">Arquivos</span>
+            </div>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Storage de arquivos</p>
+            <b className="mt-1 block text-xl font-black text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))}</b>
+            <p className="mt-1 text-[10px] text-slate-500">Arquivos hospedados no Supabase</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><FileStack size={18} /></span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600">Quantidade</span>
+            </div>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Arquivos registrados</p>
+            <b className="mt-1 block text-xl font-black text-[#07182d]">{String(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))}</b>
+            <p className="mt-1 text-[10px] text-slate-500">Total no Storage Supabase</p>
+          </div>
+          <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-700"><Server size={18} /></span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-amber-600">Ativos</span>
+            </div>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Órgãos monitorados</p>
+            <b className="mt-1 block text-xl font-black text-[#07182d]">{String(visibleItems.length)}</b>
+            <p className="mt-1 text-[10px] text-slate-500">Prefeituras e câmaras cadastradas</p>
+          </div>
         </div>
       </section>
 
