@@ -83,13 +83,11 @@ function projectRestUrl(value?: string) {
   return url;
 }
 
-function findSystem(rows: ManagedSystem[], key: "rg" | "bg") {
-  return rows.find((item) => {
-    const haystack = `${item.orgao || ""} ${item.dominio_url || ""} ${item.acesso_url || ""}`.toLowerCase();
-    return key === "rg"
-      ? haystack.includes("ribeiro gonçalves") || haystack.includes("ribeiro goncalves") || haystack.includes("gestaolicitarg")
-      : haystack.includes("baixa grande") || haystack.includes("gestaolicitabrg");
-  });
+function inferTenant(item?: Partial<ManagedSystem> | null): "rg" | "bg" | null {
+  const haystack = `${item?.orgao || ""} ${item?.dominio_url || ""} ${item?.acesso_url || ""} ${item?.supabase_url || ""}`.toLowerCase();
+  if (haystack.includes("ribeiro gonçalves") || haystack.includes("ribeiro goncalves") || haystack.includes("gestaolicitarg") || haystack.includes("kiviwxonxeqmzqlmshpc")) return "rg";
+  if (haystack.includes("baixa grande") || haystack.includes("gestaolicitabrg") || haystack.includes("jfzavijlkbqzkrnlgphz")) return "bg";
+  return null;
 }
 
 async function probe(url: string, timeoutMs = 8000): Promise<EndpointHealth> {
@@ -169,28 +167,67 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
   try { rows = await getManagedSystems(); } catch { rows = []; }
 
   const metrics = await loadMetrics();
+  const activeRows = rows.filter((item) => String(item.status || "ativo").toLowerCase() !== "inativo");
 
-  return Promise.all((["rg", "bg"] as const).map(async (key) => {
-    const fallback = FALLBACKS[key];
-    const stored = findSystem(rows, key);
-    const accessUrl = safeUrl(stored?.acesso_url || stored?.dominio_url || fallback.accessUrl);
-    const supabaseUrl = projectRestUrl(stored?.supabase_url || fallback.supabaseUrl);
-    const vercelUrl = safeUrl(stored?.vercel_url || "");
-    const [app, database, backend] = await Promise.all([probe(accessUrl), probe(supabaseUrl), probeHealth(fallback.healthUrl)]);
+  const sourceRows: ManagedSystem[] = activeRows.length ? activeRows : ([
+    {
+      id: "fallback-rg",
+      orgao: FALLBACKS.rg.name,
+      tipo_orgao: "Prefeitura",
+      sistema: "Gestão Licita",
+      dominio_url: FALLBACKS.rg.accessUrl,
+      acesso_url: FALLBACKS.rg.accessUrl,
+      supabase_url: FALLBACKS.rg.supabaseUrl,
+      ambiente: "Produção",
+      status: "ativo",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "fallback-bg",
+      orgao: FALLBACKS.bg.name,
+      tipo_orgao: "Prefeitura",
+      sistema: "Gestão Licita",
+      dominio_url: FALLBACKS.bg.accessUrl,
+      acesso_url: FALLBACKS.bg.accessUrl,
+      supabase_url: FALLBACKS.bg.supabaseUrl,
+      ambiente: "Produção",
+      status: "ativo",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ] as ManagedSystem[]);
+
+  return Promise.all(sourceRows.map(async (stored) => {
+    const tenantKey = inferTenant(stored);
+    const fallback = tenantKey ? FALLBACKS[tenantKey] : null;
+    const accessUrl = safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
+    const supabaseUrl = projectRestUrl(stored.supabase_url || fallback?.supabaseUrl || "");
+    const vercelUrl = safeUrl(stored.vercel_url || "");
+    const [app, database] = await Promise.all([
+      probe(accessUrl),
+      supabaseUrl ? probe(supabaseUrl) : Promise.resolve({
+        state: "unconfigured" as HealthState,
+        latencyMs: null,
+        checkedAt: new Date().toISOString(),
+        url: "",
+        message: "Supabase não informado",
+      }),
+    ]);
 
     return {
-      key,
-      name: stored?.orgao || fallback.name,
-      shortName: fallback.shortName,
-      city: fallback.city,
+      key: stored.id || tenantKey || accessUrl || stored.orgao,
+      tenantKey,
+      name: stored.orgao || fallback?.name || "Sistema monitorado",
+      shortName: stored.sistema || fallback?.shortName || stored.orgao || "Sistema",
+      city: stored.orgao || fallback?.city || "",
       accessUrl,
       vercelUrl,
       supabaseUrl,
       app,
       database,
-      backend,
-      overall: combine(app, database, backend),
-      metrics: metrics.get(key) || null,
+      overall: combine(app, database),
+      metrics: tenantKey ? metrics.get(tenantKey) || null : null,
     };
   }));
 }
