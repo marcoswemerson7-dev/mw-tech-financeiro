@@ -46,7 +46,6 @@ const ACTION_LABELS: Record<string, string> = {
   additive_update: "Editou aditivo", additive_delete: "Removeu aditivo",
   contractor_create: "Adicionou contratado", contractor_update: "Editou contratado",
   contractor_delete: "Removeu contratado",
-  contract_balance_movement_delete: "Excluiu movimentação de saldo",
   protocol_create: "Criou protocolo", protocol_update: "Editou protocolo",
   protocol_delete: "Excluiu protocolo", protocol_print: "Imprimiu protocolo",
   normative_act_create: "Cadastrou ato normativo", normative_act_update: "Editou ato normativo",
