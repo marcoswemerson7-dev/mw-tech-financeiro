@@ -3,6 +3,7 @@ import {
   Activity, AlertTriangle, CalendarDays, Download, Eye, FileDown, Filter,
   RefreshCw, Search, ShieldCheck, UserRound, X, Building2, FileText, Database
 } from "lucide-react";
+import { account } from "../lib/appwrite";
 
 type AuditRow = {
   id?: string;
@@ -149,7 +150,11 @@ export default function Audit() {
       if (from) qs.set("from", from);
       if (to) qs.set("to", to);
       qs.set("limit", "4000");
-      const response = await fetch(`/api/audit?${qs}`, { cache: "no-store" });
+      const jwt = await account.createJWT();
+      const response = await fetch(`/api/audit?${qs}`, {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${jwt.jwt}` },
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "Falha ao carregar auditoria.");
       setRows(Array.isArray(data.rows) ? data.rows : []);
