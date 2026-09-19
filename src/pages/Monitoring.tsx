@@ -154,9 +154,7 @@ function MetricBox({ label, value, icon }: { label: string; value: string | numb
 }
 
 function systemFilterLabel(item: SystemHealthSnapshot) {
-  if (item.tenantKey === "rg") return "Gestão Licita RG";
-  if (item.tenantKey === "bg") return "Gestão Licita BG";
-  return item.name || item.shortName || "Órgão monitorado";
+  return item.shortName || item.name || "Órgão monitorado";
 }
 
 function getSystemTheme(item: SystemHealthSnapshot) {
@@ -193,11 +191,7 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
   const metricsAvailable = Boolean(m?.configured);
   const theme = getSystemTheme(item);
   const badge = item.tenantKey?.toUpperCase() || item.shortName.slice(0, 2).toUpperCase() || "SI";
-  const displayName = item.tenantKey === "rg"
-    ? "Gestão Licita RG"
-    : item.tenantKey === "bg"
-      ? "Gestão Licita BG"
-      : (item.shortName || item.name);
+  const displayName = item.shortName || item.name;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(7,24,45,.12)]">
@@ -261,7 +255,8 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
 
         <div className="mt-4 flex flex-wrap gap-2">
           {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black text-white transition ${theme.button}`}>Abrir sistema <ExternalLink size={12} /></a>}
-          {item.tenantKey && <Link to={`/monitoramento/usuarios?tenant=${item.tenantKey}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-black transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
+          {item.tenantKey && <Link to={`/monitoramento/usuarios?tenant=${encodeURIComponent(item.tenantKey)}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-black transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
+          {item.tenantKey && <Link to={`/monitoramento/auditoria?system=${encodeURIComponent(item.tenantKey)}&name=${encodeURIComponent(item.name)}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-black text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"><ShieldCheck size={12} /> Auditoria</Link>}
         </div>
       </div>
     </article>
@@ -521,7 +516,7 @@ export default function Monitoring() {
                         </span>
                         <span className="min-w-0">
                           <b className="block truncate text-xs text-[#07182d]">{item.name}</b>
-                          <span className="mt-0.5 block truncate text-[9px] text-slate-500">{item.tenantKey === "bg" || item.tenantKey === "rg" ? "Prefeitura" : "Órgão público"}</span>
+                          <span className="mt-0.5 block truncate text-[9px] text-slate-500">Sistema monitorado</span>
                         </span>
                       </div>
                       <div className="mt-3 flex items-center justify-between text-[9px] font-bold">
