@@ -23,9 +23,7 @@ import {
   KeyRound,
   Monitor,
   Activity,
-  Siren,
-  ShieldCheck,
-} from "lucide-react";
+  Siren,} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { supportService, type SupportTicket } from "../services/support";
@@ -46,9 +44,7 @@ const financeItems = [
 const managementItems = [
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/monitoramento", "Monitoramento", Activity],
-  ["/monitoramento/incidentes", "Central de Incidentes", Siren],
-  ["/auditoria", "Auditoria RG + BG", ShieldCheck],
-  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
+  ["/monitoramento/incidentes", "Central de Incidentes", Siren],  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
   ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
 
