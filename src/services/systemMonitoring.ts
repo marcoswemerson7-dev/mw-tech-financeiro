@@ -35,7 +35,7 @@ export type MonitoringMetrics = {
 
 export type SystemHealthSnapshot = {
   key: string;
-  tenantKey: "rg" | "bg" | null;
+  tenantKey: string | null;
   name: string;
   shortName: string;
   city: string;
@@ -85,7 +85,9 @@ function projectRestUrl(value?: string) {
   return url;
 }
 
-function inferTenant(item?: Partial<ManagedSystem> | null): "rg" | "bg" | null {
+function inferTenant(item?: Partial<ManagedSystem> | null): string | null {
+  const configured = String(item?.monitoring_key || "").trim().toLowerCase();
+  if (configured) return configured;
   const haystack = `${item?.orgao || ""} ${item?.dominio_url || ""} ${item?.acesso_url || ""} ${item?.supabase_url || ""}`.toLowerCase();
   if (
     haystack.includes("ribeiro gonçalves") ||
@@ -191,13 +193,13 @@ async function probeHealth(url: string, timeoutMs = 8000): Promise<EndpointHealt
 async function loadMetrics() {
   try {
     const response = await fetch("/api/monitoring", { cache: "no-store" });
-    if (!response.ok) return new Map<"rg" | "bg", MonitoringMetrics>();
+    if (!response.ok) return new Map<string, MonitoringMetrics>();
     const data = await response.json();
-    return new Map<"rg" | "bg", MonitoringMetrics>(
-      (data.systems || []).map((item: MonitoringMetrics & { tenant: "rg" | "bg" }) => [item.tenant, item]),
+    return new Map<string, MonitoringMetrics>(
+      (data.systems || []).map((item: MonitoringMetrics & { tenant: string }) => [item.tenant, item]),
     );
   } catch {
-    return new Map<"rg" | "bg", MonitoringMetrics>();
+    return new Map<string, MonitoringMetrics>();
   }
 }
 
