@@ -1,6 +1,8 @@
+import { Account, Client } from "node-appwrite";
 type VercelRequest = {
   method?: string;
   query: Record<string, string | string[] | undefined>;
+  headers: Record<string, string | string[] | undefined>;
 };
 
 type VercelResponse = {
@@ -77,10 +79,31 @@ async function fetchTenant(tenant: TenantKey, params: Record<string, string>) {
   };
 }
 
+async function requireMwSession(req: VercelRequest) {
+  const raw = Array.isArray(req.headers.authorization) ? req.headers.authorization[0] : req.headers.authorization;
+  const jwt = String(raw || "").replace(/^Bearer\s+/i, "").trim();
+  if (!jwt) throw new Error("missing_session");
+
+  const endpoint = process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+  const projectId = process.env.APPWRITE_PROJECT_ID || process.env.VITE_APPWRITE_PROJECT_ID || "6a9194e0002bdfa75d97";
+  const client = new Client().setEndpoint(endpoint).setProject(projectId).setJWT(jwt);
+  const account = new Account(client);
+  const user = await account.get();
+  if (!user?.$id) throw new Error("invalid_session");
+  return user;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
   if (req.method !== "GET") {
     res.status(405).json({ error: "Método não permitido." });
+    return;
+  }
+
+  try {
+    await requireMwSession(req);
+  } catch {
+    res.status(401).json({ error: "Sessão administrativa inválida ou expirada." });
     return;
   }
 
