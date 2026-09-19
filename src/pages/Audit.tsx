@@ -103,7 +103,6 @@ const ACTION_LABELS: Record<string, string> = {
   execution_schedule_update: "Alterou agendamento da execução",
   execution_schedule_delete: "Excluiu agendamento da execução",
   execution_permission_insert: "Concedeu permissão de execução",
-  execution_permission_update: "Alterou permissão de execução",
   execution_permission_delete: "Removeu permissão de execução",
   supplier_payment_request_insert: "Criou solicitação de pagamento do fornecedor",
   supplier_payment_request_update: "Alterou solicitação de pagamento do fornecedor",
