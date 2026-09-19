@@ -24,6 +24,7 @@ import {
   Monitor,
   Activity,
   Siren,
+  ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -46,6 +47,7 @@ const managementItems = [
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/monitoramento", "Monitoramento", Activity],
   ["/monitoramento/incidentes", "Central de Incidentes", Siren],
+  ["/auditoria", "Auditoria RG + BG", ShieldCheck],
   ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
   ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
