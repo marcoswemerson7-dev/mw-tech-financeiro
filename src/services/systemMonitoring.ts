@@ -257,7 +257,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
   return Promise.all(
     sourceRows.map(async (stored) => {
       const tenantKey = inferTenant(stored);
-      const fallback = tenantKey ? FALLBACKS[tenantKey] : null;
+      const fallback = tenantKey === "rg" || tenantKey === "bg" ? FALLBACKS[tenantKey] : null;
       const accessUrl = safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
       const supabaseUrl = projectRestUrl(stored.supabase_url || fallback?.supabaseUrl || "");
       const vercelUrl = safeUrl(stored.vercel_url || "");
