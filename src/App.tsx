@@ -47,6 +47,7 @@ const SystemUsers = lazyWithRecovery(() => import("./pages/SystemUsers"), "syste
 const UsersAccess = lazyWithRecovery(() => import("./pages/UsersAccess"), "users");
 const Storage = lazyWithRecovery(() => import("./pages/Storage"), "storage");
 const RemoteAccess = lazyWithRecovery(() => import("./pages/RemoteAccess"), "remote-access");
+const Audit = lazyWithRecovery(() => import("./pages/Audit"), "audit");
 
 function LoadingScreen() {
   return (
@@ -124,6 +125,7 @@ function Private() {
         import("./pages/UsersAccess"),
         import("./pages/Storage"),
         import("./pages/RemoteAccess"),
+        import("./pages/Audit"),
         import("./pages/SupportCenter"),
         import("./pages/Settings"),
         import("./pages/DataPage"),
@@ -169,6 +171,7 @@ export default function App() {
               <Route path="monitoramento/tecnico" element={<TechnicalMonitoring />} />
               <Route path="monitoramento/incidentes" element={<IncidentCenter />} />
               <Route path="monitoramento/usuarios" element={<SystemUsers />} />
+              <Route path="auditoria" element={<Audit />} />
               <Route path="usuarios" element={<UsersAccess />} />
               <Route path="configuracoes" element={<Settings />} />
               <Route path="receitas" element={<DataPage kind="receitas" />} />
