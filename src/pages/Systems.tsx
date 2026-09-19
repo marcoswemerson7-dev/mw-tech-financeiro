@@ -170,6 +170,7 @@ export default function Systems() {
         <Field label="Domínio"><input name="dominio_url" placeholder="https://..." defaultValue={edit.dominio_url || ""} className="input"/></Field>
         <Field label="URL da Vercel"><input name="vercel_url" placeholder="https://vercel.com/..." defaultValue={edit.vercel_url || ""} className="input"/></Field>
         <Field label="URL Supabase"><input name="supabase_url" placeholder="https://supabase.com/..." defaultValue={edit.supabase_url || ""} className="input"/></Field>
+        <Field label="Chave de monitoramento"><input name="monitoring_key" placeholder="Ex.: rg, bg, alagoinha" defaultValue={edit.monitoring_key || ""} className="input"/><span className="mt-1 block text-[11px] font-medium text-slate-400">Identificador único usado por métricas, usuários e auditoria. Não coloque senha ou chave secreta aqui.</span></Field>
         <Field label="Link para entrar" wide><input name="acesso_url" placeholder="https://..." defaultValue={edit.acesso_url || ""} className="input"/></Field>
         <Field label="Ambiente"><select name="ambiente" defaultValue={edit.ambiente || "Produção"} className="input"><option>Produção</option><option>Homologação</option><option>Teste</option></select></Field>
         <Field label="Status"><select name="status" defaultValue={edit.status || "ativo"} className="input"><option value="ativo">Ativo</option><option value="implantacao">Em implantação</option><option value="suspenso">Suspenso</option><option value="inativo">Inativo</option></select></Field>
