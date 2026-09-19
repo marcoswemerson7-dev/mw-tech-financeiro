@@ -51,6 +51,49 @@ const ACTION_LABELS: Record<string, string> = {
   normative_act_create: "Cadastrou ato normativo", normative_act_update: "Editou ato normativo",
   normative_act_delete: "Excluiu ato normativo", normative_act_file_upload: "Enviou PDF de ato normativo",
   normative_act_view: "Visualizou ato normativo", normative_act_download: "Baixou ato normativo",
+
+  contract_balance_movement_insert: "Registrou movimentação de saldo",
+  contract_balance_movement_update: "Alterou movimentação de saldo",
+  contract_balance_movement_delete: "Excluiu movimentação de saldo",
+  contract_balance_insert: "Criou controle de saldo",
+  contract_balance_update: "Alterou controle de saldo",
+  contract_balance_delete: "Excluiu controle de saldo",
+  contract_balance_layer_insert: "Criou camada de saldo",
+  contract_balance_layer_update: "Alterou camada de saldo",
+  contract_balance_layer_delete: "Excluiu camada de saldo",
+  contract_balance_allocation_insert: "Criou alocação de saldo",
+  contract_balance_allocation_update: "Alterou alocação de saldo",
+  contract_balance_allocation_delete: "Excluiu alocação de saldo",
+  contract_item_movement_insert: "Registrou movimentação de item",
+  contract_item_movement_update: "Alterou movimentação de item",
+  contract_item_movement_delete: "Excluiu movimentação de item",
+  invoice_insert: "Registrou nota fiscal",
+  invoice_update: "Alterou nota fiscal",
+  invoice_delete: "Excluiu nota fiscal",
+  invoice_file_insert: "Anexou arquivo à nota fiscal",
+  invoice_file_update: "Alterou arquivo da nota fiscal",
+  invoice_file_delete: "Excluiu arquivo da nota fiscal",
+  payment_insert: "Registrou pagamento",
+  payment_update: "Alterou pagamento",
+  payment_delete: "Excluiu pagamento",
+  payment_receipt_insert: "Anexou comprovante de pagamento",
+  payment_receipt_update: "Alterou comprovante de pagamento",
+  payment_receipt_delete: "Excluiu comprovante de pagamento",
+  execution_schedule_insert: "Criou agendamento da execução",
+  execution_schedule_update: "Alterou agendamento da execução",
+  execution_schedule_delete: "Excluiu agendamento da execução",
+  execution_permission_insert: "Concedeu permissão de execução",
+  execution_permission_update: "Alterou permissão de execução",
+  execution_permission_delete: "Removeu permissão de execução",
+  supplier_payment_request_insert: "Criou solicitação de pagamento do fornecedor",
+  supplier_payment_request_update: "Alterou solicitação de pagamento do fornecedor",
+  supplier_payment_request_delete: "Excluiu solicitação de pagamento do fornecedor",
+  supplier_payment_file_insert: "Anexou arquivo à solicitação do fornecedor",
+  supplier_payment_file_update: "Alterou arquivo da solicitação do fornecedor",
+  supplier_payment_file_delete: "Excluiu arquivo da solicitação do fornecedor",
+  supplier_link_insert: "Criou vínculo de fornecedor",
+  supplier_link_update: "Alterou vínculo de fornecedor",
+  supplier_link_delete: "Excluiu vínculo de fornecedor",
 };
 
 const CRITICAL = new Set([
@@ -64,8 +107,8 @@ const ATTENTION = new Set([
 ]);
 
 function severity(action = "") {
-  if (CRITICAL.has(action)) return "critical";
-  if (ATTENTION.has(action)) return "attention";
+  if (CRITICAL.has(action) || action.endsWith("_delete")) return "critical";
+  if (ATTENTION.has(action) || action.endsWith("_update")) return "attention";
   return "normal";
 }
 
