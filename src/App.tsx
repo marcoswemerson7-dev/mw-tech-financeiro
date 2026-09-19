@@ -171,7 +171,7 @@ export default function App() {
               <Route path="monitoramento/tecnico" element={<TechnicalMonitoring />} />
               <Route path="monitoramento/incidentes" element={<IncidentCenter />} />
               <Route path="monitoramento/usuarios" element={<SystemUsers />} />
-              <Route path="auditoria" element={<Audit />} />
+              <Route path="monitoramento/auditoria" element={<Audit />} />
               <Route path="usuarios" element={<UsersAccess />} />
               <Route path="configuracoes" element={<Settings />} />
               <Route path="receitas" element={<DataPage kind="receitas" />} />
