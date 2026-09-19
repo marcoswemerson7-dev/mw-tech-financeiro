@@ -11,6 +11,7 @@ export type ManagedSystem = {
   supabase_url?: string;
   acesso_url?: string;
   logo_url?: string;
+  monitoring_key?: string;
   ambiente: string;
   status: string;
   observacao?: string;
@@ -22,6 +23,7 @@ type SystemMeta = {
   notes?: string;
   supabase_url?: string;
   logo_url?: string;
+  monitoring_key?: string;
   orgao?: string;
   tipo_orgao?: string;
   sistema?: string;
@@ -96,6 +98,7 @@ function parseMeta(value?: string): SystemMeta {
         notes: String(parsed.notes || ""),
         supabase_url: String(parsed.supabase_url || ""),
         logo_url: String(parsed.logo_url || ""),
+        monitoring_key: String(parsed.monitoring_key || ""),
         orgao: String(parsed.orgao || ""),
         tipo_orgao: String(parsed.tipo_orgao || ""),
         sistema: String(parsed.sistema || ""),
@@ -118,6 +121,7 @@ function serializeMeta(values: Partial<ManagedSystem>) {
     notes: values.observacao || "",
     supabase_url: values.supabase_url || "",
     logo_url: values.logo_url || "",
+    monitoring_key: values.monitoring_key || "",
   });
 }
 
@@ -132,6 +136,7 @@ function serializeFallback(values: Partial<ManagedSystem>) {
     supabase_url: values.supabase_url || "",
     acesso_url: values.acesso_url || values.dominio_url || "",
     logo_url: values.logo_url || "",
+    monitoring_key: values.monitoring_key || "",
     ambiente: values.ambiente || "Produção",
     status: values.status || "ativo",
     notes: values.observacao || "",
@@ -154,6 +159,7 @@ const normalize = (row: any): ManagedSystem => {
     observacao: meta.notes || "",
     supabase_url: meta.supabase_url || "",
     logo_url: meta.logo_url || "",
+    monitoring_key: meta.monitoring_key || "",
     created_at: row.created_at || row.$createdAt || new Date().toISOString(),
     updated_at: row.updated_at || row.$updatedAt || row.$createdAt || new Date().toISOString(),
   };
