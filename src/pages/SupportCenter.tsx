@@ -425,7 +425,7 @@ export default function SupportCenter() {
   const isFinished = selected ? ["resolvido", "fechado"].includes(selected.status) : false;
 
   return (
-    <div className="mx-auto flex w-full max-w-[1760px] flex-col gap-3 text-slate-900 xl:h-[calc(100dvh-92px)] xl:min-h-0">
+    <div className="mx-auto flex w-full max-w-[1840px] flex-col gap-3 text-slate-900 xl:h-[calc(100dvh-92px)] xl:min-h-0">
       <section className="flex shrink-0 flex-col gap-2 rounded-[20px] border border-slate-200 bg-white px-4 py-2.5 shadow-[0_12px_34px_rgba(7,24,45,0.05)] sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
           <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#082743] text-[#f0b83f] shadow-sm sm:size-12"><Headphones size={24} /></div>
@@ -446,12 +446,12 @@ export default function SupportCenter() {
         </div>
       )}
 
-      <div className="grid min-h-[620px] flex-1 grid-cols-1 gap-3 xl:min-h-0 xl:grid-cols-[260px_minmax(0,1fr)_235px] 2xl:grid-cols-[280px_minmax(0,1fr)_250px]">
-        <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
-          <div className="shrink-0 border-b border-slate-100 bg-gradient-to-b from-white to-slate-50/60 p-3">
-            <div className="mb-2.5 flex items-center justify-between gap-2">
+      <div className="grid min-h-[620px] flex-1 grid-cols-1 gap-3 xl:min-h-0 xl:grid-cols-[320px_minmax(0,1fr)_270px] 2xl:grid-cols-[350px_minmax(0,1fr)_290px]">
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)]">
+          <div className="shrink-0 border-b border-slate-200 bg-white p-3.5">
+            <div className="mb-3 flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
-                <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#eef4fa] text-[#0a3158]">
+                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#082743] text-[#f0b83f] shadow-sm">
                   <Headphones size={17} />
                 </div>
                 <div className="min-w-0">
@@ -483,14 +483,14 @@ export default function SupportCenter() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Buscar chamado, assunto ou solicitante..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-3 text-[12px] font-medium text-slate-800 shadow-[0_4px_14px_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-400 focus:border-[#d6a33a] focus:ring-4 focus:ring-[#d6a33a]/10"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-[12px] font-semibold text-slate-800 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-[#d6a33a] focus:bg-white focus:ring-4 focus:ring-[#d6a33a]/10"
               />
             </div>
 
-            <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+            <div className="mt-2.5 grid grid-cols-3 gap-2">
               <button
                 onClick={() => setFilter("novo")}
-                className={`rounded-xl border px-1.5 py-2 text-center transition ${filter === "novo" ? "border-blue-300 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"}`}
+                className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "novo" ? "border-blue-300 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"}`}
               >
                 <span className="mx-auto grid size-7 place-items-center rounded-full bg-blue-100 text-blue-700"><FileText size={15} /></span>
                 <span className="mt-1.5 block text-[10px] font-bold text-slate-500">Novo</span>
@@ -499,7 +499,7 @@ export default function SupportCenter() {
 
               <button
                 onClick={() => setFilter("em_atendimento")}
-                className={`rounded-xl border px-1.5 py-2 text-center transition ${filter === "em_atendimento" ? "border-amber-300 bg-amber-50 shadow-sm ring-1 ring-amber-100" : "border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/40"}`}
+                className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "em_atendimento" ? "border-amber-300 bg-amber-50 shadow-sm ring-1 ring-amber-100" : "border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/40"}`}
               >
                 <span className="mx-auto grid size-7 place-items-center rounded-full bg-amber-100 text-amber-700"><Clock3 size={16} /></span>
                 <span className="mt-1.5 block text-[9px] font-bold leading-3 text-slate-500">Em atendimento</span>
@@ -508,7 +508,7 @@ export default function SupportCenter() {
 
               <button
                 onClick={() => setFilter("encerrados")}
-                className={`rounded-xl border px-1.5 py-2 text-center transition ${filter === "encerrados" ? "border-emerald-300 bg-emerald-50 shadow-sm ring-1 ring-emerald-100" : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"}`}
+                className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "encerrados" ? "border-emerald-300 bg-emerald-50 shadow-sm ring-1 ring-emerald-100" : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"}`}
               >
                 <span className="mx-auto grid size-7 place-items-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 size={16} /></span>
                 <span className="mt-1.5 block text-[10px] font-bold text-slate-500">Encerrados</span>
@@ -516,7 +516,7 @@ export default function SupportCenter() {
               </button>
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3.5">
               <div className="mb-2 flex items-center gap-2">
                 <Building2 size={14} className="text-slate-400" />
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Filtrar por órgão</p>
@@ -541,15 +541,15 @@ export default function SupportCenter() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white p-2.5">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] p-2">
             {loading ? (
               <div className="grid min-h-[280px] place-items-center text-[14px] text-slate-400">Carregando chamados...</div>
             ) : filtered.length === 0 ? (
               <div className="grid min-h-[280px] place-items-center px-6 text-center">
-                <div><div className="mx-auto grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-400"><MessageSquare size={22} /></div><p className="mt-3 text-[14px] font-bold text-slate-500">Nenhum chamado encontrado.</p></div>
+                <div><div className="mx-auto grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-400"><MessageSquare size={22} /></div><p className="mt-3.5 text-[14px] font-bold text-slate-500">Nenhum chamado encontrado.</p></div>
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-1.5">
                 {filtered.map((ticket) => {
                   const org = getOrg(ticket.tenant_key);
                   const active = selected?.id === ticket.id;
@@ -558,15 +558,15 @@ export default function SupportCenter() {
                     <button
                       key={ticket.id}
                       onClick={() => openTicket(ticket)}
-                      className={`group w-full rounded-[18px] border p-3.5 text-left transition duration-200 ${active ? "border-[#e8b94d] bg-gradient-to-br from-[#fffaf0] to-white shadow-[0_10px_28px_rgba(7,24,45,0.08)] ring-1 ring-amber-100" : needsReply ? "border-blue-200 bg-blue-50/35 shadow-[0_6px_18px_rgba(37,99,235,0.08)] ring-1 ring-blue-100 hover:-translate-y-0.5 hover:border-blue-300" : "border-slate-200/80 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.03)] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_10px_24px_rgba(15,23,42,0.07)]"}`}
+                      className={`group w-full rounded-xl border px-3 py-2.5 text-left transition duration-150 ${active ? "border-[#d6a33a] bg-[#fffaf0] shadow-[0_6px_18px_rgba(7,24,45,0.07)] ring-1 ring-amber-100" : needsReply ? "border-blue-200 bg-blue-50/60 shadow-sm ring-1 ring-blue-100 hover:border-blue-300 hover:bg-blue-50" : "border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:bg-slate-50/70"}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             {needsReply && <span className="size-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]" />}
-                            <b className="text-[13px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                            <b className="text-[12px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
                           </div>
-                          <p className="mt-1 line-clamp-2 text-[14px] font-black leading-5 text-slate-800">{ticket.subject}</p>
+                          <p className="mt-0.5 line-clamp-1 text-[13px] font-black leading-5 text-slate-800">{ticket.subject}</p>
                           {needsReply && (
                             <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-blue-700">
                               <MessageSquare size={10} /> Nova mensagem
@@ -580,19 +580,19 @@ export default function SupportCenter() {
                         </span>
                       </div>
 
-                      <div className="mt-2.5 space-y-1.5">
-                        <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center gap-2 text-[10.5px] font-semibold text-slate-500">
                           <UserRound size={14} className="shrink-0 text-[#69829a]" />
                           <span className="truncate">{ticket.requester_name || ticket.requester_email || "Usuário"}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                        <div className="flex items-center gap-2 text-[10.5px] text-slate-500">
                           <Landmark size={14} className="shrink-0 text-[#69829a]" />
                           <span className="truncate">{org.name}</span>
                         </div>
                       </div>
 
-                      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
-                        <span className={`inline-flex min-w-0 items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[10px] font-bold ${org.badge}`}>
+                      <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
+                        <span className={`inline-flex min-w-0 items-center gap-1.5 truncate rounded-full border px-2 py-0.5 text-[9.5px] font-bold ${org.badge}`}>
                           <MapPin size={11} className="shrink-0" />{org.shortName}
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-400">
@@ -607,7 +607,7 @@ export default function SupportCenter() {
           </div>
         </div>
 
-        <section className="min-h-0 min-w-0 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)]">
+        <section className="min-h-0 min-w-0 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)]">
           {!selected ? (
             <div className="grid h-full min-h-[520px] place-items-center p-8 text-center xl:min-h-0">
               <div>
@@ -655,8 +655,8 @@ export default function SupportCenter() {
                               ? <img src={message.sender_avatar_url || selected.requester_avatar_url || ""} alt={message.sender_name || selected.requester_name || "Usuário"} className="size-8 shrink-0 rounded-full border border-slate-200 object-cover" />
                               : <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#0a3158] text-[12px] font-black text-white">{initials(message.sender_name || selected.requester_name)}</div>
                           )}
-                          <div className={`max-w-[70%] 2xl:max-w-[64%] ${staff ? "text-right" : "text-left"}`}>
-                            <div className={`mb-1.5 flex items-center gap-2 text-[11px] font-semibold text-slate-500 ${staff ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[82%] 2xl:max-w-[76%] ${staff ? "text-right" : "text-left"}`}>
+                            <div className={`mb-1.5 flex items-center gap-2 text-[10.5px] font-semibold text-slate-500 ${staff ? "justify-end" : "justify-start"}`}>
                               <span className="font-bold text-slate-700">{message.sender_name || (staff ? staffIdentity.name : selected.requester_name || "Usuário")}</span>
                               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{message.sender_role || (staff ? staffIdentity.role : selected.requester_role || selected.requester_sector || "Usuário")}</span>
                               <span>•</span>
@@ -665,7 +665,7 @@ export default function SupportCenter() {
                             <div className={`rounded-2xl px-3.5 py-2.5 shadow-sm ${staff ? "rounded-br-md bg-[#dbeafe] text-[#153b64]" : "rounded-bl-md border border-slate-200 bg-white text-slate-800"}`}>
                               <p className="whitespace-pre-wrap text-[14px] font-medium leading-5 sm:text-[14px]">{message.body}</p>
                               {!!message.attachments?.length && (
-                                <div className="mt-3 space-y-2">
+                                <div className="mt-3.5 space-y-2">
                                   {message.attachments.map((attachment, index) => (
                                     <a
                                       key={`${attachment.path || attachment.name}-${index}`}
@@ -746,14 +746,14 @@ export default function SupportCenter() {
           )}
         </section>
 
-        <div className="min-h-0 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,0.05)] xl:col-span-1">
+        <div className="min-h-0 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)] xl:col-span-1">
           {!selected ? (
             <div className="grid min-h-[280px] place-items-center px-6 text-center text-[14px] text-slate-400 xl:h-full">Os detalhes do chamado aparecerão aqui.</div>
           ) : (
             <div className="p-3.5 sm:p-4">
               <h2 className="text-[16px] font-black text-[#07182d] sm:text-[17px]">Detalhes do chamado</h2>
 
-              <div className="mt-3 space-y-3.5">
+              <div className="mt-3.5 space-y-3.5">
                 <div>
                   <label className="mb-2 block text-[11px] font-semibold text-slate-500">Status</label>
                   <select value={selected.status} onChange={(event) => void changeStatus(event.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 outline-none">
