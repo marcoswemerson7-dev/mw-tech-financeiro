@@ -491,110 +491,110 @@ export default function SupportCenter() {
 
       <div className="grid min-h-[620px] flex-1 grid-cols-1 gap-3 xl:min-h-0 xl:grid-cols-[320px_minmax(0,1fr)_270px] 2xl:grid-cols-[350px_minmax(0,1fr)_290px]">
         <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)]">
-          <div className="shrink-0 border-b border-slate-200 bg-white p-3.5">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-3">
-                <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#082743] text-[#f0b83f] shadow-sm">
-                  <Headphones size={17} />
+          <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#082743] text-[#f0b83f] shadow-sm">
+                  <Headphones size={16} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-[17px] font-black leading-none text-[#07182d] sm:text-[18px]">Chamados</h2>
+                    <h2 className="text-[16px] font-black leading-none text-[#07182d]">Chamados</h2>
                     {counts.aguardandoResposta > 0 && (
-                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-black text-white shadow-sm">
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-black text-white">
                         {counts.aguardandoResposta}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 truncate text-[11px] font-medium text-slate-400">
-                    {counts.aguardandoResposta > 0 ? `${counts.aguardandoResposta} aguardando sua resposta` : "Acompanhe seus atendimentos"}
+                  <p className="mt-1 truncate text-[10px] font-medium text-slate-400">
+                    {filter === "historico" ? `${counts.encerrados} chamados arquivados` : counts.aguardandoResposta > 0 ? `${counts.aguardandoResposta} aguardando resposta` : "Atendimentos ativos"}
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => void loadTickets()}
-                className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-[#315779] shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md"
-                title="Atualizar chamados"
-              >
-                <RefreshCw size={17} />
-              </button>
-            </div>
 
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6683a1]" size={18} />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar chamado, assunto ou solicitante..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-10 pr-3 text-[12px] font-semibold text-slate-800 outline-none transition placeholder:font-medium placeholder:text-slate-400 focus:border-[#d6a33a] focus:bg-white focus:ring-4 focus:ring-[#d6a33a]/10"
-              />
-            </div>
-
-            <div className="mt-2.5 grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setFilter(filter === "novo" ? "ativos" : "novo")}
-                className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "novo" ? "border-blue-300 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"}`}
-              >
-                <span className="mx-auto grid size-7 place-items-center rounded-full bg-blue-100 text-blue-700"><FileText size={15} /></span>
-                <span className="mt-1.5 block text-[10px] font-bold text-slate-500">Novos</span>
-                <span className="mt-0.5 block text-[17px] font-black leading-none text-[#07182d]">{counts.novo}</span>
-              </button>
-
-              <button
-                onClick={() => setFilter(filter === "em_atendimento" ? "ativos" : "em_atendimento")}
-                className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "em_atendimento" ? "border-amber-300 bg-amber-50 shadow-sm ring-1 ring-amber-100" : "border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/40"}`}
-              >
-                <span className="mx-auto grid size-7 place-items-center rounded-full bg-amber-100 text-amber-700"><Clock3 size={16} /></span>
-                <span className="mt-1.5 block text-[9px] font-bold leading-3 text-slate-500">Em atendimento</span>
-                <span className="mt-0.5 block text-[17px] font-black leading-none text-[#07182d]">{counts.em_atendimento}</span>
-              </button>
-            </div>
-
-            <div className="mt-3.5">
-              <div className="mb-2 flex items-center gap-2">
-                <Building2 size={14} className="text-slate-400" />
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Filtrar por órgão</p>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
-                  onClick={() => setOrgFilter("todos")}
-                  className={`inline-flex items-center gap-2 whitespace-nowrap rounded-xl border px-2.5 py-1.5 text-[11px] font-bold transition ${orgFilter === "todos" ? "border-[#082743] bg-[#082743] text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  onClick={() => {
+                    setFilter(filter === "historico" ? "ativos" : "historico");
+                    setSelected(null);
+                    selectedIdRef.current = null;
+                    setMessages([]);
+                    const nextParams = new URLSearchParams(searchParams);
+                    nextParams.delete("ticket");
+                    setSearchParams(nextParams, { replace: true });
+                  }}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-xl border px-2.5 text-[10.5px] font-bold transition ${filter === "historico" ? "border-[#082743] bg-[#082743] text-white shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  title={filter === "historico" ? "Voltar aos chamados ativos" : "Abrir histórico de chamados"}
                 >
-                  <Grid2X2 size={14} /> Todos
+                  <Archive size={14} />
+                  <span className="hidden 2xl:inline">{filter === "historico" ? "Ativos" : "Histórico"}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black ${filter === "historico" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600"}`}>{counts.encerrados}</span>
                 </button>
-                {organizations.map((org) => (
-                  <button
-                    key={org.key}
-                    onClick={() => setOrgFilter(org.key)}
-                    className={`inline-flex items-center whitespace-nowrap rounded-xl border px-2.5 py-1.5 text-[11px] font-bold transition ${orgFilter === org.key ? org.badge : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
-                  >
-                    <span className={`mr-1.5 inline-block size-2 rounded-full ${org.dot}`} />{org.key.toUpperCase()}
-                  </button>
-                ))}
+                <button
+                  onClick={() => void loadTickets()}
+                  className="grid size-9 place-items-center rounded-xl border border-slate-200 bg-white text-[#315779] transition hover:bg-slate-50"
+                  title="Atualizar chamados"
+                >
+                  <RefreshCw size={15} />
+                </button>
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setFilter(filter === "historico" ? "ativos" : "historico");
-                setSelected(null);
-                selectedIdRef.current = null;
-                setMessages([]);
-                const nextParams = new URLSearchParams(searchParams);
-                nextParams.delete("ticket");
-                setSearchParams(nextParams, { replace: true });
-              }}
-              className={`mt-3 flex h-10 w-full items-center justify-between rounded-xl border px-3 text-[11px] font-bold transition ${filter === "historico" ? "border-slate-400 bg-slate-100 text-slate-800 shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <Archive size={15} />
-                {filter === "historico" ? "Voltar aos chamados ativos" : "Abrir histórico de chamados"}
-              </span>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600">{counts.encerrados}</span>
-            </button>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6683a1]" size={15} />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Buscar chamado..."
+                  className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50/70 pl-9 pr-3 text-[11px] font-semibold text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#d6a33a] focus:bg-white focus:ring-2 focus:ring-[#d6a33a]/10"
+                />
+              </div>
+            </div>
+
+            {filter !== "historico" && (
+              <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-0.5">
+                <button
+                  onClick={() => setFilter("ativos")}
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[10.5px] font-bold transition ${filter === "ativos" ? "border-[#082743] bg-[#082743] text-white" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <Grid2X2 size={13} /> Todos
+                </button>
+                <button
+                  onClick={() => setFilter("novo")}
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[10.5px] font-bold transition ${filter === "novo" ? "border-blue-300 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <FileText size={13} /> Novos <b>{counts.novo}</b>
+                </button>
+                <button
+                  onClick={() => setFilter("em_atendimento")}
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-[10.5px] font-bold transition ${filter === "em_atendimento" ? "border-amber-300 bg-amber-50 text-amber-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <Clock3 size={13} /> Em atendimento <b>{counts.em_atendimento}</b>
+                </button>
+              </div>
+            )}
+
+            <div className="mt-1.5 flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              <button
+                onClick={() => setOrgFilter("todos")}
+                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border px-2 text-[10px] font-bold transition ${orgFilter === "todos" ? "border-slate-400 bg-slate-100 text-slate-800" : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"}`}
+              >
+                <Building2 size={12} /> Todos os órgãos
+              </button>
+              {organizations.map((org) => (
+                <button
+                  key={org.key}
+                  onClick={() => setOrgFilter(org.key)}
+                  className={`inline-flex h-7 shrink-0 items-center rounded-lg border px-2 text-[10px] font-bold transition ${orgFilter === org.key ? org.badge : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"}`}
+                >
+                  <span className={`mr-1.5 inline-block size-1.5 rounded-full ${org.dot}`} />{org.key.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] p-2">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] p-1.5">
             {loading ? (
               <div className="grid min-h-[280px] place-items-center text-[14px] text-slate-400">Carregando chamados...</div>
             ) : filtered.length === 0 ? (
@@ -602,7 +602,7 @@ export default function SupportCenter() {
                 <div><div className="mx-auto grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-400"><MessageSquare size={22} /></div><p className="mt-3.5 text-[14px] font-bold text-slate-500">Nenhum chamado encontrado.</p></div>
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {filtered.map((ticket) => {
                   const org = getOrg(ticket.tenant_key);
                   const active = selected?.id === ticket.id;
@@ -611,45 +611,37 @@ export default function SupportCenter() {
                     <button
                       key={ticket.id}
                       onClick={() => openTicket(ticket)}
-                      className={`group w-full rounded-xl border px-3 py-2.5 text-left transition duration-150 ${active ? "border-[#d6a33a] bg-[#fffaf0] shadow-[0_6px_18px_rgba(7,24,45,0.07)] ring-1 ring-amber-100" : needsReply ? "border-blue-200 bg-blue-50/60 shadow-sm ring-1 ring-blue-100 hover:border-blue-300 hover:bg-blue-50" : "border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:bg-slate-50/70"}`}
+                      className={`group w-full rounded-xl border px-2.5 py-2 text-left transition duration-150 ${active ? "border-[#d6a33a] bg-[#fffaf0] shadow-sm ring-1 ring-amber-100" : needsReply ? "border-blue-200 bg-blue-50/60 ring-1 ring-blue-100 hover:border-blue-300" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70"}`}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            {needsReply && <span className="size-2 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]" />}
-                            <b className="text-[12px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            {needsReply && <span className="size-1.5 shrink-0 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]" />}
+                            <b className="shrink-0 text-[11px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                            <span className="truncate text-[12px] font-black text-slate-800">{ticket.subject}</span>
                           </div>
-                          <p className="mt-0.5 line-clamp-1 text-[13px] font-black leading-5 text-slate-800">{ticket.subject}</p>
-                          {needsReply && (
-                            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-blue-700">
-                              <MessageSquare size={10} /> Nova mensagem
-                            </span>
-                          )}
+                          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[10px] text-slate-500">
+                            <UserRound size={11} className="shrink-0 text-[#69829a]" />
+                            <span className="truncate font-semibold">{ticket.requester_name || ticket.requester_email || "Usuário"}</span>
+                          </div>
+                          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[9.5px] text-slate-400">
+                            <Landmark size={11} className="shrink-0 text-[#69829a]" />
+                            <span className="truncate">{org.name}</span>
+                          </div>
                         </div>
-                        <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${statusClass[ticket.status] || statusClass.fechado}`}>
-                          {ticket.status === "em_atendimento" && <Clock3 size={12} />}
-                          {["resolvido", "fechado"].includes(ticket.status) && <CheckCircle2 size={12} />}
+                        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[8.5px] font-bold ${statusClass[ticket.status] || statusClass.fechado}`}>
+                          {ticket.status === "em_atendimento" && <Clock3 size={9} />}
+                          {["resolvido", "fechado"].includes(ticket.status) && <CheckCircle2 size={9} />}
                           {statusLabels[ticket.status] || ticket.status}
                         </span>
                       </div>
 
-                      <div className="mt-2 space-y-1">
-                        <div className="flex items-center gap-2 text-[10.5px] font-semibold text-slate-500">
-                          <UserRound size={14} className="shrink-0 text-[#69829a]" />
-                          <span className="truncate">{ticket.requester_name || ticket.requester_email || "Usuário"}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10.5px] text-slate-500">
-                          <Landmark size={14} className="shrink-0 text-[#69829a]" />
-                          <span className="truncate">{org.name}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2">
-                        <span className={`inline-flex min-w-0 items-center gap-1.5 truncate rounded-full border px-2 py-0.5 text-[9.5px] font-bold ${org.badge}`}>
-                          <MapPin size={11} className="shrink-0" />{org.shortName}
+                      <div className="mt-1.5 flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5">
+                        <span className={`inline-flex min-w-0 items-center gap-1 truncate rounded-full border px-1.5 py-0.5 text-[8.5px] font-bold ${org.badge}`}>
+                          <MapPin size={9} className="shrink-0" />{org.shortName}
                         </span>
-                        <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-400">
-                          <CalendarDays size={12} />{shortFmt(ticket.last_message_at)}
+                        <span className="inline-flex shrink-0 items-center gap-1 text-[8.5px] font-semibold text-slate-400">
+                          <CalendarDays size={9} />{shortFmt(ticket.last_message_at)}
                         </span>
                       </div>
                     </button>
