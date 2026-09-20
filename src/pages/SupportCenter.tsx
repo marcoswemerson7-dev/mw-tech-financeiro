@@ -126,7 +126,7 @@ function initials(name?: string | null) {
 }
 
 export default function SupportCenter() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { session } = useAuth();
   const prefs = ((session as { prefs?: Record<string, unknown> } | null)?.prefs || {}) as Record<string, unknown>;
   const staffIdentity = {
@@ -270,14 +270,23 @@ export default function SupportCenter() {
     const ticketId = searchParams.get("ticket");
     if (!ticketId || selected?.id === ticketId) return;
     const match = tickets.find((ticket) => ticket.id === ticketId);
-    if (match) openTicket(match);
+    if (match) openTicket(match, false);
   }, [tickets, searchParams, selected?.id]);
 
-  const openTicket = (ticket: SupportTicket) => {
-    if (selected?.id === ticket.id) return;
+  const openTicket = (ticket: SupportTicket, syncUrl = true) => {
+    if (selectedIdRef.current === ticket.id && selected?.id === ticket.id) return;
+
+    // Atualiza a referência antes de qualquer render/requisição para impedir
+    // respostas atrasadas do chamado anterior de reassumirem a tela.
     selectedIdRef.current = ticket.id;
     setSelected(ticket);
     setError("");
+
+    if (syncUrl && searchParams.get("ticket") !== ticket.id) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set("ticket", ticket.id);
+      setSearchParams(nextParams, { replace: true });
+    }
 
     const cached = detailCacheRef.current.get(ticket.id);
     setMessages(cached || []);
