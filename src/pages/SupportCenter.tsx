@@ -151,6 +151,7 @@ export default function SupportCenter() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [regeneratingArchive, setRegeneratingArchive] = useState(false);
   const [error, setError] = useState("");
 
   const loadTickets = async (silent = false) => {
@@ -444,6 +445,22 @@ export default function SupportCenter() {
       setError(e instanceof Error ? e.message : "Falha ao encerrar atendimento");
     } finally {
       setClosing(false);
+    }
+  };
+
+  const regenerateArchive = async () => {
+    if (!selected || regeneratingArchive) return;
+    if (!window.confirm("Regenerar o PDF deste chamado no Google Drive? O PDF e o JSON antigos serão removidos e substituídos pelo novo PDF institucional.")) return;
+    setRegeneratingArchive(true);
+    setError("");
+    try {
+      const result = await supportService.rearchive(selected.id);
+      await Promise.all([loadTickets(true), loadDetail(selected, true)]);
+      if (result.driveUrl) window.open(result.driveUrl, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao regenerar o PDF no Google Drive");
+    } finally {
+      setRegeneratingArchive(false);
     }
   };
 
@@ -817,9 +834,18 @@ export default function SupportCenter() {
                 <div className="sticky bottom-0 z-10 -mx-3.5 border-t border-slate-200 bg-white/95 px-3.5 pb-1 pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.05)] backdrop-blur sm:-mx-4 sm:px-4">
                   <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Ações rápidas</p>
                   <div className="space-y-2">
-                    <button onClick={() => void finishAttendance()} disabled={closing || isFinished} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#0b355d] disabled:opacity-50"><CheckCircle2 size={17} />{closing ? "Resolvendo..." : "Resolver chamado"}</button>
-                    <button onClick={() => void changeStatus("fechado")} disabled={isFinished} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 text-[14px] font-bold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"><XCircle size={16} />Encerrar atendimento</button>
-                    <button onClick={() => void changeStatus("aguardando_usuario")} disabled={isFinished} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Aguardar retorno</button>
+                    {isFinished ? (
+                      <button onClick={() => void regenerateArchive()} disabled={regeneratingArchive} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[13px] font-bold text-white shadow-sm transition hover:bg-[#0b355d] disabled:opacity-50">
+                        <RefreshCw size={16} className={regeneratingArchive ? "animate-spin" : ""} />
+                        {regeneratingArchive ? "Regenerando PDF..." : "Regenerar PDF do Drive"}
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={() => void finishAttendance()} disabled={closing} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#0b355d] disabled:opacity-50"><CheckCircle2 size={17} />{closing ? "Resolvendo..." : "Resolver chamado"}</button>
+                        <button onClick={() => void changeStatus("fechado")} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-slate-50 px-4 text-[14px] font-bold text-slate-700 transition hover:bg-slate-100"><XCircle size={16} />Encerrar atendimento</button>
+                        <button onClick={() => void changeStatus("aguardando_usuario")} className="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50">Aguardar retorno</button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
