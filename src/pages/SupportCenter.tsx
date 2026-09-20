@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
+  Archive,
   Building2,
   CalendarDays,
   CheckCircle2,
@@ -137,7 +138,7 @@ export default function SupportCenter() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
-  const [filter, setFilter] = useState("todos");
+  const [filter, setFilter] = useState("ativos");
   const [orgFilter, setOrgFilter] = useState("todos");
   const [query, setQuery] = useState("");
   const [text, setText] = useState("");
@@ -328,8 +329,8 @@ export default function SupportCenter() {
       .filter((ticket) => {
         if (filter === "novo" && ticket.status !== "novo") return false;
         if (filter === "em_atendimento" && !["em_atendimento", "aguardando_usuario"].includes(ticket.status)) return false;
-        if (filter === "encerrados" && !["resolvido", "fechado"].includes(ticket.status)) return false;
-        if (filter === "todos" && ["resolvido", "fechado"].includes(ticket.status)) return false;
+        if (filter === "historico" && !["resolvido", "fechado"].includes(ticket.status)) return false;
+        if (filter === "ativos" && ["resolvido", "fechado"].includes(ticket.status)) return false;
         const org = getOrg(ticket.tenant_key);
         if (orgFilter !== "todos" && org.key !== orgFilter) return false;
         if (!q) return true;
