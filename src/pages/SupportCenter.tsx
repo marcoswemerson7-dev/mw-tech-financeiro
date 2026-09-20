@@ -271,8 +271,17 @@ export default function SupportCenter() {
     const ticketId = searchParams.get("ticket");
     if (!ticketId || selected?.id === ticketId) return;
     const match = tickets.find((ticket) => ticket.id === ticketId);
-    if (match) openTicket(match, false);
-  }, [tickets, searchParams, selected?.id]);
+    if (match) {
+      const finished = ["resolvido", "fechado"].includes(match.status);
+      if (finished && filter !== "historico") {
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("ticket");
+        setSearchParams(nextParams, { replace: true });
+        return;
+      }
+      openTicket(match, false);
+    }
+  }, [tickets, searchParams, selected?.id, filter]);
 
   const openTicket = (ticket: SupportTicket, syncUrl = true) => {
     if (selectedIdRef.current === ticket.id && selected?.id === ticket.id) return;
@@ -400,8 +409,19 @@ export default function SupportCenter() {
     if (!selected) return;
     try {
       await supportService.updateStatus(selected.id, status);
-      await loadDetail(selected, true);
       await loadTickets(true);
+
+      if (["resolvido", "fechado"].includes(status) && filter !== "historico") {
+        setSelected(null);
+        selectedIdRef.current = null;
+        setMessages([]);
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete("ticket");
+        setSearchParams(nextParams, { replace: true });
+        return;
+      }
+
+      await loadDetail({ ...selected, status }, true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao atualizar status");
     }
@@ -413,8 +433,13 @@ export default function SupportCenter() {
     setClosing(true);
     try {
       await supportService.updateStatus(selected.id, "resolvido");
-      await loadDetail(selected, true);
       await loadTickets(true);
+      setSelected(null);
+      selectedIdRef.current = null;
+      setMessages([]);
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("ticket");
+      setSearchParams(nextParams, { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao encerrar atendimento");
     } finally {
@@ -488,32 +513,23 @@ export default function SupportCenter() {
               />
             </div>
 
-            <div className="mt-2.5 grid grid-cols-3 gap-2">
+            <div className="mt-2.5 grid grid-cols-2 gap-2">
               <button
-                onClick={() => setFilter("novo")}
+                onClick={() => setFilter(filter === "novo" ? "ativos" : "novo")}
                 className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "novo" ? "border-blue-300 bg-blue-50 shadow-sm ring-1 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"}`}
               >
                 <span className="mx-auto grid size-7 place-items-center rounded-full bg-blue-100 text-blue-700"><FileText size={15} /></span>
-                <span className="mt-1.5 block text-[10px] font-bold text-slate-500">Novo</span>
+                <span className="mt-1.5 block text-[10px] font-bold text-slate-500">Novos</span>
                 <span className="mt-0.5 block text-[17px] font-black leading-none text-[#07182d]">{counts.novo}</span>
               </button>
 
               <button
-                onClick={() => setFilter("em_atendimento")}
+                onClick={() => setFilter(filter === "em_atendimento" ? "ativos" : "em_atendimento")}
                 className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "em_atendimento" ? "border-amber-300 bg-amber-50 shadow-sm ring-1 ring-amber-100" : "border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/40"}`}
               >
                 <span className="mx-auto grid size-7 place-items-center rounded-full bg-amber-100 text-amber-700"><Clock3 size={16} /></span>
                 <span className="mt-1.5 block text-[9px] font-bold leading-3 text-slate-500">Em atendimento</span>
                 <span className="mt-0.5 block text-[17px] font-black leading-none text-[#07182d]">{counts.em_atendimento}</span>
-              </button>
-
-              <button
-                onClick={() => setFilter("encerrados")}
-                className={`rounded-xl border px-2 py-2.5 text-center transition ${filter === "encerrados" ? "border-emerald-300 bg-emerald-50 shadow-sm ring-1 ring-emerald-100" : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"}`}
-              >
-                <span className="mx-auto grid size-7 place-items-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 size={16} /></span>
-                <span className="mt-1.5 block text-[10px] font-bold text-slate-500">Encerrados</span>
-                <span className="mt-0.5 block text-[17px] font-black leading-none text-[#07182d]">{counts.encerrados}</span>
               </button>
             </div>
 
@@ -540,6 +556,25 @@ export default function SupportCenter() {
                 ))}
               </div>
             </div>
+
+            <button
+              onClick={() => {
+                setFilter(filter === "historico" ? "ativos" : "historico");
+                setSelected(null);
+                selectedIdRef.current = null;
+                setMessages([]);
+                const nextParams = new URLSearchParams(searchParams);
+                nextParams.delete("ticket");
+                setSearchParams(nextParams, { replace: true });
+              }}
+              className={`mt-3 flex h-10 w-full items-center justify-between rounded-xl border px-3 text-[11px] font-bold transition ${filter === "historico" ? "border-slate-400 bg-slate-100 text-slate-800 shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"}`}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Archive size={15} />
+                {filter === "historico" ? "Voltar aos chamados ativos" : "Abrir histórico de chamados"}
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-600">{counts.encerrados}</span>
+            </button>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto bg-[#f8fafc] p-2">
