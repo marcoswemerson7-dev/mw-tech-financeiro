@@ -44,7 +44,7 @@ function signalStaffSend(ticketId: string) {
   window.dispatchEvent(new CustomEvent("mw-support-staff-sent", { detail: { ticketId, at: Date.now() } }));
 }
 
-async function archiveRequest(ticketId: string) {
+async function archiveRequest(ticketId: string, force = false) {
   const source = resolveSource(ticketId);
   const jwt = await account.createJWT();
   const res = await fetch(SOURCES[source].archiveEndpoint, {
@@ -53,7 +53,7 @@ async function archiveRequest(ticketId: string) {
       "Content-Type": "application/json",
       "x-appwrite-jwt": jwt.jwt,
     },
-    body: JSON.stringify({ ticket_id: ticketId }),
+    body: JSON.stringify({ ticket_id: ticketId, force }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || "Falha ao arquivar atendimento no Google Drive");
@@ -204,7 +204,11 @@ export const supportService = {
   },
 
   async archive(ticketId: string) {
-    return archiveRequest(ticketId) as Promise<{ success: boolean; ticket: SupportTicket; driveUrl?: string; archivedMessages?: number }>;
+    return archiveRequest(ticketId, false) as Promise<{ success: boolean; ticket: SupportTicket; driveUrl?: string; archivedMessages?: number }>;
+  },
+
+  async rearchive(ticketId: string) {
+    return archiveRequest(ticketId, true) as Promise<{ success: boolean; ticket: SupportTicket; driveUrl?: string; archivedMessages?: number }>;
   },
 
   async updateStatus(ticketId: string, status: string) {
