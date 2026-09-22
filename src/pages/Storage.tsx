@@ -44,7 +44,7 @@ export default function Storage() {
         </section>
       ) : error && !data ? (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-          <div className="flex gap-3"><AlertTriangle size={22} className="mt-0.5 shrink-0"/><div><b>Google Drive aguardando configuração</b><p className="mt-1 text-sm">{error}</p></div></div>
+          <div className="flex gap-3"><AlertTriangle size={22} className="mt-0.5 shrink-0"/><div><b>{error.toLowerCase().includes("tempo limite") ? "Google Drive demorou para responder" : "Google Drive indisponível no momento"}</b><p className="mt-1 text-sm">{error}</p></div></div>
         </section>
       ) : data ? (
         <>
