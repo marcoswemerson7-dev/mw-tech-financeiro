@@ -20,8 +20,7 @@ export type DriveStorageUsage = {
   account?: string;
 };
 
-const DRIVE_STORAGE_ENDPOINT = "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-drive-storage-summary";
-const MW_TECH_DRIVE_KEY = "ADJ9w5w15Tinci91aHGav4vWjpqDqhq2NBeHqqOoQH4";
+const DRIVE_STORAGE_ENDPOINT = "/api/drive-storage";
 const CACHE_KEY = "drive-storage-summary:v2";
 const CACHE_TTL = 15 * 60 * 1000;
 let memoryCache = readFastCache<DriveStorageUsage>(CACHE_KEY, CACHE_TTL);
@@ -40,14 +39,15 @@ export async function getDriveStorageUsage(force = false): Promise<DriveStorageU
     const response = await fetch(DRIVE_STORAGE_ENDPOINT, {
       method: "GET",
       headers: {
-        "x-mw-tech-key": MW_TECH_DRIVE_KEY,
+        "Accept": "application/json",
       },
       cache: "no-store",
     });
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok || body?.error) {
-      throw new Error(body?.error || "Não foi possível consultar o armazenamento do Google Drive.");
+      const detail = body?.detail ? ` (${body.detail})` : "";
+      throw new Error(`${body?.error || "Não foi possível consultar o armazenamento do Google Drive."}${detail}`);
     }
 
     const data = body as DriveStorageUsage;
