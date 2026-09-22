@@ -22,8 +22,10 @@ export type DriveStorageUsage = {
 
 const DRIVE_STORAGE_ENDPOINT = "/api/drive-storage";
 const CACHE_KEY = "drive-storage-summary:v2";
+const LEGACY_CACHE_KEY = "drive-storage-summary";
 const CACHE_TTL = 15 * 60 * 1000;
-let memoryCache = readFastCache<DriveStorageUsage>(CACHE_KEY, CACHE_TTL);
+const STALE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+let memoryCache = readFastCache<DriveStorageUsage>(CACHE_KEY, STALE_CACHE_TTL) || readFastCache<DriveStorageUsage>(LEGACY_CACHE_KEY, STALE_CACHE_TTL);
 let memoryCacheAt = memoryCache ? Date.now() : 0;
 let pending: Promise<DriveStorageUsage> | null = null;
 
@@ -47,6 +49,7 @@ export async function getDriveStorageUsage(force = false): Promise<DriveStorageU
     const body = await response.json().catch(() => ({}));
     if (!response.ok || body?.error) {
       const detail = body?.detail ? ` (${body.detail})` : "";
+      if (memoryCache) return memoryCache;
       throw new Error(`${body?.error || "Não foi possível consultar o armazenamento do Google Drive."}${detail}`);
     }
 
