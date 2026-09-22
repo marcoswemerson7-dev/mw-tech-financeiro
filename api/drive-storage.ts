@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 type VercelRequest = {
   method?: string;
 };
@@ -25,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
+  const timeout = setTimeout(() => controller.abort(), 55000);
 
   try {
     const response = await fetch(DRIVE_STORAGE_ENDPOINT, {
