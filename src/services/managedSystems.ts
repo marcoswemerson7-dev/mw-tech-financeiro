@@ -157,9 +157,9 @@ const normalize = (row: any): ManagedSystem => {
     ambiente: meta.ambiente || row.ambiente || "Produção",
     status: meta.status || row.status || (row.ativo === false ? "inativo" : "ativo"),
     observacao: meta.notes || "",
-    supabase_url: meta.supabase_url || "",
-    logo_url: meta.logo_url || "",
-    monitoring_key: meta.monitoring_key || "",
+    supabase_url: meta.supabase_url || row.supabase_url || "",
+    logo_url: meta.logo_url || row.logo_url || "",
+    monitoring_key: meta.monitoring_key || row.monitoring_key || "",
     created_at: row.created_at || row.$createdAt || new Date().toISOString(),
     updated_at: row.updated_at || row.$updatedAt || row.$createdAt || new Date().toISOString(),
   };
