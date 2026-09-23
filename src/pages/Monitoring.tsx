@@ -87,6 +87,16 @@ function formatBytes(value: number | null | undefined) {
   return `${(mb / 1024).toFixed(2)} GB`;
 }
 
+function GoogleDriveLogo({ className = "size-7" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 87.3 78" className={className} role="img" aria-label="Google Drive">
+      <path d="M6.6 65.8 27.8 29h21.3L27.9 65.8H6.6Z" fill="#0F9D58" />
+      <path d="M59.4 65.8H27.9L49.1 29h31.6L59.4 65.8Z" fill="#4285F4" />
+      <path d="M38.5 0 59.7 36.8 49.1 55.2 17.3 0h21.2Z" fill="#F4B400" />
+    </svg>
+  );
+}
+
 function SummaryCard({
   label,
   value,
@@ -496,7 +506,9 @@ export default function Monitoring() {
       <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-blue-50 text-blue-600"><HardDrive size={21} /></span>
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <GoogleDriveLogo className="size-8" />
+            </span>
             <div>
               <h2 className="text-base font-black text-[#07182d]">Google Drive</h2>
               <p className="text-[10px] text-slate-500">Uso total e consumo das pastas monitoradas por órgão.</p>
