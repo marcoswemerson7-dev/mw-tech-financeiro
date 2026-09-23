@@ -13,6 +13,7 @@ import {
   ExternalLink,
   FileStack,
   FileText,
+  FolderOpen,
   Gauge,
   HardDrive,
   Info,
@@ -44,6 +45,7 @@ import {
   type MonitoringMetrics,
   type SystemHealthSnapshot,
 } from "../services/systemMonitoring";
+import { getCachedDriveStorageUsage, getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 
 const refreshEveryMs = 60000;
 const historyKey = "mw-control:monitoring-history:v2";
@@ -277,6 +279,8 @@ export default function Monitoring() {
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [orgFilter, setOrgFilter] = useState("todos");
   const [statusFilter, setStatusFilter] = useState<"todos" | HealthState>("todos");
+  const [driveData, setDriveData] = useState<DriveStorageUsage | null>(() => getCachedDriveStorageUsage());
+  const [driveError, setDriveError] = useState("");
 
   const visibleItems = useMemo(() => items.filter((item) => {
     const matchesOrg = orgFilter === "todos" || item.key === orgFilter;
@@ -290,6 +294,10 @@ export default function Monitoring() {
     try {
       const data = await getSystemHealth();
       setItems(data);
+      setDriveError("");
+      void getDriveStorageUsage(manual)
+        .then(setDriveData)
+        .catch((driveErr: Error) => setDriveError(driveErr.message));
       setNextRefresh(refreshEveryMs / 1000);
 
       const point: HistoryPoint = {
@@ -377,6 +385,21 @@ export default function Monitoring() {
   const totalSystems = visibleItems.length;
   const operationalPercent = totalSystems ? Math.round((summary.online / totalSystems) * 100) : 0;
 
+  const latencyStats = useMemo(() => {
+    const keys = new Set(visibleItems.map((item) => item.key));
+    const values = history.flatMap((point) =>
+      Object.entries(point)
+        .filter(([key]) => key !== "time" && keys.has(key))
+        .map(([, value]) => typeof value === "number" ? value : null)
+        .filter((value): value is number => value !== null),
+    );
+    return {
+      min: values.length ? Math.min(...values) : null,
+      max: values.length ? Math.max(...values) : null,
+      average: values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : summary.average,
+    };
+  }, [history, visibleItems, summary.average]);
+
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5">
       <PageHeader
@@ -411,6 +434,54 @@ export default function Monitoring() {
         <span className="ml-auto flex items-center gap-2 text-[10px] font-semibold text-slate-500"><span className="size-2 rounded-full bg-emerald-500" /> Atualização automática a cada 60 segundos</span>
       </section>
 
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_16px_42px_rgba(7,24,45,.07)]">
+        <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-r from-white via-blue-50/40 to-amber-50/30 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 place-items-center rounded-2xl bg-amber-50 text-amber-600"><Gauge size={21} /></span>
+            <div>
+              <h2 className="text-lg font-black text-[#07182d]">Histórico de latência</h2>
+              <p className="text-[11px] text-slate-500">Acompanhamento em tempo real · últimas 24 leituras</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">Atual: {summary.average === null ? "—" : `${summary.average} ms`}</span>
+            <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
+            <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-black text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
+            <span className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-700">Máx: {latencyStats.max === null ? "—" : `${latencyStats.max} ms`}</span>
+          </div>
+        </div>
+        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
+          <div className="h-[300px] p-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={history} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10 }} width={45} axisLine={false} tickLine={false} unit=" ms" />
+                <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(7,24,45,.10)" }} />
+                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+                {items.map((item, index) => (
+                  <Line key={item.key} type="monotone" dataKey={item.key} name={item.shortName || item.name} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="border-t border-slate-100 bg-slate-50/60 p-5 xl:border-l xl:border-t-0">
+            <div className="flex items-center gap-3">
+              <span className={`grid size-11 place-items-center rounded-full ${summary.offline ? "bg-rose-100 text-rose-700" : summary.attention ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}><CheckCircle2 size={22} /></span>
+              <div>
+                <b className="text-sm text-[#07182d]">{summary.offline ? "Há sistema indisponível" : summary.attention ? "Sistema requer atenção" : "Sistemas estáveis"}</b>
+                <p className="mt-1 text-[10px] leading-4 text-slate-500">Atualização automática a cada 60 segundos.</p>
+              </div>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Latência média</span><b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b></div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Operacionais</span><b className="mt-1 block text-lg font-black text-emerald-700">{operationalPercent}%</b></div>
+            </div>
+            <p className="mt-4 text-[10px] text-slate-500">Última verificação: <b className="text-slate-700">{lastChecked(items)}</b></p>
+          </div>
+        </div>
+      </section>
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} em atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
         <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
@@ -421,6 +492,46 @@ export default function Monitoring() {
         <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
         <SummaryCard label="Latência média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Tempo médio de resposta" icon={<Gauge size={20} />} tone="amber" />
       </div>
+
+      <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 place-items-center rounded-2xl bg-blue-50 text-blue-600"><HardDrive size={21} /></span>
+            <div>
+              <h2 className="text-base font-black text-[#07182d]">Google Drive</h2>
+              <p className="text-[10px] text-slate-500">Uso total e consumo das pastas monitoradas por órgão.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-black ${driveError ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}><span className={`size-2 rounded-full ${driveError ? "bg-amber-500" : "bg-emerald-500"}`} />{driveError ? "Dados em cache" : "Conectado"}</span>
+            <Link to="/armazenamento" className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 py-2 text-[10px] font-black text-blue-700 hover:bg-blue-50">Ver detalhes <ArrowRight size={12}/></Link>
+          </div>
+        </div>
+        {driveData ? (
+          <div className="grid gap-3 xl:grid-cols-[1.1fr_.7fr_.7fr_1.6fr]">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Uso total do Drive</span><b className="text-sm text-blue-700">{driveData.percent.toFixed(1)}%</b></div>
+              <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(100, driveData.percent)}%` }} /></div>
+              <div className="mt-3 flex items-end justify-between"><div><b className="text-xl font-black text-[#07182d]">{driveData.usedGb.toFixed(2)} GB</b><p className="text-[9px] text-slate-500">de {driveData.totalGb.toFixed(0)} GB</p></div><span className="text-[9px] text-slate-400">Atualizado {new Date(driveData.updatedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></div>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><HardDrive size={17}/></span><p className="mt-3 text-[9px] font-black uppercase text-slate-400">Disponível</p><b className="mt-1 block text-lg font-black text-[#07182d]">{driveData.availableGb.toFixed(2)} GB</b></div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={17}/></span><p className="mt-3 text-[9px] font-black uppercase text-slate-400">Plano</p><b className="mt-1 block text-lg font-black text-[#07182d]">{driveData.totalGb.toFixed(0)} GB</b><p className="text-[9px] text-slate-500">{driveData.folders.length} pasta(s) raiz</p></div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="mb-2 flex items-center justify-between"><b className="text-[11px] text-[#07182d]">Uso por órgão</b><span className="text-[9px] font-semibold text-slate-400">{driveData.folders.length} monitorado(s)</span></div>
+              <div className="space-y-3">
+                {driveData.folders.slice(0,4).map((folder) => (
+                  <div key={folder.id}>
+                    <div className="mb-1 flex items-center justify-between gap-3"><span className="flex min-w-0 items-center gap-2 text-[10px] font-semibold text-slate-600"><FolderOpen size={13} className="shrink-0 text-amber-500"/><span className="truncate">{folder.name}</span></span><b className="shrink-0 text-[10px] text-[#07182d]">{folder.usedGb.toFixed(2)} GB</b></div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-500" style={{width:`${Math.min(100, folder.percentOfTotal)}%`}}/></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center text-xs text-slate-500">{driveError || "Carregando dados do Google Drive..."}</div>
+        )}
+      </section>
 
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50/60 p-6 shadow-[0_14px_40px_rgba(7,24,45,.07)]">
         <div className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-blue-200/20 blur-3xl" />
@@ -565,31 +676,7 @@ export default function Monitoring() {
         </section>
       </div>
 
-      <div className="grid items-start gap-4 2xl:grid-cols-[minmax(0,1.2fr)_380px_320px]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-black text-[#07182d]">Histórico de latência</h3>
-              <p className="mt-0.5 text-[10px] text-slate-500">Cada linha representa um sistema cadastrado.</p>
-            </div>
-            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-bold text-slate-600">Últimas 24 leituras</span>
-          </div>
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} width={40} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 10 }} />
-                {items.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={item.shortName || item.name} stroke={chartColors[index % chartColors.length]} strokeWidth={2.2} dot={false} connectNulls />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
+      <div className="grid items-start gap-4 xl:grid-cols-2">
         <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-black text-[#07182d]">Distribuição operacional</h3>
           <p className="mt-0.5 text-[10px] text-slate-500">Situação de todos os sistemas cadastrados.</p>
