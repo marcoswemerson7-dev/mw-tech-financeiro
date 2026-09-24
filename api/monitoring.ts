@@ -14,18 +14,21 @@ type TenantKey = "rg" | "bg";
 const TENANTS: Record<TenantKey, {
   projectRef: string;
   url: string;
+  accessUrl: string;
   keyEnv: string;
   publicKey: string;
 }> = {
   rg: {
     projectRef: "kiviwxonxeqmzqlmshpc",
     url: "https://kiviwxonxeqmzqlmshpc.supabase.co",
+    accessUrl: "https://gestaolicitarg.com.br",
     keyEnv: "SUPABASE_RG_SERVICE_ROLE_KEY",
     publicKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtpdml3eG9ueGVxbXpxbG1zaHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMDY3NzgsImV4cCI6MjA5NTU4Mjc3OH0.wBchG43tpsA8teNkK33AT8Vq5wtUl-JVTUJrIPXhkqM",
   },
   bg: {
     projectRef: "jfzavijlkbqzkrnlgphz",
     url: "https://jfzavijlkbqzkrnlgphz.supabase.co",
+    accessUrl: "https://gestaolicitabrg.com.br",
     keyEnv: "SUPABASE_BG_SERVICE_ROLE_KEY",
     publicKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmemF2aWpsa2JxemtybmxncGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjkyNTgsImV4cCI6MjA5NjAwNTI1OH0.13-RRfTSeFuCg3pUYYnaQgFp93iKR4tBgVjaUDOFccU",
   },
@@ -48,8 +51,36 @@ async function getSnapshot(baseUrl: string, key: string, rpc: string) {
   return await response.json();
 }
 
+async function probeApplication(url: string) {
+  const started = Date.now();
+  const checkedAt = new Date().toISOString();
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      cache: "no-store",
+      headers: { "user-agent": "MW-Tech-Monitor/1.0" },
+    });
+    const latencyMs = Date.now() - started;
+    return {
+      appLatencyMs: latencyMs,
+      appState: response.ok ? (latencyMs > 800 ? "attention" : "online") : "offline",
+      appCheckedAt: checkedAt,
+      appStatusCode: response.status,
+    };
+  } catch {
+    return {
+      appLatencyMs: null,
+      appState: "offline",
+      appCheckedAt: checkedAt,
+      appStatusCode: null,
+    };
+  }
+}
+
 async function tenantMetrics(tenant: TenantKey) {
   const config = TENANTS[tenant];
+  const appProbe = await probeApplication(config.accessUrl);
   const serviceKey = process.env[config.keyEnv];
   const key = serviceKey || config.publicKey;
   const rpc = serviceKey ? "mw_control_monitoring_snapshot" : "mw_control_monitoring_snapshot_public";
@@ -59,6 +90,7 @@ async function tenantMetrics(tenant: TenantKey) {
     return {
       tenant,
       configured: true,
+      ...appProbe,
       source: serviceKey ? "service" : "safe_public_snapshot",
       processes: Number(snapshot.processes ?? 0),
       contracts: Number(snapshot.contracts ?? 0),
@@ -82,6 +114,7 @@ async function tenantMetrics(tenant: TenantKey) {
     return {
       tenant,
       configured: false,
+      ...appProbe,
       source: serviceKey ? "service" : "safe_public_snapshot",
       processes: null,
       contracts: null,
