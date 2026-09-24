@@ -13,6 +13,10 @@ export type EndpointHealth = {
 export type MonitoringMetrics = {
   configured: boolean;
   source?: string;
+  appLatencyMs?: number | null;
+  appState?: HealthState;
+  appCheckedAt?: string;
+  appStatusCode?: number | null;
   processes: number | null;
   contracts: number | null;
   users: number | null;
@@ -262,9 +266,23 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       const supabaseUrl = projectRestUrl(stored.supabase_url || fallback?.supabaseUrl || "");
       const vercelUrl = safeUrl(stored.vercel_url || "");
       const healthUrl = fallback?.healthUrl || "";
+      const tenantMetrics = tenantKey ? metrics.get(tenantKey) || null : null;
+      const monitoredApp: EndpointHealth | null = tenantMetrics?.appLatencyMs !== null && tenantMetrics?.appLatencyMs !== undefined
+        ? {
+            state: tenantMetrics.appState === "attention" || tenantMetrics.appState === "offline" ? tenantMetrics.appState : "online",
+            latencyMs: tenantMetrics.appLatencyMs,
+            checkedAt: tenantMetrics.appCheckedAt || new Date().toISOString(),
+            url: accessUrl,
+            message: tenantMetrics.appState === "attention"
+              ? "Servidor respondendo com lentidão"
+              : tenantMetrics.appState === "offline"
+                ? "Servidor indisponível"
+                : "Servidor respondendo normalmente",
+          }
+        : null;
 
       const [app, database, backend] = await Promise.all([
-        probe(accessUrl),
+        monitoredApp ? Promise.resolve(monitoredApp) : probe(accessUrl),
         supabaseUrl ? probe(supabaseUrl) : Promise.resolve(unconfiguredHealth("Supabase não informado")),
         healthUrl ? probeHealth(healthUrl) : Promise.resolve(unconfiguredHealth("Health check interno ainda não configurado")),
       ]);
@@ -272,8 +290,8 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       return {
         key: stored.id || tenantKey || accessUrl || stored.orgao,
         tenantKey,
-        name: stored.orgao || fallback?.name || "Sistema monitorado",
-        shortName: stored.sistema || fallback?.shortName || stored.orgao || "Sistema",
+        name: fallback?.name || stored.orgao || "Sistema monitorado",
+        shortName: fallback?.shortName || stored.sistema || stored.orgao || "Sistema",
         city: stored.orgao || fallback?.city || "",
         accessUrl,
         vercelUrl,
@@ -283,7 +301,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
         database,
         backend,
         overall: combine(app, database, backend),
-        metrics: tenantKey ? metrics.get(tenantKey) || null : null,
+        metrics: tenantMetrics,
       };
     }),
   );
