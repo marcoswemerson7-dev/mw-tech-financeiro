@@ -166,7 +166,15 @@ function MetricBox({ label, value, icon }: { label: string; value: string | numb
 }
 
 function systemFilterLabel(item: SystemHealthSnapshot) {
+  if (item.tenantKey === "rg") return "Gestão Licita RG — Ribeiro Gonçalves";
+  if (item.tenantKey === "bg") return "Gestão Licita BG — Baixa Grande do Ribeiro";
   return item.shortName || item.name || "Órgão monitorado";
+}
+
+function systemChartLabel(item: SystemHealthSnapshot) {
+  if (item.tenantKey === "rg") return "Gestão Licita RG";
+  if (item.tenantKey === "bg") return "Gestão Licita BG";
+  return item.shortName || item.name || "Sistema";
 }
 
 function getSystemTheme(item: SystemHealthSnapshot) {
@@ -203,7 +211,7 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
   const metricsAvailable = Boolean(m?.configured);
   const theme = getSystemTheme(item);
   const badge = item.tenantKey?.toUpperCase() || item.shortName.slice(0, 2).toUpperCase() || "SI";
-  const displayName = item.shortName || item.name;
+  const displayName = systemChartLabel(item);
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(7,24,45,.12)]">
@@ -470,7 +478,7 @@ export default function Monitoring() {
                 <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(7,24,45,.10)" }} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                 {items.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={item.shortName || item.name} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
+                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>
