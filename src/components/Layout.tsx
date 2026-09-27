@@ -23,7 +23,9 @@ import {
   KeyRound,
   Monitor,
   Activity,
-  Siren,} from "lucide-react";
+  Siren,
+  Code2,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
 import { supportService, type SupportTicket } from "../services/support";
@@ -45,6 +47,7 @@ const managementItems = [
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/monitoramento", "Monitoramento", Activity],
   ["/monitoramento/incidentes", "Central de Incidentes", Siren],  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
+  ["/projetos-codigo", "Projetos / Código", Code2],
   ["/usuarios", "Usuários e acessos", UsersRound],
 ] as const;
 
