@@ -12,6 +12,10 @@ export type ManagedSystem = {
   acesso_url?: string;
   logo_url?: string;
   monitoring_key?: string;
+  infraestrutura?: string;
+  provedor?: string;
+  servidor_endereco?: string;
+  servidor_os?: string;
   ambiente: string;
   status: string;
   observacao?: string;
@@ -24,6 +28,10 @@ type SystemMeta = {
   supabase_url?: string;
   logo_url?: string;
   monitoring_key?: string;
+  infraestrutura?: string;
+  provedor?: string;
+  servidor_endereco?: string;
+  servidor_os?: string;
   orgao?: string;
   tipo_orgao?: string;
   sistema?: string;
@@ -99,6 +107,10 @@ function parseMeta(value?: string): SystemMeta {
         supabase_url: String(parsed.supabase_url || ""),
         logo_url: String(parsed.logo_url || ""),
         monitoring_key: String(parsed.monitoring_key || ""),
+        infraestrutura: String(parsed.infraestrutura || ""),
+        provedor: String(parsed.provedor || ""),
+        servidor_endereco: String(parsed.servidor_endereco || ""),
+        servidor_os: String(parsed.servidor_os || ""),
         orgao: String(parsed.orgao || ""),
         tipo_orgao: String(parsed.tipo_orgao || ""),
         sistema: String(parsed.sistema || ""),
@@ -122,6 +134,10 @@ function serializeMeta(values: Partial<ManagedSystem>) {
     supabase_url: values.supabase_url || "",
     logo_url: values.logo_url || "",
     monitoring_key: values.monitoring_key || "",
+    infraestrutura: values.infraestrutura || "",
+    provedor: values.provedor || "",
+    servidor_endereco: values.servidor_endereco || "",
+    servidor_os: values.servidor_os || "",
   });
 }
 
@@ -137,6 +153,10 @@ function serializeFallback(values: Partial<ManagedSystem>) {
     acesso_url: values.acesso_url || values.dominio_url || "",
     logo_url: values.logo_url || "",
     monitoring_key: values.monitoring_key || "",
+    infraestrutura: values.infraestrutura || "",
+    provedor: values.provedor || "",
+    servidor_endereco: values.servidor_endereco || "",
+    servidor_os: values.servidor_os || "",
     ambiente: values.ambiente || "Produção",
     status: values.status || "ativo",
     notes: values.observacao || "",
@@ -160,6 +180,10 @@ const normalize = (row: any): ManagedSystem => {
     supabase_url: meta.supabase_url || row.supabase_url || "",
     logo_url: meta.logo_url || row.logo_url || "",
     monitoring_key: meta.monitoring_key || row.monitoring_key || "",
+    infraestrutura: meta.infraestrutura || row.infraestrutura || "",
+    provedor: meta.provedor || row.provedor || "",
+    servidor_endereco: meta.servidor_endereco || row.servidor_endereco || "",
+    servidor_os: meta.servidor_os || row.servidor_os || "",
     created_at: row.created_at || row.$createdAt || new Date().toISOString(),
     updated_at: row.updated_at || row.$updatedAt || row.$createdAt || new Date().toISOString(),
   };
