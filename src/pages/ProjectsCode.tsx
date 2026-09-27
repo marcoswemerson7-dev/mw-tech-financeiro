@@ -9,7 +9,7 @@ import {
   GitBranch,
   LockKeyhole,
   Save,
-  TerminalSquare,
+  Monitor,
 } from "lucide-react";
 
 const REPOSITORY_NAME = "gestao-licitacoes-mwtech";
@@ -144,7 +144,7 @@ export default function ProjectsCode() {
                   href={vscodeUrl}
                   className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-sm font-black text-white shadow-sm transition hover:bg-[#0b355d]"
                 >
-                  <TerminalSquare size={18} />
+                  <Monitor size={18} />
                   Abrir no VS Code
                 </a>
 
