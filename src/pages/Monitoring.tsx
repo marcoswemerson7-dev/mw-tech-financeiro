@@ -231,6 +231,10 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
               <h3 className="truncate text-sm font-black">{displayName}</h3>
               <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-white/75">{item.name}</p>
               <p className="mt-1 truncate text-[9px] text-white/60">{item.accessUrl.replace(/^https?:\/\//, "") || "Domínio não informado"}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <span className="rounded-full border border-white/15 bg-white/[.08] px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white/80">{item.ambiente || "Produção"}</span>
+                <span className="rounded-full border border-white/15 bg-white/[.08] px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white/80">{item.infraestrutura || "Infraestrutura não informada"}</span>
+              </div>
             </div>
           </div>
           <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[9px] font-black text-white`}>
@@ -242,6 +246,11 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
 
       <div className="p-4">
         <div className="grid gap-x-4 sm:grid-cols-2">
+          <SmallRow icon={<Server size={14} />} label="Infraestrutura" value={item.infraestrutura || "Não informado"} />
+          <SmallRow icon={<Info size={14} />} label="Ambiente" value={item.ambiente || "—"} />
+          {item.provedor && <SmallRow icon={<Server size={14} />} label="Provedor / datacenter" value={item.provedor} />}
+          {item.servidorEndereco && <SmallRow icon={<Server size={14} />} label="Servidor / IP" value={item.servidorEndereco} />}
+          {item.servidorOs && <SmallRow icon={<HardDrive size={14} />} label="Sistema operacional" value={item.servidorOs} />}
           <SmallRow icon={<Gauge size={14} />} label="Latência" value={item.app.latencyMs !== null ? `${item.app.latencyMs} ms` : "—"} />
           <SmallRow icon={<Server size={14} />} label="Aplicação / domínio" value={stateLabel(item.app.state)} good={item.app.state === "online"} />
           <SmallRow icon={<Database size={14} />} label="Banco Supabase" value={stateLabel(item.database.state)} good={item.database.state === "online"} />
