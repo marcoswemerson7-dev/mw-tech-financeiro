@@ -152,7 +152,11 @@ export default function Systems() {
         <div className="space-y-4 p-5">
           <div><span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">Sistema</span><b className="mt-1 block text-[#061426]">{item.sistema}</b></div>
           <LinkRow icon={<Globe2 size={17}/>} label="Domínio" url={item.dominio_url} theme={theme}/>
-          <LinkRow icon={<Server size={17}/>} label="Projeto Vercel" url={item.vercel_url} theme={theme}/>
+          <InfoRow icon={<Server size={17}/>} label="Infraestrutura" value={item.infraestrutura || (item.vercel_url ? "Vercel" : item.ambiente === "Teste" ? "VPS / Servidor" : "Não informado")} theme={theme}/>
+          {item.provedor && <InfoRow icon={<Server size={17}/>} label="Provedor" value={item.provedor} theme={theme}/>} 
+          {item.servidor_endereco && <InfoRow icon={<Server size={17}/>} label="Servidor / IP" value={item.servidor_endereco} theme={theme}/>} 
+          {item.servidor_os && <InfoRow icon={<Server size={17}/>} label="Sistema operacional" value={item.servidor_os} theme={theme}/>} 
+          {item.vercel_url && <LinkRow icon={<Server size={17}/>} label="Projeto Vercel" url={item.vercel_url} theme={theme}/>} 
           <LinkRow icon={<Server size={17}/>} label="Supabase" url={item.supabase_url} theme={theme}/>
           <div className="flex gap-3 pt-2">
             {item.acesso_url && <a href={safeUrl(item.acesso_url)} target="_blank" rel="noreferrer" className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-xl px-4 text-[14px] font-black text-white shadow-sm transition ${theme.button} ${theme.buttonHover}`}>Entrar no sistema <ExternalLink size={16}/></a>}
@@ -168,6 +172,10 @@ export default function Systems() {
         <Field label="Tipo de órgão"><select name="tipo_orgao" defaultValue={edit.tipo_orgao || "Prefeitura"} className="input"><option>Prefeitura</option><option>Câmara</option><option>Empresa</option><option>Outro órgão</option></select></Field>
         <Field label="Sistema"><input name="sistema" required defaultValue={edit.sistema || "Gestão Licita"} className="input"/></Field>
         <Field label="Domínio"><input name="dominio_url" placeholder="https://..." defaultValue={edit.dominio_url || ""} className="input"/></Field>
+        <Field label="Infraestrutura"><select name="infraestrutura" defaultValue={edit.infraestrutura || (edit.vercel_url ? "Vercel" : "VPS")} className="input"><option>Vercel</option><option>VPS</option><option>Servidor dedicado</option><option>Local</option><option>Outro</option></select></Field>
+        <Field label="Provedor / datacenter"><input name="provedor" placeholder="Ex.: Hostinger, Contabo, Oracle Cloud..." defaultValue={edit.provedor || ""} className="input"/></Field>
+        <Field label="Servidor / IP"><input name="servidor_endereco" placeholder="Ex.: 192.0.2.10 ou vps.exemplo.com" defaultValue={edit.servidor_endereco || ""} className="input"/></Field>
+        <Field label="Sistema operacional"><input name="servidor_os" placeholder="Ex.: Ubuntu 24.04 LTS" defaultValue={edit.servidor_os || ""} className="input"/></Field>
         <Field label="URL da Vercel"><input name="vercel_url" placeholder="https://vercel.com/..." defaultValue={edit.vercel_url || ""} className="input"/></Field>
         <Field label="URL Supabase"><input name="supabase_url" placeholder="https://supabase.com/..." defaultValue={edit.supabase_url || ""} className="input"/></Field>
         <Field label="Chave de monitoramento"><input name="monitoring_key" placeholder="Ex.: rg, bg, alagoinha" defaultValue={edit.monitoring_key || ""} className="input"/><span className="mt-1 block text-[11px] font-medium text-slate-400">Identificador único usado por métricas, usuários e auditoria. Não coloque senha ou chave secreta aqui.</span></Field>
@@ -199,6 +207,7 @@ function statusLabel(status?: string) {
   return "Ativo";
 }
 function SystemsSkeleton(){return <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">{[0,1].map((item)=><div key={item} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="h-48 animate-pulse bg-gradient-to-br from-slate-200 to-slate-100"/><div className="space-y-3 p-5"><div className="h-5 w-1/3 animate-pulse rounded bg-slate-200"/><div className="h-14 animate-pulse rounded-xl bg-slate-100"/><div className="h-14 animate-pulse rounded-xl bg-slate-100"/><div className="h-12 animate-pulse rounded-xl bg-slate-200"/></div></div>)}</div>}
+function InfoRow({icon,label,value,theme}:{icon:any;label:string;value?:string;theme:SystemTheme}){return <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-[13px] ring-1 ring-inset ring-slate-100"><span className={`grid size-8 shrink-0 place-items-center rounded-lg ${theme.iconBox} ${theme.icon}`}>{icon}</span><div className="min-w-0"><span className="block font-bold text-slate-500">{label}</span><span className="block truncate font-bold text-[#061426]">{value || "Não informado"}</span></div></div>}
 function LinkRow({icon,label,url,theme}:{icon:any;label:string;url?:string;theme:SystemTheme}){return <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-[13px] ring-1 ring-inset ring-slate-100"><span className={`grid size-8 shrink-0 place-items-center rounded-lg ${theme.iconBox} ${theme.icon}`}>{icon}</span><div className="min-w-0"><span className="block font-bold text-slate-500">{label}</span>{url?<a href={safeUrl(url)} target="_blank" rel="noreferrer" className="block truncate font-bold text-[#061426] transition hover:opacity-70">{url}</a>:<span className="text-slate-400">Não informado</span>}</div></div>}
 function Modal({title,close,children}:{title:string;close:()=>void;children:any}){return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><div className="max-h-[92vh] w-full max-w-3xl overflow-auto rounded-2xl bg-white"><div className="sticky top-0 z-10 flex justify-between border-b bg-white px-7 py-5"><h3 className="text-xl font-black">{title}</h3><button onClick={close}><X/></button></div><div className="p-7">{children}</div></div></div>}
 function Field({label,children,wide}:{label:string;children:any;wide?:boolean}){return <label className={`text-sm font-bold text-slate-600 ${wide?"sm:col-span-2":""}`}>{label}{children}</label>}
