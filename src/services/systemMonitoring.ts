@@ -47,6 +47,11 @@ export type SystemHealthSnapshot = {
   vercelUrl: string;
   supabaseUrl: string;
   logoUrl: string;
+  ambiente: string;
+  infraestrutura: string;
+  provedor: string;
+  servidorEndereco: string;
+  servidorOs: string;
   app: EndpointHealth;
   database: EndpointHealth;
   backend: EndpointHealth;
@@ -297,6 +302,11 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
         vercelUrl,
         supabaseUrl,
         logoUrl: stored.logo_url || "",
+        ambiente: stored.ambiente || "Produção",
+        infraestrutura: stored.infraestrutura || (vercelUrl ? "Vercel" : String(stored.ambiente || "").toLowerCase() === "teste" ? "VPS / Servidor" : "Não informado"),
+        provedor: stored.provedor || "",
+        servidorEndereco: stored.servidor_endereco || "",
+        servidorOs: stored.servidor_os || "",
         app,
         database,
         backend,
