@@ -76,6 +76,14 @@ const FALLBACKS = {
     supabaseUrl: "https://jfzavijlkbqzkrnlgphz.supabase.co/rest/v1/",
     healthUrl: "https://jfzavijlkbqzkrnlgphz.supabase.co/functions/v1/mw-health",
   },
+  vps_test: {
+    name: "Gestão Licita TESTE - VPS Hostinger",
+    shortName: "Gestão Licita TESTE",
+    city: "Ambiente de laboratório",
+    accessUrl: "http://179.197.76.18:8000",
+    supabaseUrl: "",
+    healthUrl: "",
+  },
 };
 
 function safeUrl(value?: string) {
@@ -109,6 +117,12 @@ function inferTenant(item?: Partial<ManagedSystem> | null): string | null {
     haystack.includes("gestaolicitabrg") ||
     haystack.includes("jfzavijlkbqzkrnlgphz")
   ) return "bg";
+  if (
+    haystack.includes("gestão licita teste") ||
+    haystack.includes("gestao licita teste") ||
+    haystack.includes("179.197.76.18") ||
+    haystack.includes("vps")
+  ) return "vps_test";
   return null;
 }
 
@@ -232,7 +246,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
   const metrics = await loadMetrics();
   const activeRows = rows.filter((item) => String(item.status || "ativo").toLowerCase() !== "inativo");
 
-  const sourceRows: ManagedSystem[] = activeRows.length
+  const baseRows: ManagedSystem[] = activeRows.length
     ? activeRows
     : ([
         {
@@ -263,10 +277,35 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
         },
       ] as ManagedSystem[]);
 
+  const hasVpsTest = baseRows.some((item) => inferTenant(item) === "vps_test");
+  const sourceRows: ManagedSystem[] = hasVpsTest
+    ? baseRows
+    : [
+        ...baseRows,
+        {
+          id: "fallback-vps-test",
+          orgao: FALLBACKS.vps_test.name,
+          tipo_orgao: "Ambiente de teste",
+          sistema: FALLBACKS.vps_test.shortName,
+          dominio_url: FALLBACKS.vps_test.accessUrl,
+          acesso_url: FALLBACKS.vps_test.accessUrl,
+          supabase_url: "",
+          monitoring_key: "vps_test",
+          infraestrutura: "VPS",
+          provedor: "Hostinger",
+          servidor_endereco: "179.197.76.18",
+          servidor_os: "Ubuntu 24.04 LTS",
+          ambiente: "Teste",
+          status: "ativo",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ];
+
   return Promise.all(
     sourceRows.map(async (stored) => {
       const tenantKey = inferTenant(stored);
-      const fallback = tenantKey === "rg" || tenantKey === "bg" ? FALLBACKS[tenantKey] : null;
+      const fallback = tenantKey === "rg" || tenantKey === "bg" || tenantKey === "vps_test" ? FALLBACKS[tenantKey] : null;
       const accessUrl = safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
       const supabaseUrl = projectRestUrl(stored.supabase_url || fallback?.supabaseUrl || "");
       const vercelUrl = safeUrl(stored.vercel_url || "");
