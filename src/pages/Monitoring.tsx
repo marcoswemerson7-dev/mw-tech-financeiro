@@ -209,6 +209,7 @@ function getSystemTheme(item: SystemHealthSnapshot) {
 
 function SystemCard({ item }: { item: SystemHealthSnapshot }) {
   const m = item.metrics;
+  const isVpsTest = String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps");
   const metricsAvailable = Boolean(m?.configured);
   const theme = getSystemTheme(item);
   const badge = item.tenantKey?.toUpperCase() || item.shortName.slice(0, 2).toUpperCase() || "SI";
@@ -252,17 +253,17 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
           {item.provedor && <SmallRow icon={<Server size={14} />} label="Provedor / datacenter" value={item.provedor} />}
           {item.servidorEndereco && <SmallRow icon={<Server size={14} />} label="Servidor / IP" value={item.servidorEndereco} />}
           {item.servidorOs && <SmallRow icon={<HardDrive size={14} />} label="Sistema operacional" value={item.servidorOs} />}
-          <SmallRow icon={<Gauge size={14} />} label="Latência" value={item.app.latencyMs !== null ? `${item.app.latencyMs} ms` : "—"} />
+          <SmallRow icon={<Gauge size={14} />} label={isVpsTest ? "Latência da aplicação" : "Latência"} value={item.app.latencyMs !== null ? `${item.app.latencyMs} ms` : "—"} />
           <SmallRow icon={<Server size={14} />} label="Aplicação / domínio" value={stateLabel(item.app.state)} good={item.app.state === "online"} />
-          <SmallRow icon={<Database size={14} />} label="Banco Supabase" value={stateLabel(item.database.state)} good={item.database.state === "online"} />
-          <SmallRow icon={<ShieldCheck size={14} />} label="Backend interno" value={stateLabel(item.backend.state)} good={item.backend.state === "online"} />
-          <SmallRow icon={<UsersRound size={14} />} label="Usuários cadastrados" value={m?.users ?? "—"} />
-          <SmallRow icon={<Activity size={14} />} label="Ativos 24h" value={m?.active24h ?? "—"} />
-          <SmallRow icon={<Activity size={14} />} label="Ações 24h" value={m?.audit24h ?? "—"} />
-          <SmallRow icon={<Clock3 size={14} />} label="Ativos 7 dias" value={m?.active7d ?? "—"} />
+          {!isVpsTest && <SmallRow icon={<Database size={14} />} label="Banco Supabase" value={stateLabel(item.database.state)} good={item.database.state === "online"} />}
+          {!isVpsTest && <SmallRow icon={<ShieldCheck size={14} />} label="Backend interno" value={stateLabel(item.backend.state)} good={item.backend.state === "online"} />}
+          {!isVpsTest && <SmallRow icon={<UsersRound size={14} />} label="Usuários cadastrados" value={m?.users ?? "—"} />}
+          {!isVpsTest && <SmallRow icon={<Activity size={14} />} label="Ativos 24h" value={m?.active24h ?? "—"} />}
+          {!isVpsTest && <SmallRow icon={<Activity size={14} />} label="Ações 24h" value={m?.audit24h ?? "—"} />}
+          {!isVpsTest && <SmallRow icon={<Clock3 size={14} />} label="Ativos 7 dias" value={m?.active7d ?? "—"} />}
         </div>
 
-        <div className="mt-4">
+        {!isVpsTest && <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
               <h4 className="text-[11px] font-black text-[#07182d]">Volume operacional</h4>
@@ -281,14 +282,14 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
             <MetricBox label="Storage Supabase" value={formatBytes(m?.supabaseStorageBytes)} icon={<HardDrive size={12} />} />
             <MetricBox label="Banco Supabase" value={formatBytes(m?.databaseBytes)} icon={<Database size={12} />} />
           </div>
-        </div>
+        </div>}
 
-        {(String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps")) && <VpsServerPanel />}
+        {isVpsTest && <VpsServerPanel />}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black text-white transition ${theme.button}`}>Abrir sistema <ExternalLink size={12} /></a>}
-          {item.tenantKey && <Link to={`/monitoramento/usuarios?tenant=${encodeURIComponent(item.tenantKey)}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-black transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
-          {item.tenantKey && <Link to={`/monitoramento/auditoria?system=${encodeURIComponent(item.tenantKey)}&name=${encodeURIComponent(item.name)}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-black text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"><ShieldCheck size={12} /> Auditoria</Link>}
+          {item.tenantKey && !isVpsTest && <Link to={`/monitoramento/usuarios?tenant=${encodeURIComponent(item.tenantKey)}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-black transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
+          {item.tenantKey && !isVpsTest && <Link to={`/monitoramento/auditoria?system=${encodeURIComponent(item.tenantKey)}&name=${encodeURIComponent(item.name)}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-black text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"><ShieldCheck size={12} /> Auditoria</Link>}
         </div>
       </div>
     </article>
