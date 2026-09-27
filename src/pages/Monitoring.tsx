@@ -39,6 +39,7 @@ import {
   YAxis,
 } from "recharts";
 import { ActionButton, PageHeader } from "../components/UI";
+import VpsServerPanel from "../components/VpsServerPanel";
 import {
   getSystemHealth,
   type HealthState,
@@ -281,6 +282,8 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
             <MetricBox label="Banco Supabase" value={formatBytes(m?.databaseBytes)} icon={<Database size={12} />} />
           </div>
         </div>
+
+        {(String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps")) && <VpsServerPanel />}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black text-white transition ${theme.button}`}>Abrir sistema <ExternalLink size={12} /></a>}
