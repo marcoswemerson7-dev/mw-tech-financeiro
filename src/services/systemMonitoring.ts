@@ -80,7 +80,8 @@ const FALLBACKS = {
     name: "Gestão Licita TESTE - VPS Hostinger",
     shortName: "Gestão Licita TESTE",
     city: "Ambiente de laboratório",
-    accessUrl: "http://179.197.76.18:8000",
+    accessUrl: "https://gestao-licitacoes-teste.vercel.app",
+    vercelUrl: "https://gestao-licitacoes-teste.vercel.app",
     supabaseUrl: "",
     healthUrl: "",
   },
@@ -289,6 +290,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
           sistema: FALLBACKS.vps_test.shortName,
           dominio_url: FALLBACKS.vps_test.accessUrl,
           acesso_url: FALLBACKS.vps_test.accessUrl,
+          vercel_url: FALLBACKS.vps_test.vercelUrl,
           supabase_url: "",
           monitoring_key: "vps_test",
           infraestrutura: "VPS",
@@ -306,9 +308,15 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
     sourceRows.map(async (stored) => {
       const tenantKey = inferTenant(stored);
       const fallback = tenantKey === "rg" || tenantKey === "bg" || tenantKey === "vps_test" ? FALLBACKS[tenantKey] : null;
-      const accessUrl = safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
+      // O ambiente de teste é acessado pela Vercel. O IP da VPS fica reservado
+      // para telemetria/infraestrutura e não deve ser usado como URL pública do app.
+      const accessUrl = tenantKey === "vps_test"
+        ? safeUrl(FALLBACKS.vps_test.accessUrl)
+        : safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
       const supabaseUrl = projectRestUrl(stored.supabase_url || fallback?.supabaseUrl || "");
-      const vercelUrl = safeUrl(stored.vercel_url || "");
+      const vercelUrl = tenantKey === "vps_test"
+        ? safeUrl(FALLBACKS.vps_test.vercelUrl)
+        : safeUrl(stored.vercel_url || "");
       const healthUrl = fallback?.healthUrl || "";
       const tenantMetrics = tenantKey ? metrics.get(tenantKey) || null : null;
       const monitoredApp: EndpointHealth | null = tenantMetrics?.appLatencyMs !== null && tenantMetrics?.appLatencyMs !== undefined
