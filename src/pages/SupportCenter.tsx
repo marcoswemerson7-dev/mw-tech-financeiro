@@ -194,20 +194,6 @@ export default function SupportCenter() {
     }
   };
 
-  const prefetchOpenTickets = async (items: SupportTicket[]) => {
-    const candidates = items
-      .filter((ticket) => !["resolvido", "fechado"].includes(ticket.status))
-      .filter((ticket) => !detailCacheRef.current.has(ticket.id))
-      .slice(0, 12);
-
-    await Promise.allSettled(
-      candidates.map(async (ticket) => {
-        const data = await supportService.detail(ticket.id);
-        detailCacheRef.current.set(ticket.id, data.messages);
-      }),
-    );
-  };
-
   useEffect(() => {
     void (async () => {
       setLoading(true);
@@ -215,7 +201,6 @@ export default function SupportCenter() {
         const data = await supportService.list("todos");
         setTickets(data.tickets);
         setError("");
-        void prefetchOpenTickets(data.tickets);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Falha ao carregar chamados");
       } finally {
@@ -230,7 +215,7 @@ export default function SupportCenter() {
 
   useEffect(() => {
     if (!selected) return;
-    const id = window.setInterval(() => void loadDetail(selected, true), 5000);
+    const id = window.setInterval(() => void loadDetail(selected, true), 15000);
     return () => window.clearInterval(id);
   }, [selected?.id]);
 
