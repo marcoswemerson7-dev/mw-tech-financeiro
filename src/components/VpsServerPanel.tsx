@@ -11,19 +11,31 @@ type VpsTelemetry = {
   kernel?: string;
   uptimeSeconds?: number | null;
   cpuPercent?: number | null;
+  cpuCores?: number | null;
+  cpuModel?: string;
   memoryUsedBytes?: number | null;
   memoryTotalBytes?: number | null;
   memoryPercent?: number | null;
+  swapUsedBytes?: number | null;
+  swapTotalBytes?: number | null;
+  swapPercent?: number | null;
   diskUsedBytes?: number | null;
   diskTotalBytes?: number | null;
   diskPercent?: number | null;
+  diskFreeBytes?: number | null;
   load1?: number | null;
   load5?: number | null;
   load15?: number | null;
   docker?: "online" | "offline" | "unknown";
+  caddy?: "online" | "offline" | "unknown";
   nginx?: "online" | "offline" | "unknown";
   postgres?: "online" | "offline" | "unknown";
   app?: "online" | "offline" | "unknown";
+  containersRunning?: number | null;
+  containersTotal?: number | null;
+  processCount?: number | null;
+  networkRxBytes?: number | null;
+  networkTxBytes?: number | null;
   sslValid?: boolean | null;
   sslExpiresAt?: string | null;
   publicIp?: string;
@@ -142,22 +154,30 @@ export default function VpsServerPanel() {
       <div className="p-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <Metric label="CPU" value={pct(data.cpuPercent)} icon={<Cpu size={12} />} />
-          <Metric label="Memória" value={data.memoryPercent != null ? `${pct(data.memoryPercent)} · ${formatBytes(data.memoryUsedBytes)} / ${formatBytes(data.memoryTotalBytes)}` : "—"} icon={<MemoryStick size={12} />} />
+          <Metric label="Núcleos CPU" value={data.cpuCores != null ? String(data.cpuCores) : "—"} icon={<Cpu size={12} />} />
+          <Metric label="Memória RAM" value={data.memoryPercent != null ? `${pct(data.memoryPercent)} · ${formatBytes(data.memoryUsedBytes)} / ${formatBytes(data.memoryTotalBytes)}` : "—"} icon={<MemoryStick size={12} />} />
+          <Metric label="Swap" value={data.swapPercent != null ? `${pct(data.swapPercent)} · ${formatBytes(data.swapUsedBytes)} / ${formatBytes(data.swapTotalBytes)}` : "—"} icon={<MemoryStick size={12} />} />
           <Metric label="Disco" value={data.diskPercent != null ? `${pct(data.diskPercent)} · ${formatBytes(data.diskUsedBytes)} / ${formatBytes(data.diskTotalBytes)}` : "—"} icon={<HardDrive size={12} />} />
+          <Metric label="Disco livre" value={formatBytes(data.diskFreeBytes)} icon={<HardDrive size={12} />} />
           <Metric label="Uptime" value={formatUptime(data.uptimeSeconds)} icon={<Activity size={12} />} />
           <Metric label="Latência health" value={data.latencyMs != null ? `${data.latencyMs} ms` : "—"} icon={<Gauge size={12} />} />
           <Metric label="Load 1m" value={data.load1 != null ? data.load1.toFixed(2) : "—"} icon={<Activity size={12} />} />
           <Metric label="Load 5m" value={data.load5 != null ? data.load5.toFixed(2) : "—"} icon={<Activity size={12} />} />
           <Metric label="Load 15m" value={data.load15 != null ? data.load15.toFixed(2) : "—"} icon={<Activity size={12} />} />
+          <Metric label="Processos" value={data.processCount != null ? String(data.processCount) : "—"} icon={<Activity size={12} />} />
+          <Metric label="Containers" value={data.containersTotal != null ? `${data.containersRunning ?? 0}/${data.containersTotal}` : "—"} icon={<Server size={12} />} />
+          <Metric label="Rede recebida" value={formatBytes(data.networkRxBytes)} icon={<Activity size={12} />} />
+          <Metric label="Rede enviada" value={formatBytes(data.networkTxBytes)} icon={<Activity size={12} />} />
+          <Metric label="Modelo CPU" value={data.cpuModel || "—"} icon={<Cpu size={12} />} />
         </div>
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <Service label="Aplicação" state={data.app} />
           <Service label="Docker" state={data.docker} />
-          <Service label="Nginx" state={data.nginx} />
+          <Service label="Caddy" state={data.caddy || data.nginx} />
           <Service label="PostgreSQL" state={data.postgres} />
+          <Service label="Health endpoint" state={data.reachable ? "online" : "offline"} />
         </div>
-
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
             <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wide text-slate-400"><ShieldCheck size={12} />SSL</div>
