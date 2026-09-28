@@ -77,7 +77,14 @@ def payload():
     loads = os.getloadavg()
     containers, docker = docker_stats()
     cpu_model = run("awk -F: '/model name/ {print $2; exit}' /proc/cpuinfo").strip()
-    os_name = run("grep PRETTY_NAME /etc/os-release | cut -d= -f2- | tr -d '"'") or platform.platform()
+    os_name = platform.platform()
+    try:
+        for line in open("/etc/os-release"):
+            if line.startswith("PRETTY_NAME="):
+                os_name = line.split("=", 1)[1].strip().strip('"')
+                break
+    except Exception:
+        pass
     process_count = len([x for x in os.listdir("/proc") if x.isdigit()])
     caddy = docker_service_state("caddy")
     nginx = state("systemctl is-active nginx")
