@@ -60,13 +60,16 @@ def docker_stats():
     running = run("docker ps -q | wc -l")
     return {"running": int(running or 0), "total": int(total or 0)}, "online"
 
-def postgres_state():
+def docker_service_state(*needles):
     names = run("docker ps --format '{{.Names}}'").splitlines()
-    return "online" if any(("postgres" in n.lower() or "supabase-db" in n.lower() or "pooler" in n.lower()) for n in names) else "offline"
+    lowered = [n.lower() for n in names]
+    return "online" if any(any(needle in n for needle in needles) for n in lowered) else "offline"
+
+def postgres_state():
+    return docker_service_state("postgres", "supabase-db", "pooler")
 
 def app_state():
-    names = run("docker ps --format '{{.Names}}'").splitlines()
-    return "online" if any(names) else "offline"
+    return docker_service_state("supabase-studio", "supabase-kong", "supabase-auth", "supabase-rest", "supabase-realtime")
 
 def payload():
     mem = meminfo()
@@ -76,7 +79,7 @@ def payload():
     cpu_model = run("awk -F: '/model name/ {print $2; exit}' /proc/cpuinfo").strip()
     os_name = run("grep PRETTY_NAME /etc/os-release | cut -d= -f2- | tr -d '"'") or platform.platform()
     process_count = len([x for x in os.listdir("/proc") if x.isdigit()])
-    caddy = state("systemctl is-active caddy")
+    caddy = docker_service_state("caddy")
     nginx = state("systemctl is-active nginx")
     return {
         "ok": True,
