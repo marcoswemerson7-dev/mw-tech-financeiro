@@ -401,7 +401,8 @@ export default function Monitoring() {
       if (item.overall === "offline") rows.push({ title: "Sistema indisponível", detail: item.name, level: "Alta", tone: "rose" });
       else if (item.overall === "attention") rows.push({ title: "Sistema requer atenção", detail: item.name, level: "Média", tone: "amber" });
       if ((item.app.latencyMs || 0) > 2500) rows.push({ title: "Latência elevada", detail: `${item.name} · ${item.app.latencyMs} ms`, level: "Média", tone: "amber" });
-      if (!item.metrics?.configured) rows.push({ title: "Métricas detalhadas pendentes", detail: item.name, level: "Info", tone: "blue" });
+      const isVpsTest = String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps");
+      if (!isVpsTest && !item.metrics?.configured) rows.push({ title: "Métricas detalhadas pendentes", detail: item.name, level: "Info", tone: "blue" });
     });
     if (!rows.length) rows.push({ title: "Nenhuma pendência crítica", detail: "Todos os sistemas monitorados estão estáveis.", level: "Info", tone: "blue" });
     return rows.slice(0, 6);
