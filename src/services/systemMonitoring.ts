@@ -195,11 +195,11 @@ async function probeHealth(url: string, timeoutMs = 8000): Promise<EndpointHealt
       };
     }
     return {
-      state: latencyMs > 1800 ? "attention" : "online",
+      state: latencyMs > 2500 ? "attention" : "online",
       latencyMs,
       checkedAt: body.checkedAt || checkedAt,
       url,
-      message: latencyMs > 1800 ? "Backend respondendo com lentidão" : "Backend e banco operacionais",
+      message: latencyMs > 2500 ? "Backend respondendo com lentidão" : "Backend e banco operacionais",
     };
   } catch {
     return {
