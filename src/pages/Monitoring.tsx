@@ -49,11 +49,12 @@ import {
 import { getCachedDriveStorageUsage, getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 
 const refreshEveryMs = 60000;
-const historyKey = "mw-control:monitoring-history:v2";
+const historyKey = "mw-control:monitoring-history:v3";
 const chartColors = ["#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626", "#0891b2", "#4f46e5"];
 
 type HistoryPoint = {
   time: string;
+  timestamp: number;
   [key: string]: string | number | null;
 };
 
@@ -331,8 +332,10 @@ export default function Monitoring() {
         .catch((driveErr: Error) => setDriveError(driveErr.message));
       setNextRefresh(refreshEveryMs / 1000);
 
+      const now = new Date();
       const point: HistoryPoint = {
-        time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        time: now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        timestamp: now.getTime(),
       };
       data.forEach((item) => {
         point[item.key] = item.app.latencyMs;
@@ -422,7 +425,7 @@ export default function Monitoring() {
     const keys = new Set(visibleItems.map((item) => item.key));
     const values = history.flatMap((point) =>
       Object.entries(point)
-        .filter(([key]) => key !== "time" && keys.has(key))
+        .filter(([key]) => key !== "time" && key !== "timestamp" && keys.has(key))
         .map(([, value]) => typeof value === "number" ? value : null)
         .filter((value): value is number => value !== null),
     );
@@ -492,7 +495,7 @@ export default function Monitoring() {
                 <YAxis tick={{ fontSize: 10 }} width={45} axisLine={false} tickLine={false} unit=" ms" />
                 <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(7,24,45,.10)" }} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                {items.map((item, index) => (
+                {visibleItems.map((item, index) => (
                   <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
                 ))}
               </LineChart>
