@@ -415,7 +415,8 @@ export default function Monitoring() {
   ];
 
   const totalSystems = visibleItems.length;
-  const operationalPercent = totalSystems ? Math.round((summary.online / totalSystems) * 100) : 0;
+  const operationalSystems = summary.online + summary.attention;
+  const operationalPercent = totalSystems ? Math.round((operationalSystems / totalSystems) * 100) : 0;
 
   const latencyStats = useMemo(() => {
     const keys = new Set(visibleItems.map((item) => item.key));
@@ -515,7 +516,7 @@ export default function Monitoring() {
       </section>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} em atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
+        <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online + summary.attention}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} operacional com atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
         <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
         <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
         <SummaryCard label="Contratos" value={loading ? "—" : String(summary.contracts)} hint="Total cadastrado" icon={<FileText size={20} />} tone="slate" />
