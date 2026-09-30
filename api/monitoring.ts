@@ -102,7 +102,7 @@ async function probeApplication(url: string) {
     // Ela serve apenas para aquecer a conexão e não entra no valor exibido.
     await probeOnce(url).catch(() => null);
 
-    const samples = [];
+    const samples: Awaited<ReturnType<typeof probeOnce>>[] = [];
     for (let index = 0; index < 3; index += 1) {
       try {
         samples.push(await probeOnce(url));
