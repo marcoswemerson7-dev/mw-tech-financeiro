@@ -358,6 +358,14 @@ function effectiveState(history: HistoryPoint[], item: SystemHealthSnapshot): He
   return "online";
 }
 
+function latencyQuality(value: number | null) {
+  if (value === null) return { label: "Sem dados", tone: "slate" };
+  if (value < 100) return { label: "Excelente", tone: "emerald" };
+  if (value < 300) return { label: "Normal", tone: "blue" };
+  if (value < 800) return { label: "Atenção", tone: "amber" };
+  return { label: "Elevada", tone: "rose" };
+}
+
 export default function Monitoring() {
   const [items, setItems] = useState<SystemHealthSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -501,6 +509,16 @@ export default function Monitoring() {
     };
   }, [history, visibleItems, summary.average]);
 
+  const historyReadingCount = Math.min(history.length, 24);
+  const currentLatencyQuality = latencyQuality(summary.average);
+  const qualityToneClasses = {
+    emerald: "border-emerald-100 bg-emerald-50 text-emerald-700",
+    blue: "border-blue-100 bg-blue-50 text-blue-700",
+    amber: "border-amber-100 bg-amber-50 text-amber-700",
+    rose: "border-rose-100 bg-rose-50 text-rose-700",
+    slate: "border-slate-200 bg-slate-50 text-slate-600",
+  }[currentLatencyQuality.tone];
+
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5">
       <PageHeader
@@ -541,11 +559,20 @@ export default function Monitoring() {
             <span className="grid size-11 place-items-center rounded-2xl bg-amber-50 text-amber-600"><Gauge size={21} /></span>
             <div>
               <h2 className="text-lg font-black text-[#07182d]">Histórico de latência</h2>
-              <p className="text-[11px] text-slate-500">Acompanhamento em tempo real · últimas 24 leituras</p>
+              <p className="text-[11px] text-slate-500">
+                {historyReadingCount < 24
+                  ? `Coletando histórico: ${historyReadingCount}/24 leituras`
+                  : "Acompanhamento em tempo real · últimas 24 leituras"}
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">Atual estável: {summary.average === null ? "—" : `${summary.average} ms`}</span>
+            <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">
+              Atual estável: {summary.average === null ? "—" : `${summary.average} ms`}
+            </span>
+            <span className={`rounded-xl border px-3 py-2 text-[10px] font-black ${qualityToneClasses}`}>
+              {currentLatencyQuality.label}
+            </span>
             <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
             <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-black text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
             <span className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-700">Máx: {latencyStats.max === null ? "—" : `${latencyStats.max} ms`}</span>
@@ -561,7 +588,7 @@ export default function Monitoring() {
                 <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(7,24,45,.10)" }} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                 {visibleItems.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
+                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={{ r: 2.2, strokeWidth: 0 }} activeDot={{ r: 5 }} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -575,7 +602,13 @@ export default function Monitoring() {
               </div>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Latência atual estável</span><b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b></div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <span className="text-[9px] font-bold uppercase text-slate-400">Latência consolidada</span>
+                <b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b>
+                <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[8px] font-black ${qualityToneClasses}`}>
+                  {currentLatencyQuality.label}
+                </span>
+              </div>
               <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Operacionais</span><b className="mt-1 block text-lg font-black text-emerald-700">{operationalPercent}%</b></div>
             </div>
             <p className="mt-4 text-[10px] text-slate-500">Última verificação: <b className="text-slate-700">{lastChecked(items)}</b></p>
@@ -591,7 +624,7 @@ export default function Monitoring() {
         <SummaryCard label="Notas fiscais" value={loading ? "—" : String(summary.invoices)} hint="Total cadastrado" icon={<Receipt size={20} />} tone="amber" />
         <SummaryCard label="Pagamentos" value={loading ? "—" : String(summary.payments)} hint="Registros financeiros" icon={<CreditCard size={20} />} tone="emerald" />
         <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
-        <SummaryCard label="Latência atual estável" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Mediana das últimas leituras, resistente a picos isolados" icon={<Gauge size={20} />} tone="amber" />
+        <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
       </div>
 
       <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
