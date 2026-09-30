@@ -64,7 +64,7 @@ async function probeApplication(url: string) {
     const latencyMs = Date.now() - started;
     return {
       appLatencyMs: latencyMs,
-      appState: response.ok ? (latencyMs > 800 ? "attention" : "online") : "offline",
+      appState: response.ok ? (latencyMs > 2500 ? "attention" : "online") : "offline",
       appCheckedAt: checkedAt,
       appStatusCode: response.status,
     };
