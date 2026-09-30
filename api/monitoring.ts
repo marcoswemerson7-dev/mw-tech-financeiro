@@ -51,22 +51,88 @@ async function getSnapshot(baseUrl: string, key: string, rpc: string) {
   return await response.json();
 }
 
-async function probeApplication(url: string) {
-  const started = Date.now();
-  const checkedAt = new Date().toISOString();
+async function probeOnce(url: string) {
+  const started = performance.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const response = await fetch(url, {
-      method: "GET",
+    let response = await fetch(url, {
+      method: "HEAD",
       redirect: "follow",
       cache: "no-store",
-      headers: { "user-agent": "MW-Tech-Monitor/1.0" },
+      signal: controller.signal,
+      headers: { "user-agent": "MW-Tech-Monitor/2.0" },
     });
-    const latencyMs = Date.now() - started;
+
+    // Alguns hosts não implementam HEAD corretamente. Nesses casos, usa GET
+    // somente como contingência.
+    if (response.status === 405 || response.status === 501) {
+      response = await fetch(url, {
+        method: "GET",
+        redirect: "follow",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: { "user-agent": "MW-Tech-Monitor/2.0" },
+      });
+    }
+
+    return {
+      ok: response.ok,
+      latencyMs: Math.round(performance.now() - started),
+      statusCode: response.status,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function median(values: number[]) {
+  const ordered = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2
+    ? ordered[middle]
+    : Math.round((ordered[middle - 1] + ordered[middle]) / 2);
+}
+
+async function probeApplication(url: string) {
+  const checkedAt = new Date().toISOString();
+
+  try {
+    // A primeira chamada pode carregar DNS/TLS/conexão da função serverless.
+    // Ela serve apenas para aquecer a conexão e não entra no valor exibido.
+    await probeOnce(url).catch(() => null);
+
+    const samples = [];
+    for (let index = 0; index < 3; index += 1) {
+      try {
+        samples.push(await probeOnce(url));
+      } catch {
+        // Uma amostra isolada não deve transformar um sistema saudável em pico.
+      }
+    }
+
+    const successful = samples.filter((sample) => sample.ok);
+    if (!successful.length) {
+      const last = samples[samples.length - 1];
+      return {
+        appLatencyMs: last?.latencyMs ?? null,
+        appState: "offline",
+        appCheckedAt: checkedAt,
+        appStatusCode: last?.statusCode ?? null,
+      };
+    }
+
+    const latencyMs = median(successful.map((sample) => sample.latencyMs));
+    const state = latencyMs > 800 ? "attention" : "online";
+    const representative = successful.reduce((best, sample) =>
+      Math.abs(sample.latencyMs - latencyMs) < Math.abs(best.latencyMs - latencyMs) ? sample : best
+    );
+
     return {
       appLatencyMs: latencyMs,
-      appState: response.ok ? (latencyMs > 2500 ? "attention" : "online") : "offline",
+      appState: state,
       appCheckedAt: checkedAt,
-      appStatusCode: response.status,
+      appStatusCode: representative.statusCode,
     };
   } catch {
     return {
