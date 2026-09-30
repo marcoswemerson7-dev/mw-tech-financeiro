@@ -164,13 +164,24 @@ function SmallRow({
   );
 }
 
-function MetricBox({ label, value, icon }: { label: string; value: string | number; icon: ReactNode }) {
+function MetricBox({
+  label,
+  value,
+  icon,
+  hint,
+}: {
+  label: string;
+  value: string | number;
+  icon: ReactNode;
+  hint?: string;
+}) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
       <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wide text-slate-400">
         <span className="text-slate-500">{icon}</span>{label}
       </div>
       <b className="mt-1.5 block text-lg font-black text-[#07182d]">{value}</b>
+      {hint && <p className="mt-1 text-[8px] leading-3 text-slate-400">{hint}</p>}
     </div>
   );
 }
@@ -286,8 +297,8 @@ function SystemCard({
         {!isVpsTest && <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
-              <h4 className="text-[11px] font-black text-[#07182d]">Volume operacional</h4>
-              <p className="text-[9px] text-slate-400">Dados reais cadastrados no sistema.</p>
+              <h4 className="text-[11px] font-black text-[#07182d]">Dados do sistema</h4>
+              <p className="text-[9px] text-slate-400">Cadastros no banco e uso físico do Supabase. O Google Drive é medido separadamente abaixo.</p>
             </div>
             {!metricsAvailable && <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-black text-amber-700">Integração de métricas pendente</span>}
           </div>
@@ -296,11 +307,36 @@ function SystemCard({
             <MetricBox label="Contratos" value={m?.contracts ?? "—"} icon={<FileText size={12} />} />
             <MetricBox label="Notas fiscais" value={m?.invoices ?? "—"} icon={<Receipt size={12} />} />
             <MetricBox label="Pagamentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />
-            <MetricBox label="Arquivos registrados" value={m?.files ?? "—"} icon={<HardDrive size={12} />} />
-            <MetricBox label="Volume de anexos registrados" value={formatBytes(m?.fileBytes)} icon={<HardDrive size={12} />} />
-            <MetricBox label="Objetos no Supabase" value={m?.supabaseStorageFiles ?? "—"} icon={<HardDrive size={12} />} />
-            <MetricBox label="Storage Supabase" value={formatBytes(m?.supabaseStorageBytes)} icon={<HardDrive size={12} />} />
-            <MetricBox label="Banco Supabase" value={formatBytes(m?.databaseBytes)} icon={<Database size={12} />} />
+            <MetricBox
+              label="Arquivos de processos"
+              value={m?.files ?? "—"}
+              icon={<HardDrive size={12} />}
+              hint="Registros da tabela de arquivos de processos"
+            />
+            <MetricBox
+              label="Volume dos arquivos de processos"
+              value={formatBytes(m?.fileBytes)}
+              icon={<HardDrive size={12} />}
+              hint="Soma dos tamanhos cadastrados; não é o uso total do Drive"
+            />
+            <MetricBox
+              label="Objetos físicos no Supabase"
+              value={m?.supabaseStorageFiles ?? "—"}
+              icon={<HardDrive size={12} />}
+              hint="Inclui avatares e qualquer objeto restante no Storage"
+            />
+            <MetricBox
+              label="Uso físico do Supabase"
+              value={formatBytes(m?.supabaseStorageBytes)}
+              icon={<HardDrive size={12} />}
+              hint="Espaço realmente ocupado no Supabase Storage"
+            />
+            <MetricBox
+              label="Banco de dados Supabase"
+              value={formatBytes(m?.databaseBytes)}
+              icon={<Database size={12} />}
+              hint="Tamanho do banco PostgreSQL; não inclui arquivos do Drive"
+            />
           </div>
         </div>}
 
@@ -637,8 +673,8 @@ export default function Monitoring() {
               <GoogleDriveLogo className="size-8" />
             </span>
             <div>
-              <h2 className="text-base font-black text-[#07182d]">Google Drive</h2>
-              <p className="text-[10px] text-slate-500">Uso total e consumo das pastas monitoradas por órgão.</p>
+              <h2 className="text-base font-black text-[#07182d]">Google Drive · armazenamento físico real</h2>
+              <p className="text-[10px] text-slate-500">Medição direta da conta do Drive e de todo o conteúdo dentro das pastas de cada órgão.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -646,21 +682,39 @@ export default function Monitoring() {
             <Link to="/armazenamento" className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 py-2 text-[10px] font-black text-blue-700 hover:bg-blue-50">Ver detalhes <ArrowRight size={12}/></Link>
           </div>
         </div>
+        <div className="mb-4 grid gap-2 md:grid-cols-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5">
+            <b className="block text-[9px] uppercase text-blue-700">Drive por órgão</b>
+            <span className="mt-0.5 block text-[9px] leading-4 text-slate-600">É o tamanho físico real de tudo que existe dentro da pasta monitorada do órgão.</span>
+          </div>
+          <div className="rounded-xl border border-violet-100 bg-violet-50/70 px-3 py-2.5">
+            <b className="block text-[9px] uppercase text-violet-700">Arquivos de processos</b>
+            <span className="mt-0.5 block text-[9px] leading-4 text-slate-600">É apenas a soma dos registros da tabela de anexos de processos. Não precisa ser igual ao Drive.</span>
+          </div>
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5">
+            <b className="block text-[9px] uppercase text-emerald-700">Supabase Storage</b>
+            <span className="mt-0.5 block text-[9px] leading-4 text-slate-600">Mostra somente o que ainda está fisicamente no Storage do Supabase, como avatares.</span>
+          </div>
+        </div>
         {driveData ? (
           <div className="grid gap-3 xl:grid-cols-[1.1fr_.7fr_.7fr_1.6fr]">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Uso total do Drive</span><b className="text-sm text-blue-700">{driveData.percent.toFixed(1)}%</b></div>
+              <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Uso real da conta Drive</span><b className="text-sm text-blue-700">{driveData.percent.toFixed(1)}%</b></div>
               <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(100, driveData.percent)}%` }} /></div>
               <div className="mt-3 flex items-end justify-between"><div><b className="text-xl font-black text-[#07182d]">{driveData.usedGb.toFixed(2)} GB</b><p className="text-[9px] text-slate-500">de {driveData.totalGb.toFixed(0)} GB</p></div><span className="text-[9px] text-slate-400">Atualizado {new Date(driveData.updatedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></div>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><HardDrive size={17}/></span><p className="mt-3 text-[9px] font-black uppercase text-slate-400">Disponível</p><b className="mt-1 block text-lg font-black text-[#07182d]">{driveData.availableGb.toFixed(2)} GB</b></div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={17}/></span><p className="mt-3 text-[9px] font-black uppercase text-slate-400">Plano</p><b className="mt-1 block text-lg font-black text-[#07182d]">{driveData.totalGb.toFixed(0)} GB</b><p className="text-[9px] text-slate-500">{driveData.folders.length} pasta(s) raiz</p></div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="mb-2 flex items-center justify-between"><b className="text-[11px] text-[#07182d]">Uso por órgão</b><span className="text-[9px] font-semibold text-slate-400">{driveData.folders.length} monitorado(s)</span></div>
+              <div className="mb-2 flex items-center justify-between"><b className="text-[11px] text-[#07182d]">Uso físico por órgão no Drive</b><span className="text-[9px] font-semibold text-slate-400">{driveData.folders.length} pasta(s) raiz</span></div>
               <div className="space-y-3">
                 {driveData.folders.slice(0,4).map((folder) => (
                   <div key={folder.id}>
                     <div className="mb-1 flex items-center justify-between gap-3"><span className="flex min-w-0 items-center gap-2 text-[10px] font-semibold text-slate-600"><FolderOpen size={13} className="shrink-0 text-amber-500"/><span className="truncate">{folder.name}</span></span><b className="shrink-0 text-[10px] text-[#07182d]">{folder.usedGb.toFixed(2)} GB</b></div>
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-[8px] text-slate-400">
+                      <span>{folder.files.toLocaleString("pt-BR")} arquivo(s)</span>
+                      <span>{folder.folders.toLocaleString("pt-BR")} subpasta(s)</span>
+                    </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-500" style={{width:`${Math.min(100, folder.percentOfTotal)}%`}}/></div>
                   </div>
                 ))}
@@ -680,8 +734,8 @@ export default function Monitoring() {
               <HardDrive size={21} />
             </span>
             <div>
-              <h2 className="text-lg font-black tracking-tight text-[#07182d]">Armazenamento por origem</h2>
-              <p className="mt-1 text-[11px] text-slate-500">Acompanhe o espaço utilizado e a quantidade de arquivos em cada camada.</p>
+              <h2 className="text-lg font-black tracking-tight text-[#07182d]">Onde os dados estão armazenados</h2>
+              <p className="mt-1 text-[11px] text-slate-500">Banco e Storage do Supabase são separados do Google Drive. Os números representam camadas diferentes e não devem ser comparados como se fossem o mesmo conjunto.</p>
             </div>
           </div>
           <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3 py-1.5 text-[10px] font-black text-blue-700 shadow-sm">
@@ -703,27 +757,27 @@ export default function Monitoring() {
               <span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700"><HardDrive size={18} /></span>
               <span className="text-[9px] font-black uppercase tracking-wider text-blue-500">Arquivos</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Storage de arquivos</p>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Supabase Storage físico</p>
             <b className="mt-1 block text-xl font-black text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))}</b>
-            <p className="mt-1 text-[10px] text-slate-500">Arquivos hospedados no Supabase</p>
+            <p className="mt-1 text-[10px] text-slate-500">Somente objetos realmente hospedados no Supabase</p>
           </div>
           <div className="rounded-2xl border border-emerald-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><FileStack size={18} /></span>
               <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600">Quantidade</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Arquivos registrados</p>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Objetos físicos no Supabase</p>
             <b className="mt-1 block text-xl font-black text-[#07182d]">{String(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))}</b>
-            <p className="mt-1 text-[10px] text-slate-500">Total no Storage Supabase</p>
+            <p className="mt-1 text-[10px] text-slate-500">Quantidade real no Storage, inclusive avatares</p>
           </div>
           <div className="rounded-2xl border border-amber-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-700"><Server size={18} /></span>
-              <span className="text-[9px] font-black uppercase tracking-wider text-amber-600">Ativos</span>
+              <span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-700"><FolderOpen size={18} /></span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-amber-600">Drive</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Órgãos monitorados</p>
-            <b className="mt-1 block text-xl font-black text-[#07182d]">{String(visibleItems.length)}</b>
-            <p className="mt-1 text-[10px] text-slate-500">Prefeituras e câmaras cadastradas</p>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Google Drive · uso físico</p>
+            <b className="mt-1 block text-xl font-black text-[#07182d]">{driveData ? `${driveData.usedGb.toFixed(2)} GB` : "—"}</b>
+            <p className="mt-1 text-[10px] text-slate-500">Uso real da conta Google Drive monitorada</p>
           </div>
         </div>
       </section>
