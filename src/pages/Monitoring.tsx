@@ -208,7 +208,15 @@ function getSystemTheme(item: SystemHealthSnapshot) {
   };
 }
 
-function SystemCard({ item }: { item: SystemHealthSnapshot }) {
+function SystemCard({
+  item,
+  displayState,
+  displayLatency,
+}: {
+  item: SystemHealthSnapshot;
+  displayState: HealthState;
+  displayLatency: number | null;
+}) {
   const m = item.metrics;
   const isVpsTest = String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps");
   const metricsAvailable = Boolean(m?.configured);
@@ -241,8 +249,8 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
             </div>
           </div>
           <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[9px] font-black text-white`}>
-            <span className={`size-1.5 rounded-full ${item.overall === "online" ? "bg-emerald-300" : item.overall === "offline" ? "bg-rose-300" : "bg-amber-300"}`} />
-            {stateLabel(item.overall)}
+            <span className={`size-1.5 rounded-full ${displayState === "online" ? "bg-emerald-300" : displayState === "offline" ? "bg-rose-300" : "bg-amber-300"}`} />
+            {stateLabel(displayState)}
           </span>
         </div>
       </div>
@@ -254,7 +262,10 @@ function SystemCard({ item }: { item: SystemHealthSnapshot }) {
           {item.provedor && <SmallRow icon={<Server size={14} />} label="Provedor / datacenter" value={item.provedor} />}
           {item.servidorEndereco && <SmallRow icon={<Server size={14} />} label="Servidor / IP" value={item.servidorEndereco} />}
           {item.servidorOs && <SmallRow icon={<HardDrive size={14} />} label="Sistema operacional" value={item.servidorOs} />}
-          <SmallRow icon={<Gauge size={14} />} label={isVpsTest ? "Latência da aplicação" : "Latência"} value={item.app.latencyMs !== null ? `${item.app.latencyMs} ms` : "—"} />
+          <SmallRow icon={<Gauge size={14} />} label={isVpsTest ? "Latência estável da aplicação" : "Latência estável"} value={displayLatency !== null ? `${displayLatency} ms` : "—"} />
+          {item.app.latencyMs !== null && displayLatency !== item.app.latencyMs && (
+            <SmallRow icon={<Activity size={14} />} label="Última amostra bruta" value={`${item.app.latencyMs} ms`} />
+          )}
           <SmallRow icon={<Server size={14} />} label="Aplicação / domínio" value={stateLabel(item.app.state)} good={item.app.state === "online"} />
           {!isVpsTest && <SmallRow icon={<Database size={14} />} label="Banco Supabase" value={stateLabel(item.database.state)} good={item.database.state === "online"} />}
           {!isVpsTest && <SmallRow icon={<ShieldCheck size={14} />} label="Backend interno" value={stateLabel(item.backend.state)} good={item.backend.state === "online"} />}
@@ -730,7 +741,15 @@ export default function Monitoring() {
                   );
                 })}
               </div>
-              {selectedItem && <div className="mx-auto mt-4 w-full max-w-3xl"><SystemCard item={selectedItem} /></div>}
+              {selectedItem && (
+                <div className="mx-auto mt-4 w-full max-w-3xl">
+                  <SystemCard
+                    item={selectedItem}
+                    displayState={effectiveState(history, selectedItem)}
+                    displayLatency={stableLatency(history, selectedItem)}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
