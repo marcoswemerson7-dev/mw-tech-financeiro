@@ -297,8 +297,8 @@ function SystemCard({
             <MetricBox label="Notas fiscais" value={m?.invoices ?? "—"} icon={<Receipt size={12} />} />
             <MetricBox label="Pagamentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />
             <MetricBox label="Arquivos registrados" value={m?.files ?? "—"} icon={<HardDrive size={12} />} />
-            <MetricBox label="Volume dos anexos" value={formatBytes(m?.fileBytes)} icon={<HardDrive size={12} />} />
-            <MetricBox label="Arquivos no Supabase" value={m?.supabaseStorageFiles ?? "—"} icon={<HardDrive size={12} />} />
+            <MetricBox label="Volume de anexos registrados" value={formatBytes(m?.fileBytes)} icon={<HardDrive size={12} />} />
+            <MetricBox label="Objetos no Supabase" value={m?.supabaseStorageFiles ?? "—"} icon={<HardDrive size={12} />} />
             <MetricBox label="Storage Supabase" value={formatBytes(m?.supabaseStorageBytes)} icon={<HardDrive size={12} />} />
             <MetricBox label="Banco Supabase" value={formatBytes(m?.databaseBytes)} icon={<Database size={12} />} />
           </div>
