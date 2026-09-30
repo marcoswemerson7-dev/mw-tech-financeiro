@@ -49,7 +49,7 @@ import {
 import { getCachedDriveStorageUsage, getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 
 const refreshEveryMs = 60000;
-const historyKey = "mw-control:monitoring-history:v3";
+const historyKey = "mw-control:monitoring-history:v4";
 const chartColors = ["#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626", "#0891b2", "#4f46e5"];
 
 type HistoryPoint = {
@@ -301,6 +301,52 @@ function sumMetric(items: SystemHealthSnapshot[], key: keyof MonitoringMetrics) 
   return items.reduce((sum, item) => sum + Number(item.metrics?.[key] || 0), 0);
 }
 
+const LATENCY_ATTENTION_MS = 800;
+
+function medianNumber(values: number[]) {
+  if (!values.length) return null;
+  const ordered = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2
+    ? ordered[middle]
+    : Math.round((ordered[middle - 1] + ordered[middle]) / 2);
+}
+
+function recentLatencyValues(history: HistoryPoint[], key: string, limit = 3) {
+  return history
+    .slice(-limit)
+    .map((point) => point[key])
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+}
+
+function stableLatency(history: HistoryPoint[], item: SystemHealthSnapshot) {
+  const recent = recentLatencyValues(history, item.key, 3);
+  if (recent.length >= 2) return medianNumber(recent);
+  return item.app.latencyMs;
+}
+
+function hasSustainedLatency(history: HistoryPoint[], item: SystemHealthSnapshot) {
+  const recent = recentLatencyValues(history, item.key, 3);
+  return recent.length >= 2 && recent.filter((value) => value > LATENCY_ATTENTION_MS).length >= 2;
+}
+
+function hasIsolatedSpike(history: HistoryPoint[], item: SystemHealthSnapshot) {
+  const recent = recentLatencyValues(history, item.key, 3);
+  if (recent.length < 2) return false;
+  const latest = recent[recent.length - 1];
+  const baseline = medianNumber(recent.slice(0, -1));
+  if (baseline === null || baseline <= 0) return false;
+  return latest > LATENCY_ATTENTION_MS && latest >= Math.max(baseline * 2.5, baseline + 500);
+}
+
+function effectiveState(history: HistoryPoint[], item: SystemHealthSnapshot): HealthState {
+  if (item.database.state === "offline" || item.backend.state === "offline" || item.app.state === "offline") return "offline";
+  if (item.database.state === "attention" || item.backend.state === "attention") return "attention";
+  if (item.app.state === "attention" && hasSustainedLatency(history, item)) return "attention";
+  if (item.overall === "unconfigured") return "unconfigured";
+  return "online";
+}
+
 export default function Monitoring() {
   const [items, setItems] = useState<SystemHealthSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,9 +362,9 @@ export default function Monitoring() {
 
   const visibleItems = useMemo(() => items.filter((item) => {
     const matchesOrg = orgFilter === "todos" || item.key === orgFilter;
-    const matchesStatus = statusFilter === "todos" || item.overall === statusFilter;
+    const matchesStatus = statusFilter === "todos" || effectiveState(history, item) === statusFilter;
     return matchesOrg && matchesStatus;
-  }), [items, orgFilter, statusFilter]);
+  }), [items, orgFilter, statusFilter, history]);
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -378,10 +424,12 @@ export default function Monitoring() {
   const selectedItem = useMemo(() => visibleItems.find((item) => item.key === selectedKey) || visibleItems[0] || null, [visibleItems, selectedKey]);
 
   const summary = useMemo(() => {
-    const online = visibleItems.filter((item) => item.overall === "online").length;
-    const attention = visibleItems.filter((item) => item.overall === "attention").length;
-    const offline = visibleItems.filter((item) => item.overall === "offline").length;
-    const latencies = visibleItems.map((item) => item.app.latencyMs).filter((value): value is number => value !== null);
+    const online = visibleItems.filter((item) => effectiveState(history, item) === "online").length;
+    const attention = visibleItems.filter((item) => effectiveState(history, item) === "attention").length;
+    const offline = visibleItems.filter((item) => effectiveState(history, item) === "offline").length;
+    const latencies = visibleItems
+      .map((item) => stableLatency(history, item))
+      .filter((value): value is number => value !== null);
     const average = latencies.length ? Math.round(latencies.reduce((sum, value) => sum + value, 0) / latencies.length) : null;
     return {
       online,
@@ -396,20 +444,26 @@ export default function Monitoring() {
       payments: sumMetric(visibleItems, "payments"),
       files: sumMetric(visibleItems, "files"),
     };
-  }, [visibleItems]);
+  }, [visibleItems, history]);
 
   const alerts = useMemo(() => {
     const rows: Array<{ title: string; detail: string; level: "Alta" | "Média" | "Info"; tone: string }> = [];
     visibleItems.forEach((item) => {
-      if (item.overall === "offline") rows.push({ title: "Sistema indisponível", detail: item.name, level: "Alta", tone: "rose" });
-      else if (item.overall === "attention") rows.push({ title: "Sistema requer atenção", detail: item.name, level: "Média", tone: "amber" });
-      if ((item.app.latencyMs || 0) > 2500) rows.push({ title: "Latência elevada", detail: `${item.name} · ${item.app.latencyMs} ms`, level: "Média", tone: "amber" });
+      const state = effectiveState(history, item);
+      const stable = stableLatency(history, item);
+      if (state === "offline") rows.push({ title: "Sistema indisponível", detail: item.name, level: "Alta", tone: "rose" });
+      else if (state === "attention") rows.push({ title: "Sistema requer atenção", detail: item.name, level: "Média", tone: "amber" });
+      if (hasSustainedLatency(history, item) && stable !== null) {
+        rows.push({ title: "Latência elevada persistente", detail: `${item.name} · ~${stable} ms nas últimas leituras`, level: "Média", tone: "amber" });
+      } else if (hasIsolatedSpike(history, item) && item.app.latencyMs !== null) {
+        rows.push({ title: "Pico isolado de latência", detail: `${item.name} · ${item.app.latencyMs} ms · aguardando confirmação`, level: "Info", tone: "blue" });
+      }
       const isVpsTest = String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps");
       if (!isVpsTest && !item.metrics?.configured) rows.push({ title: "Métricas detalhadas pendentes", detail: item.name, level: "Info", tone: "blue" });
     });
     if (!rows.length) rows.push({ title: "Nenhuma pendência crítica", detail: "Todos os sistemas monitorados estão estáveis.", level: "Info", tone: "blue" });
     return rows.slice(0, 6);
-  }, [visibleItems]);
+  }, [visibleItems, history]);
 
   const distribution = [
     { name: "Operacionais", value: summary.online },
@@ -480,7 +534,7 @@ export default function Monitoring() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">Atual: {summary.average === null ? "—" : `${summary.average} ms`}</span>
+            <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">Atual estável: {summary.average === null ? "—" : `${summary.average} ms`}</span>
             <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
             <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-black text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
             <span className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-700">Máx: {latencyStats.max === null ? "—" : `${latencyStats.max} ms`}</span>
@@ -510,7 +564,7 @@ export default function Monitoring() {
               </div>
             </div>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Latência média</span><b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b></div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Latência atual estável</span><b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b></div>
               <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Operacionais</span><b className="mt-1 block text-lg font-black text-emerald-700">{operationalPercent}%</b></div>
             </div>
             <p className="mt-4 text-[10px] text-slate-500">Última verificação: <b className="text-slate-700">{lastChecked(items)}</b></p>
@@ -526,7 +580,7 @@ export default function Monitoring() {
         <SummaryCard label="Notas fiscais" value={loading ? "—" : String(summary.invoices)} hint="Total cadastrado" icon={<Receipt size={20} />} tone="amber" />
         <SummaryCard label="Pagamentos" value={loading ? "—" : String(summary.payments)} hint="Registros financeiros" icon={<CreditCard size={20} />} tone="emerald" />
         <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
-        <SummaryCard label="Latência média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Tempo médio de resposta" icon={<Gauge size={20} />} tone="amber" />
+        <SummaryCard label="Latência atual estável" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint="Mediana das últimas leituras, resistente a picos isolados" icon={<Gauge size={20} />} tone="amber" />
       </div>
 
       <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
