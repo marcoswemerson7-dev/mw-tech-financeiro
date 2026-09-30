@@ -80,13 +80,21 @@ function lastChecked(items: SystemHealthSnapshot[]) {
 }
 
 function formatBytes(value: number | null | undefined) {
-  if (value === null || value === undefined) return "—";
-  if (value < 1024) return `${value} B`;
-  const kb = value / 1024;
-  if (kb < 1024) return `${kb.toFixed(1)} KB`;
-  const mb = kb / 1024;
-  if (mb < 1024) return `${mb.toFixed(1)} MB`;
-  return `${(mb / 1024).toFixed(2)} GB`;
+  if (value === null || value === undefined || !Number.isFinite(value)) return "—";
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let amount = Math.max(0, Number(value));
+  let unitIndex = 0;
+
+  // Unidades decimais deixam a leitura administrativa mais intuitiva:
+  // 1.000 KB = 1 MB e 1.000 MB = 1 GB.
+  while (amount >= 1000 && unitIndex < units.length - 1) {
+    amount /= 1000;
+    unitIndex += 1;
+  }
+
+  const maximumFractionDigits = unitIndex === 0 ? 0 : amount >= 100 ? 1 : amount >= 10 ? 1 : 2;
+  return `${amount.toLocaleString("pt-BR", { maximumFractionDigits })} ${units[unitIndex]}`;
 }
 
 function GoogleDriveLogo({ className = "size-7" }: { className?: string }) {
@@ -560,18 +568,13 @@ export default function Monitoring() {
             <div>
               <h2 className="text-lg font-black text-[#07182d]">Histórico de latência</h2>
               <p className="text-[11px] text-slate-500">
-                {historyReadingCount < 24
-                  ? `Coletando histórico: ${historyReadingCount}/24 leituras`
-                  : "Acompanhamento em tempo real · últimas 24 leituras"}
+                Histórico em tempo real · {historyReadingCount}/24 leituras
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-black text-emerald-700">
-              Atual estável: {summary.average === null ? "—" : `${summary.average} ms`}
-            </span>
             <span className={`rounded-xl border px-3 py-2 text-[10px] font-black ${qualityToneClasses}`}>
-              {currentLatencyQuality.label}
+              Atual estável: {summary.average === null ? "—" : `${summary.average} ms`} · {currentLatencyQuality.label}
             </span>
             <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
             <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-black text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
@@ -579,16 +582,16 @@ export default function Monitoring() {
           </div>
         </div>
         <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="h-[300px] p-4">
+          <div className="h-[285px] p-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={history} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="4 5" vertical={false} stroke="#e8edf3" />
                 <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10 }} width={45} axisLine={false} tickLine={false} unit=" ms" />
-                <Tooltip contentStyle={{ borderRadius: 14, border: "1px solid #e2e8f0", boxShadow: "0 12px 30px rgba(7,24,45,.10)" }} />
+                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 26px rgba(7,24,45,.08)", fontSize: 11 }} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                 {visibleItems.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={{ r: 2.2, strokeWidth: 0 }} activeDot={{ r: 5 }} connectNulls />
+                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>
@@ -605,7 +608,7 @@ export default function Monitoring() {
               <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <span className="text-[9px] font-bold uppercase text-slate-400">Latência consolidada</span>
                 <b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b>
-                <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[8px] font-black ${qualityToneClasses}`}>
+                <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[8px] font-bold ${qualityToneClasses}`}>
                   {currentLatencyQuality.label}
                 </span>
               </div>
