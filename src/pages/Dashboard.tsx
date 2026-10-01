@@ -87,8 +87,8 @@ export default function Dashboard() {
   const dateLabel = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(now);
 
   return (
-    <div className="dashboard-modern mx-auto w-full max-w-[1540px] space-y-4 pb-4">
-      <section className="dashboard-hero relative overflow-hidden rounded-[22px] border border-white/10 bg-gradient-to-br from-[#07130f] via-[#0b1b16] to-[#0d2a20] px-5 py-5 text-white shadow-[0_18px_45px_rgba(5,15,10,.18)] sm:px-7">
+    <div className="mx-auto w-full max-w-[1540px] space-y-4 pb-4">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
         <div className="pointer-events-none absolute inset-y-0 left-[47%] hidden w-[28%] overflow-hidden lg:block">
           <div className="absolute inset-0 bg-gradient-to-r from-white via-amber-50/70 to-white" />
           <div className="absolute bottom-2 left-8 h-20 w-8 rounded-t-md bg-slate-200/60" />
@@ -100,28 +100,28 @@ export default function Dashboard() {
 
         <div className="relative grid gap-4 xl:grid-cols-[1.42fr_.62fr_.56fr] xl:items-center">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-emerald-400">MW TECH Control</p>
-            <h1 className="mt-1 text-[30px] font-semibold tracking-[-.025em] text-white sm:text-[36px]">Painel executivo</h1>
-            <p className="mt-1 text-[13px] text-slate-300">Indicadores essenciais da operação, reunidos em um só lugar.</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Control</p>
+            <h1 className="mt-1 text-[30px] font-semibold tracking-[-.025em] text-[#0b2239] sm:text-[36px]">Painel executivo</h1>
+            <p className="mt-1 text-[13px] text-slate-500">Indicadores essenciais da operação, reunidos em um só lugar.</p>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/[.06] px-4 py-3 backdrop-blur-sm">
+          <div className="rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-50 to-white px-4 py-3 shadow-sm">
             <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-400/15 text-amber-300"><Sun size={22} /></span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-amber-500 shadow-sm"><Sun size={22} /></span>
               <div>
-                <p className="text-[14px] font-semibold text-white">Bom dia, {firstName}!</p>
-                <p className="mt-1 text-[10px] capitalize leading-4 text-slate-300">Hoje é {dateLabel}.</p>
+                <p className="text-[14px] font-semibold text-[#0b2239]">Bom dia, {firstName}!</p>
+                <p className="mt-1 text-[10px] capitalize leading-4 text-slate-500">Hoje é {dateLabel}.</p>
                 <p className="text-[10px] text-slate-400">Vamos em frente!</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[.07] px-4 py-3 backdrop-blur-sm">
+          <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white px-4 py-3 shadow-sm">
             <div className="flex items-start gap-3">
-              <span className="mt-1 size-3 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-400/10" />
+              <span className="mt-1 size-3 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-50" />
               <div>
-                <p className="text-[10px] font-medium text-slate-300">Status do ambiente</p>
-                <p className="mt-0.5 text-[15px] font-semibold text-white">Operação normal</p>
+                <p className="text-[10px] font-medium text-slate-500">Status do ambiente</p>
+                <p className="mt-0.5 text-[15px] font-semibold text-[#0b2239]">Operação normal</p>
                 <p className="mt-1 text-[10px] text-slate-400">Todos os sistemas funcionando.</p>
               </div>
             </div>
@@ -134,6 +134,17 @@ export default function Dashboard() {
         <MetricCard icon={<ArrowDownRight size={22} />} title="A pagar hoje" value={brl(pagarHoje)} hint={`${pagamentosHoje} lançamento${pagamentosHoje === 1 ? "" : "s"}`} href="/despesas" tone="orange" />
         <MetricCard icon={<Landmark size={22} />} title="Saldo em caixa" value={brl(account)} hint="Saldo consolidado" href="/caixa" tone="blue" />
         <MetricCard icon={<UsersRound size={22} />} title="Usuários ativos" value={String(usersCount)} hint="Acessos habilitados" href="/usuarios" tone="purple" />
+      </section>
+
+      <section className="grid gap-3 xl:grid-cols-[2.1fr_.82fr]">
+        <DriveCard data={drive} loading={driveLoading} error={driveError} refresh={() => loadDrive(true)} />
+        <Panel title="Sistemas e órgãos" icon={<Building2 size={18} />} actionHref="/sistemas">
+          <div className="space-y-2.5">
+            <InfoRow icon={<Building2 size={16} />} label="Órgãos gerenciados" subtitle="Prefeituras e entidades" value={String(systemsCount)} />
+            <InfoRow icon={<PanelsTopLeft size={16} />} label="Sistemas ativos" subtitle="Em funcionamento" value={String(activeSystemsCount)} />
+            <InfoRow icon={<Link2 size={16} />} label="Integrações" subtitle="Conectadas e operacionais" value="Ativas" success />
+          </div>
+        </Panel>
       </section>
 
       <section className="grid gap-3 xl:grid-cols-[1.18fr_.94fr_.88fr]">
@@ -185,17 +196,6 @@ export default function Dashboard() {
         </Panel>
       </section>
 
-      <section className="grid gap-3 xl:grid-cols-[2.1fr_.82fr]">
-        <DriveCard data={drive} loading={driveLoading} error={driveError} refresh={() => loadDrive(true)} />
-        <Panel title="Sistemas e órgãos" icon={<Building2 size={18} />} actionHref="/sistemas">
-          <div className="space-y-2.5">
-            <InfoRow icon={<Building2 size={16} />} label="Órgãos gerenciados" subtitle="Prefeituras e entidades" value={String(systemsCount)} />
-            <InfoRow icon={<PanelsTopLeft size={16} />} label="Sistemas ativos" subtitle="Em funcionamento" value={String(activeSystemsCount)} />
-            <InfoRow icon={<Link2 size={16} />} label="Integrações" subtitle="Conectadas e operacionais" value="Ativas" success />
-          </div>
-        </Panel>
-      </section>
-
       <footer className="flex flex-col gap-2 px-2 pt-1 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <span>MW TECH Control &nbsp;•&nbsp; Sistemas e Soluções Digitais &nbsp;•&nbsp; Gestão mais simples. Resultados maiores.</span>
         <span className="flex items-center gap-3"><span>Privacidade</span><span>Termos de uso</span><span>Suporte</span><span className="flex items-center gap-1.5 text-emerald-600"><i className="size-2 rounded-full bg-emerald-500" />Todos os sistemas operacionais</span></span>
@@ -212,7 +212,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
     purple: "bg-violet-50 text-violet-600",
   }[tone];
   return (
-    <a href={href} className="metric-card group relative rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,.045)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_34px_rgba(15,23,42,.08)]">
+    <a href={href} className="group relative rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_7px_20px_rgba(15,23,42,.04)] transition hover:-translate-y-0.5 hover:shadow-md">
       <MoreHorizontal size={15} className="absolute right-4 top-4 text-slate-400" />
       <div className="flex items-start gap-4 pr-5">
         <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${style}`}>{icon}</span>
@@ -229,7 +229,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
 
 function Panel({ title, icon, subtitle, actionHref, rightLabel, children }: { title: string; icon: ReactNode; subtitle?: string; actionHref?: string; rightLabel?: string; children: ReactNode }) {
   return (
-    <section className="dashboard-panel rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,.045)]">
+    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_7px_20px_rgba(15,23,42,.04)]">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg bg-slate-50 text-[#1f4f7b]">{icon}</span>
@@ -249,7 +249,7 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
   const pct = Math.max(0, Math.min(100, data?.percent || 0));
   const folders = data?.folders || [];
   return (
-    <section className="drive-panel rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,.045)]">
+    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_7px_20px_rgba(15,23,42,.04)]">
       <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="relative grid size-10 place-items-center overflow-hidden rounded-lg bg-white shadow-sm">
