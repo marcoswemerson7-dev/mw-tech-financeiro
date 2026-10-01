@@ -564,7 +564,7 @@ export default function Monitoring() {
   }[currentLatencyQuality.tone];
 
   return (
-    <div className="monitoring-modern mx-auto w-full max-w-[1480px] space-y-5">
+    <div className="mx-auto w-full max-w-[1480px] space-y-5">
       <PageHeader
         title="Monitoramento dos sistemas"
         subtitle="Visão consolidada dos sistemas dos órgãos atendidos pela MW TECH."
@@ -584,7 +584,7 @@ export default function Monitoring() {
         }
       />
 
-      <section className="monitoring-filters flex flex-wrap items-center gap-4 rounded-[18px] border border-slate-200/80 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(7,24,45,.04)]">
+      <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(7,24,45,.04)]">
         <div className="mr-2 flex items-center gap-2 text-sm font-black text-[#07182d]"><span className="grid size-8 place-items-center rounded-lg bg-blue-50 text-blue-700"><Filter size={16} /></span> Filtros do monitoramento</div>
         <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="min-w-[175px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
           <option value="todos">Todos os órgãos</option>
@@ -597,7 +597,7 @@ export default function Monitoring() {
         <span className="ml-auto flex items-center gap-2 text-[10px] font-semibold text-slate-500"><span className="size-2 rounded-full bg-emerald-500" /> Atualização automática a cada 60 segundos</span>
       </section>
 
-      <section className="latency-panel overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_16px_42px_rgba(7,24,45,.07)]">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_16px_42px_rgba(7,24,45,.07)]">
         <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-r from-white via-blue-50/40 to-amber-50/30 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl bg-amber-50 text-amber-600"><Gauge size={21} /></span>
@@ -655,7 +655,7 @@ export default function Monitoring() {
         </div>
       </section>
 
-      <div className="monitoring-summary grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online + summary.attention}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} operacional com atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
         <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
         <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
@@ -666,7 +666,7 @@ export default function Monitoring() {
         <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
       </div>
 
-      <section className="drive-monitoring rounded-[22px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
+      <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-white shadow-sm">
