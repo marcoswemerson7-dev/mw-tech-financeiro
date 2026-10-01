@@ -151,3 +151,268 @@ main .recharts-cartesian-grid line { stroke: #edf2f7; }
 
 /* deployment refresh */
 /* publish-sync 2026-09-17 */
+
+
+/* ==========================================================================
+   MW TECH Control 2026 — refinamento visual premium
+   Escopo deliberadamente visual: não altera regras de negócio nem dados.
+   ========================================================================== */
+
+:root {
+  --mw-ink: #08120e;
+  --mw-deep: #0a1712;
+  --mw-green: #2fd071;
+  --mw-green-soft: #e9f9ef;
+  --mw-surface: #ffffff;
+  --mw-surface-soft: #f7faf8;
+  --mw-line: #e4ebe7;
+  --mw-copy: #102019;
+  --mw-copy-muted: #6f8077;
+}
+
+/* Shell */
+.mw-shell {
+  background:
+    radial-gradient(circle at 88% -12%, rgba(47, 208, 113, .055), transparent 28%),
+    #f4f7f5 !important;
+}
+
+.mw-sidebar {
+  background: linear-gradient(180deg, #081a14 0%, #071510 55%, #050f0b 100%) !important;
+  border-right: 1px solid rgba(255,255,255,.055) !important;
+  box-shadow: 12px 0 34px rgba(6,19,13,.12) !important;
+}
+
+.mw-sidebar > div:first-child {
+  border-bottom-color: rgba(255,255,255,.055) !important;
+}
+
+.mw-sidebar nav a,
+.mw-sidebar nav > div > div:first-child {
+  border-radius: 11px !important;
+}
+
+.mw-sidebar nav a[aria-current="page"] {
+  background: linear-gradient(90deg, rgba(47,208,113,.17), rgba(47,208,113,.06)) !important;
+  border-left-color: #2fd071 !important;
+  color: #78e9a4 !important;
+  box-shadow: inset 0 0 0 1px rgba(47,208,113,.08) !important;
+}
+
+.mw-sidebar nav a:hover,
+.mw-sidebar nav > div > div:first-child:hover {
+  background: rgba(255,255,255,.055) !important;
+}
+
+.mw-topbar {
+  background: rgba(7, 18, 13, .96) !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+  box-shadow: 0 8px 28px rgba(6,19,13,.16) !important;
+  backdrop-filter: blur(14px);
+}
+
+.mw-topbar > div:first-child > div {
+  border-color: rgba(255,255,255,.08) !important;
+  background: rgba(255,255,255,.045) !important;
+}
+
+.mw-main {
+  background:
+    radial-gradient(circle at 82% -8%, rgba(47,208,113,.045), transparent 24%),
+    #f4f7f5 !important;
+}
+
+/* Shared cards */
+.dashboard-modern section,
+.monitoring-modern section {
+  scroll-margin-top: 84px;
+}
+
+.dashboard-modern .metric-card,
+.dashboard-modern .dashboard-panel,
+.dashboard-modern .drive-panel,
+.monitoring-modern .monitoring-filters,
+.monitoring-modern .latency-panel,
+.monitoring-modern .drive-monitoring {
+  border-color: var(--mw-line) !important;
+}
+
+.dashboard-modern .metric-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-modern .metric-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(47,208,113,.75), transparent);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+
+.dashboard-modern .metric-card:hover::after {
+  opacity: 1;
+}
+
+.dashboard-modern .dashboard-panel,
+.dashboard-modern .drive-panel {
+  box-shadow: 0 8px 28px rgba(15, 35, 25, .045) !important;
+}
+
+.dashboard-modern .dashboard-panel:hover,
+.dashboard-modern .drive-panel:hover {
+  border-color: #d7e5dc !important;
+}
+
+/* Executive hero */
+.dashboard-hero::before {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  right: -120px;
+  top: -205px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(47,208,113,.22), rgba(47,208,113,0) 66%);
+}
+
+.dashboard-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -8% -72% 35%;
+  height: 180px;
+  background: linear-gradient(90deg, transparent, rgba(47,208,113,.10), transparent);
+  transform: rotate(-7deg);
+  pointer-events: none;
+}
+
+/* Dashboard charts and internal rows */
+.dashboard-modern .recharts-cartesian-grid line {
+  stroke: #e8eeea !important;
+}
+
+.dashboard-modern .dashboard-panel .recharts-default-tooltip {
+  border-radius: 12px !important;
+  border-color: #dfe9e3 !important;
+  box-shadow: 0 12px 28px rgba(12,31,20,.10) !important;
+}
+
+.dashboard-modern a[class*="rounded-xl"],
+.dashboard-modern button[class*="rounded-xl"] {
+  transition: transform .16s ease, border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+}
+
+/* Monitoring */
+.monitoring-modern > div:first-child h1 {
+  color: #0a1712 !important;
+}
+
+.monitoring-filters {
+  position: sticky;
+  top: 76px;
+  z-index: 10;
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,.94) !important;
+}
+
+.latency-panel > div:first-child {
+  background: linear-gradient(90deg, #08140f 0%, #0d2118 72%, #10291d 100%) !important;
+  border-bottom-color: rgba(255,255,255,.06) !important;
+}
+
+.latency-panel > div:first-child h2 {
+  color: #fff !important;
+}
+
+.latency-panel > div:first-child p {
+  color: #9fb3a8 !important;
+}
+
+.latency-panel > div:first-child > div:first-child > span {
+  background: rgba(47,208,113,.12) !important;
+  color: #69e598 !important;
+}
+
+.latency-panel > div:nth-child(2) > div:first-child {
+  background:
+    linear-gradient(180deg, rgba(7,18,13,.995), rgba(9,24,17,.995)) !important;
+}
+
+.latency-panel > div:nth-child(2) > div:first-child .recharts-cartesian-grid line {
+  stroke: rgba(255,255,255,.075) !important;
+}
+
+.latency-panel > div:nth-child(2) > div:first-child .recharts-text {
+  fill: #9db2a7 !important;
+}
+
+.latency-panel > div:nth-child(2) > div:first-child .recharts-legend-item-text {
+  color: #b7c8bf !important;
+}
+
+.latency-panel > div:nth-child(2) > div:last-child {
+  background: #0d1d16 !important;
+  border-color: #1b3125 !important;
+}
+
+.latency-panel > div:nth-child(2) > div:last-child b {
+  color: #f1f8f4 !important;
+}
+
+.latency-panel > div:nth-child(2) > div:last-child p {
+  color: #91a69b !important;
+}
+
+.latency-panel > div:nth-child(2) > div:last-child > div:nth-child(2) > div {
+  background: #10241a !important;
+  border-color: #244331 !important;
+}
+
+.monitoring-summary > div {
+  border-radius: 16px !important;
+  border-color: var(--mw-line) !important;
+  box-shadow: 0 8px 24px rgba(15,35,25,.04) !important;
+}
+
+.drive-monitoring {
+  background:
+    linear-gradient(135deg, #fff 0%, #fbfdfc 64%, #f2faf5 100%) !important;
+}
+
+/* More consistent controls */
+.dashboard-modern input,
+.dashboard-modern select,
+.monitoring-modern input,
+.monitoring-modern select {
+  border-radius: 11px !important;
+}
+
+.monitoring-modern select {
+  background-color: #f7faf8 !important;
+  border-color: #dfe8e3 !important;
+}
+
+.monitoring-modern select:focus {
+  border-color: #73d99b !important;
+  box-shadow: 0 0 0 3px rgba(47,208,113,.10) !important;
+}
+
+/* Slightly denser large desktop layout, closer to a SaaS operations console */
+@media (min-width: 1280px) {
+  .dashboard-modern,
+  .monitoring-modern {
+    letter-spacing: -.002em;
+  }
+
+  .dashboard-modern .metric-card {
+    min-height: 116px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .monitoring-filters {
+    position: static;
+  }
+}
