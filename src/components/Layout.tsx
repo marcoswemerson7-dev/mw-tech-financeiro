@@ -222,28 +222,28 @@ export default function Layout() {
   };
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition-all ${
+    `flex min-h-[44px] items-center gap-3 rounded-xl border-l-[3px] px-3.5 text-[13px] font-semibold transition-all ${
       isActive
         ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.025)]"
         : "border-transparent text-slate-100 hover:bg-white/[.05] hover:text-white"
     }`;
 
   return (
-    <div className="min-h-screen bg-[#f3f6fa] text-slate-900">
-      <aside className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-gradient-to-b from-[#08223d] via-[#071d35] to-[#06192d] text-white shadow-[12px_0_35px_rgba(6,20,38,.12)] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="relative flex min-h-[183px] items-center justify-center border-b border-white/[.055] px-5 py-4">
-          <img src="/mw-tech-logo.png" className="h-[148px] w-[215px] object-contain mix-blend-screen" alt="MW TECH" />
+    <div className="mw-shell min-h-screen bg-[#f3f6fa] text-slate-900">
+      <aside className={`mw-sidebar fixed inset-y-0 left-0 z-30 flex w-[236px] flex-col overflow-y-auto bg-gradient-to-b from-[#08223d] via-[#071d35] to-[#06192d] text-white shadow-[12px_0_35px_rgba(6,20,38,.12)] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="relative flex min-h-[154px] items-center justify-center border-b border-white/[.055] px-5 py-4">
+          <img src="/mw-tech-logo.png" className="h-[116px] w-[184px] object-contain mix-blend-screen" alt="MW TECH" />
           <button className="absolute right-3 top-3 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu"><X size={22} /></button>
         </div>
 
-        <nav className="flex-1 space-y-2 px-3 py-4">
+        <nav className="flex-1 space-y-1.5 px-3 py-3">
           {topItems.map(([to, label, I]) => <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} className={navClass}><I size={21} strokeWidth={2} /><span>{label}</span></NavLink>)}
           <div className="pt-1">
-            <div className={`flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold ${financeActive ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b]" : "border-transparent text-slate-100"}`}>
+            <div className={`flex min-h-[44px] items-center gap-3 rounded-xl border-l-[3px] px-3.5 text-[13px] font-semibold ${financeActive ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b]" : "border-transparent text-slate-100"}`}>
               <CircleDollarSign size={21} strokeWidth={2} /><span>Financeiro</span><ChevronDown size={15} className="ml-auto" />
             </div>
             <div className="mt-1 space-y-1 pl-6">
-              {financeItems.map(([to, label, I]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-[36px] items-center gap-2.5 rounded-lg px-3 text-[12px] font-semibold transition ${isActive ? "bg-white/[.07] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.05] hover:text-white"}`}><I size={15} />{label}</NavLink>)}
+              {financeItems.map(([to, label, I]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-[34px] items-center gap-2.5 rounded-lg px-3 text-[11px] font-medium transition ${isActive ? "bg-white/[.07] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.05] hover:text-white"}`}><I size={15} />{label}</NavLink>)}
             </div>
           </div>
           {managementItems.map(([to, label, I]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={navClass}><I size={21} strokeWidth={2} /><span>{label}</span></NavLink>)}
@@ -260,11 +260,11 @@ export default function Layout() {
 
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
 
-      <div className="lg:pl-[254px]">
-        <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#082743] via-[#0a3155] to-[#082743] px-4 text-white shadow-[0_7px_24px_rgba(6,20,38,.16)] sm:px-7 lg:px-6">
+      <div className="lg:pl-[236px]">
+        <header className="mw-topbar sticky top-0 z-20 flex h-[64px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#082743] via-[#0a3155] to-[#082743] px-4 text-white shadow-[0_7px_24px_rgba(6,20,38,.16)] sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
             <button className="grid size-9 place-items-center rounded-lg text-white/90 transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
-            <div className="hidden h-11 w-[500px] max-w-[40vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
+            <div className="hidden h-11 w-[470px] max-w-[38vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
               <Search size={18} className="text-slate-300" /><input aria-label="Buscar no sistema" placeholder="Buscar no sistema..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400" /><span className="rounded-md bg-white/[.07] px-2 py-1 text-[11px] text-slate-300">Ctrl + K</span>
             </div>
           </div>
@@ -298,7 +298,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="w-full p-4 sm:p-6 lg:p-7 xl:px-8 xl:py-6"><Outlet /></main>
+        <main className="mw-main w-full p-4 sm:p-5 lg:p-6 xl:px-7 xl:py-5"><Outlet /></main>
       </div>
 
       {profileModal && <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/65 p-4">
