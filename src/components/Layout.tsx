@@ -25,6 +25,8 @@ import {
   Activity,
   Siren,
   Code2,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -82,6 +84,11 @@ function playNotificationTone() {
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("mw-control-theme");
+    if (saved === "dark" || saved === "light") return saved;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileModal, setProfileModal] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -99,6 +106,12 @@ export default function Layout() {
   const navigate = useNavigate();
   const { session, logout, refresh } = useAuth();
   const financeActive = financeItems.some(([path]) => loc.pathname.startsWith(path));
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    localStorage.setItem("mw-control-theme", theme);
+  }, [theme]);
 
   const prefs = ((session as { prefs?: Record<string, unknown> } | null)?.prefs || {}) as Record<string, unknown>;
   const userName = String(session?.name || session?.email?.split("@")[0] || "Usuário");
@@ -229,8 +242,8 @@ export default function Layout() {
     }`;
 
   return (
-    <div className="min-h-screen bg-[#f3f6fa] text-slate-900">
-      <aside className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-gradient-to-b from-[#08223d] via-[#071d35] to-[#06192d] text-white shadow-[12px_0_35px_rgba(6,20,38,.12)] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+    <div className="mw-app-shell min-h-screen bg-[#f3f6fa] text-slate-900">
+      <aside className={`mw-sidebar fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-gradient-to-b from-[#08223d] via-[#071d35] to-[#06192d] text-white shadow-[12px_0_35px_rgba(6,20,38,.12)] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="relative flex min-h-[183px] items-center justify-center border-b border-white/[.055] px-5 py-4">
           <img src="/mw-tech-logo.png" className="h-[148px] w-[215px] object-contain mix-blend-screen" alt="MW TECH" />
           <button className="absolute right-3 top-3 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu"><X size={22} /></button>
@@ -261,7 +274,7 @@ export default function Layout() {
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
 
       <div className="lg:pl-[254px]">
-        <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#082743] via-[#0a3155] to-[#082743] px-4 text-white shadow-[0_7px_24px_rgba(6,20,38,.16)] sm:px-7 lg:px-6">
+        <header className="mw-topbar sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#082743] via-[#0a3155] to-[#082743] px-4 text-white shadow-[0_7px_24px_rgba(6,20,38,.16)] sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
             <button className="grid size-9 place-items-center rounded-lg text-white/90 transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
             <div className="hidden h-11 w-[500px] max-w-[40vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
@@ -269,7 +282,17 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+              className="mw-theme-toggle group flex h-10 items-center gap-1 rounded-xl border border-white/10 bg-white/[.055] p-1 transition hover:bg-white/[.09]"
+              aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+              title={theme === "dark" ? "Mudar para modo claro" : "Mudar para modo escuro"}
+            >
+              <span className={`grid size-8 place-items-center rounded-lg transition ${theme === "light" ? "bg-white text-amber-500 shadow-sm" : "text-slate-400"}`}><Sun size={16} /></span>
+              <span className={`grid size-8 place-items-center rounded-lg transition ${theme === "dark" ? "bg-emerald-500 text-[#04130d] shadow-[0_0_18px_rgba(34,197,94,.25)]" : "text-slate-300"}`}><Moon size={16} /></span>
+            </button>
             <div className="relative">
               <button onClick={() => { setNotificationOpen((value) => !value); setProfileOpen(false); }} className="relative grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10" aria-label="Notificações">
                 <Bell size={20} />
@@ -298,7 +321,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="w-full p-4 sm:p-6 lg:p-7 xl:px-8 xl:py-6"><Outlet /></main>
+        <main className="mw-main-content w-full p-4 sm:p-6 lg:p-7 xl:px-8 xl:py-6"><Outlet /></main>
       </div>
 
       {profileModal && <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/65 p-4">
