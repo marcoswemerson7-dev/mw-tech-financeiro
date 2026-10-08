@@ -304,11 +304,11 @@ export default function Expenses() {
           Limpar filtros
         </ActionButton>
       </FilterBar>
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)]">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {visible.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1080px] text-left text-[15px]">
-              <thead className="bg-[#061426] text-[13px] font-black text-white">
+              <thead className="bg-[#061426] text-[13px] font-semibold text-white">
                 <tr>
                   {[
                     "Descrição",
@@ -333,7 +333,7 @@ export default function Expenses() {
                           {categoryIcon(x.categoria)}
                         </span>
                         <div className="min-w-0">
-                          <b className="block break-words text-[16px] font-black text-[#061426]">{x.descricao}</b>
+                          <b className="block break-words text-[16px] font-semibold text-[#061426]">{x.descricao}</b>
                           <span className="text-[13px] text-slate-500">{x.recorrente ? "Recorrente mensal" : x.fornecedor || formatMonth(x.competencia)}</span>
                         </div>
                       </div>
@@ -347,7 +347,7 @@ export default function Expenses() {
                     <td className="px-6 py-5">
                       <Badge status={statusLabel(x)} />
                     </td>
-                    <td className="whitespace-nowrap px-6 py-5 text-right text-lg font-black">
+                    <td className="whitespace-nowrap px-6 py-5 text-right text-lg font-semibold">
                       <FinancialAmount value={x.valor} kind={x.status === "pago" ? "despesa" : "pendente"} />
                     </td>
                     <td className="px-6 py-5">
@@ -386,7 +386,7 @@ export default function Expenses() {
           <Empty />
         )}
       </div>
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_14px_36px_rgba(15,35,70,.055)]">
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-bold text-[#0b1d3a]">Recorrências ativas</h3>
