@@ -454,16 +454,16 @@ export default function SupportCenter() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1840px] flex-col gap-3 text-slate-900 xl:h-[calc(100dvh-92px)] xl:min-h-0">
-      <section className="flex shrink-0 flex-col gap-2 rounded-[20px] border border-slate-200 bg-white px-4 py-2.5 shadow-[0_12px_34px_rgba(7,24,45,0.05)] sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+      <section className="flex shrink-0 flex-col gap-2 rounded-[20px] border border-slate-200 bg-white px-4 py-2.5 shadow-sm sm:px-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
           <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#082743] text-[#f0b83f] shadow-sm sm:size-12"><Headphones size={24} /></div>
           <div>
-            <h1 className="text-[22px] font-black leading-tight tracking-[-0.03em] text-[#07182d] sm:text-[24px]">Central de Suporte</h1>
+            <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.03em] text-[#07182d] sm:text-[24px]">Central de Suporte</h1>
             <p className="mt-0.5 text-[12px] font-medium text-slate-500 sm:text-[13px]">Atendimento técnico e operacional dos sistemas atendidos.</p>
           </div>
         </div>
         <div className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-2 text-right">
-          <p className="text-[13px] font-black text-[#8c681d]">MW TECH</p>
+          <p className="text-[13px] font-semibold text-[#8c681d]">MW TECH</p>
           <p className="text-[11px] text-slate-500">Sistemas e Soluções Digitais</p>
         </div>
       </section>
@@ -475,7 +475,7 @@ export default function SupportCenter() {
       )}
 
       <div className="grid min-h-[620px] flex-1 grid-cols-1 gap-3 xl:min-h-0 xl:grid-cols-[320px_minmax(0,1fr)_270px] 2xl:grid-cols-[350px_minmax(0,1fr)_290px]">
-        <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)]">
+        <div className="flex min-h-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
           <div className="shrink-0 border-b border-slate-200 bg-white px-3 py-2.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2.5">
@@ -484,9 +484,9 @@ export default function SupportCenter() {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-[16px] font-black leading-none text-[#07182d]">Chamados</h2>
+                    <h2 className="text-[16px] font-semibold leading-none text-[#07182d]">Chamados</h2>
                     {counts.aguardandoResposta > 0 && (
-                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-black text-white">
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-semibold text-white">
                         {counts.aguardandoResposta}
                       </span>
                     )}
@@ -513,7 +513,7 @@ export default function SupportCenter() {
                 >
                   <Archive size={14} />
                   <span className="hidden 2xl:inline">{filter === "historico" ? "Ativos" : "Histórico"}</span>
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-black ${filter === "historico" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600"}`}>{counts.encerrados}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${filter === "historico" ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600"}`}>{counts.encerrados}</span>
                 </button>
                 <button
                   onClick={() => void loadTickets()}
@@ -601,9 +601,9 @@ export default function SupportCenter() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex min-w-0 items-center gap-1.5">
-                            {needsReply && <span className="size-1.5 shrink-0 rounded-full bg-blue-600 shadow-[0_0_0_3px_rgba(37,99,235,0.10)]" />}
-                            <b className="shrink-0 text-[11px] font-black tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
-                            <span className="truncate text-[12px] font-black text-slate-800">{ticket.subject}</span>
+                            {needsReply && <span className="size-1.5 shrink-0 rounded-full bg-blue-600 shadow-sm" />}
+                            <b className="shrink-0 text-[11px] font-semibold tracking-tight text-[#07182d]">#{String(ticket.ticket_number).padStart(4, "0")}</b>
+                            <span className="truncate text-[12px] font-semibold text-slate-800">{ticket.subject}</span>
                           </div>
                           <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[10px] text-slate-500">
                             <UserRound size={11} className="shrink-0 text-[#69829a]" />
@@ -637,12 +637,12 @@ export default function SupportCenter() {
           </div>
         </div>
 
-        <section className="min-h-0 min-w-0 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)]">
+        <section className="min-h-0 min-w-0 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm">
           {!selected ? (
             <div className="grid h-full min-h-[520px] place-items-center p-8 text-center xl:min-h-0">
               <div>
                 <div className="mx-auto grid size-20 place-items-center rounded-[24px] bg-[#07182d] text-[#f4c45a]"><Headphones size={34} /></div>
-                <h3 className="mt-6 text-[24px] font-black text-[#07182d]">Selecione um chamado</h3>
+                <h3 className="mt-6 text-[24px] font-semibold text-[#07182d]">Selecione um chamado</h3>
                 <p className="mx-auto mt-2 max-w-md text-[14px] leading-6 text-slate-500">Escolha um atendimento à esquerda para visualizar a conversa, responder e acompanhar o status.</p>
               </div>
             </div>
@@ -652,10 +652,10 @@ export default function SupportCenter() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h3 className="text-[18px] font-black text-[#07182d] sm:text-[19px]">#{String(selected.ticket_number).padStart(4, "0")}</h3>
+                      <h3 className="text-[18px] font-semibold text-[#07182d] sm:text-[19px]">#{String(selected.ticket_number).padStart(4, "0")}</h3>
                       <span className={`rounded-full border px-3 py-1 text-[12px] font-bold ${statusClass[selected.status] || statusClass.fechado}`}>{statusLabels[selected.status] || selected.status}</span>
                     </div>
-                    <h2 className="mt-1 truncate text-[18px] font-black tracking-[-0.02em] text-[#07182d] sm:text-[20px]">{selected.subject}</h2>
+                    <h2 className="mt-1 truncate text-[18px] font-semibold tracking-[-0.02em] text-[#07182d] sm:text-[20px]">{selected.subject}</h2>
                     <div className="mt-1 flex items-center gap-2 text-[13px] font-semibold text-slate-600"><Landmark size={16} /><span className="truncate">{selectedOrg?.name || selected.tenant_key}</span></div>
                     <p className="mt-1 text-[11px] text-slate-400">Aberto por {selected.requester_name || selected.requester_email || "Usuário"} em {fmt(selected.created_at)}</p>
                   </div>
@@ -664,7 +664,7 @@ export default function SupportCenter() {
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto bg-[#fbfcfe] px-4 py-3 sm:px-5">
-                <div className="mb-3 flex items-center gap-3 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Conversa<span className="h-px flex-1 bg-slate-200" /></div>
+                <div className="mb-3 flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Conversa<span className="h-px flex-1 bg-slate-200" /></div>
                 {detailLoading && messages.length === 0 ? (
                   <div className="grid min-h-[360px] place-items-center">
                     <div className="flex items-center gap-3 text-[12px] font-semibold text-slate-500">
@@ -683,7 +683,7 @@ export default function SupportCenter() {
                           {!staff && (
                             message.sender_avatar_url || selected.requester_avatar_url
                               ? <img src={message.sender_avatar_url || selected.requester_avatar_url || ""} alt={message.sender_name || selected.requester_name || "Usuário"} className="size-8 shrink-0 rounded-full border border-slate-200 object-cover" />
-                              : <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#0a3158] text-[12px] font-black text-white">{initials(message.sender_name || selected.requester_name)}</div>
+                              : <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#0a3158] text-[12px] font-semibold text-white">{initials(message.sender_name || selected.requester_name)}</div>
                           )}
                           <div className={`max-w-[82%] 2xl:max-w-[76%] ${staff ? "text-right" : "text-left"}`}>
                             <div className={`mb-1.5 flex items-center gap-2 text-[10.5px] font-semibold text-slate-500 ${staff ? "justify-end" : "justify-start"}`}>
@@ -707,7 +707,7 @@ export default function SupportCenter() {
                                       {attachment.mime_type?.startsWith("image/") && attachment.url ? (
                                         <img src={attachment.url} alt={attachment.name} className="mb-2 max-h-56 w-auto rounded-lg object-contain" />
                                       ) : null}
-                                      <span className="break-all">📎 {attachment.name}</span>
+                                      <span className="break-all">Anexo: {attachment.name}</span>
                                     </a>
                                   ))}
                                 </div>
@@ -717,7 +717,7 @@ export default function SupportCenter() {
                           {staff && (
                             message.sender_avatar_url || staffIdentity.avatarUrl
                               ? <img src={message.sender_avatar_url || staffIdentity.avatarUrl} alt={message.sender_name || staffIdentity.name} className="size-8 shrink-0 rounded-full border border-blue-200 object-cover" />
-                              : <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#07182d] text-[10px] font-black text-[#f0b83f]">{initials(message.sender_name || staffIdentity.name)}</div>
+                              : <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[#07182d] text-[10px] font-semibold text-[#f0b83f]">{initials(message.sender_name || staffIdentity.name)}</div>
                           )}
                         </div>
                       );
@@ -736,7 +736,7 @@ export default function SupportCenter() {
                       <div className="mb-3 flex flex-wrap gap-2">
                         {files.map((file, index) => (
                           <div key={`${file.name}-${index}`} className="flex max-w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] font-semibold text-slate-700">
-                            <span className="truncate">📎 {file.name}</span>
+                            <span className="truncate">Anexo: {file.name}</span>
                             <button type="button" onClick={() => setFiles((current) => current.filter((_, i) => i !== index))} className="text-rose-500">×</button>
                           </div>
                         ))}
@@ -776,12 +776,12 @@ export default function SupportCenter() {
           )}
         </section>
 
-        <div className="min-h-0 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-[0_14px_38px_rgba(7,24,45,0.06)] xl:col-span-1">
+        <div className="min-h-0 overflow-y-auto rounded-[22px] border border-slate-200 bg-white shadow-sm xl:col-span-1">
           {!selected ? (
             <div className="grid min-h-[280px] place-items-center px-6 text-center text-[14px] text-slate-400 xl:h-full">Os detalhes do chamado aparecerão aqui.</div>
           ) : (
             <div className="p-3.5 sm:p-4">
-              <h2 className="text-[16px] font-black text-[#07182d] sm:text-[17px]">Detalhes do chamado</h2>
+              <h2 className="text-[16px] font-semibold text-[#07182d] sm:text-[17px]">Detalhes do chamado</h2>
 
               <div className="mt-3.5 space-y-3.5">
                 <div>
@@ -804,12 +804,12 @@ export default function SupportCenter() {
                 <div><p className="text-[11px] font-semibold text-slate-500">Data de abertura</p><div className="mt-2 flex items-center gap-2 text-[12px] font-semibold text-slate-700"><CalendarDays size={16} />{fmt(selected.created_at)}</div></div>
                 <div><p className="text-[11px] font-semibold text-slate-500">Atendente responsável</p><div className="mt-2 flex items-center gap-2 text-[12px] font-semibold text-slate-700"><Headphones size={16} />MW TECH</div></div>
 
-                <div className="border-t border-slate-100 pt-4"><p className="text-[11px] font-semibold text-slate-500">Assunto</p><p className="mt-2 text-[13px] font-black text-slate-800">{selected.subject}</p></div>
+                <div className="border-t border-slate-100 pt-4"><p className="text-[11px] font-semibold text-slate-500">Assunto</p><p className="mt-2 text-[13px] font-semibold text-slate-800">{selected.subject}</p></div>
                 {selected.category && <div><p className="text-[11px] font-semibold text-slate-500">Categoria</p><p className="mt-2 text-[12px] font-semibold text-slate-700">{selected.category}</p></div>}
                 {selected.source_path && <div><p className="text-[11px] font-semibold text-slate-500">Origem</p><p className="mt-2 text-[12px] font-semibold text-slate-700">{selected.source_path}</p></div>}
 
-                <div className="sticky bottom-0 z-10 -mx-3.5 border-t border-slate-200 bg-white/95 px-3.5 pb-1 pt-3 shadow-[0_-10px_24px_rgba(15,23,42,0.05)] backdrop-blur sm:-mx-4 sm:px-4">
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Ações rápidas</p>
+                <div className="sticky bottom-0 z-10 -mx-3.5 border-t border-slate-200 bg-white/95 px-3.5 pb-1 pt-3 shadow-sm  sm:-mx-4 sm:px-4">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Ações rápidas</p>
                   <div className="space-y-2">
                     {isFinished ? (
                       <button onClick={() => void regenerateArchive()} disabled={regeneratingArchive} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#082743] px-4 text-[13px] font-bold text-white shadow-sm transition hover:bg-[#0b355d] disabled:opacity-50">
