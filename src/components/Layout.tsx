@@ -4,6 +4,7 @@ import {
   Wallet,
   Landmark,
   FileChartColumn,
+  Files,
   Settings,
   LogOut,
   Menu,
@@ -41,6 +42,7 @@ const financeItems = [
   ["/contas", "Contas bancárias", Landmark],
   ["/despesas", "Contas a pagar", Wallet],
   ["/relatorios", "Relatórios", FileChartColumn],
+  ["/documentos-financeiros", "Notas fiscais", Files],
 ] as const;
 
 const managementItems = [
