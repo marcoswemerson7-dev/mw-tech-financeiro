@@ -168,3 +168,31 @@ main [class*="hover:-translate-y"] { transform: none !important; }
 main [class*="font-black"] { font-weight: 650 !important; }
 main [class*="blur-3xl"] { filter: none !important; opacity: 0 !important; }
 main [class*="shadow-md"], main [class*="shadow-lg"] { box-shadow: 0 2px 8px rgba(18,35,54,.075) !important; }
+
+/* Impressão de relatórios: eliminar a caixa que reserva espaço para o menu.
+   Esta folha é carregada depois de index.css e precisa respeitar o modo print. */
+@media print {
+  .app-content-shell {
+    display: contents !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .app-content-shell > main,
+  header.sticky.top-0 + main,
+  main.w-full {
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+  .report-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
