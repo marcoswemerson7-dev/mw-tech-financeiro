@@ -408,7 +408,7 @@ function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow, 
       {rows.length ? (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1120px] text-left text-[15px]">
-            <thead className="bg-[#061426] text-[13px] font-black text-white">
+            <thead className="bg-[#061426] text-[13px] font-semibold text-white">
               <tr>{["Data", "Origem / Destino", "Descrição", "Tipo", "Conta", "Valor", "Ações"].map((x) => <th key={x} className="px-6 py-5">{x}</th>)}</tr>
             </thead>
             <tbody>
@@ -417,11 +417,11 @@ function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow, 
                 return (
                   <tr key={x.id} className={`border-t border-slate-100 transition hover:bg-slate-50/60 ${busyRow === x.id ? "opacity-45" : ""} ${x.tipo.includes("entrada") ? "border-l-4 border-l-emerald-500" : x.tipo.includes("saida") ? "border-l-4 border-l-rose-500" : x.tipo.includes("estorno") ? "border-l-4 border-l-amber-500" : "border-l-4 border-l-blue-500"}`}>
                     <td className="whitespace-nowrap px-6 py-6 font-semibold text-slate-700">{formatDate(x.data)}</td>
-                    <td className="px-6 py-5"><div className="flex items-center gap-3 font-black text-[#0b1d3a]"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600"><Building2 size={18} /></span><span className="max-w-[210px] break-words">{parsed.party}</span></div></td>
+                    <td className="px-6 py-5"><div className="flex items-center gap-3 font-semibold text-[#0b1d3a]"><span className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50 text-blue-600"><Building2 size={18} /></span><span className="max-w-[210px] break-words">{parsed.party}</span></div></td>
                     <td className="max-w-[260px] px-6 py-5 font-bold text-[#061426]">{parsed.description}</td>
                     <td className="px-6 py-5"><Badge status={x.tipo.includes("entrada") ? "entrada" : x.tipo.includes("saida") ? "saída" : x.tipo.includes("estorno") ? "estorno" : "transferência"} /></td>
                     <td className="max-w-[220px] px-6 py-5 text-slate-600">{x.contas_bancarias?.nome || "—"}</td>
-                    <td className="whitespace-nowrap px-6 py-5 text-right text-lg font-black">
+                    <td className="whitespace-nowrap px-6 py-5 text-right text-lg font-semibold">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
                     </td>
                     <td className="px-6 py-5">
@@ -457,7 +457,7 @@ function MovementTable({ rows, edit, remove, reverse, duplicate, view, busyRow, 
         <span>Exibindo {rows.length} lançamento{rows.length === 1 ? "" : "s"}</span>
         <div className="flex items-center gap-2">
           <button className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-400">‹</button>
-          <button className="grid size-10 place-items-center rounded-lg bg-[#061426] font-black text-white">1</button>
+          <button className="grid size-10 place-items-center rounded-lg bg-[#061426] font-semibold text-white">1</button>
           <button className="grid size-10 place-items-center rounded-lg border border-slate-200 text-slate-400">›</button>
         </div>
       </div>
@@ -472,7 +472,7 @@ function MovementDetails({ movement, close }: { movement: Movement; close: () =>
       <section className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b px-7 py-6">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#c78b35]">Detalhes da movimentação</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c78b35]">Detalhes da movimentação</p>
             <h3 id="movement-details-title" className="mt-1 text-2xl font-bold text-[#0b1d3a]">{parsed.description}</h3>
           </div>
           <button type="button" onClick={close} className="rounded-xl p-2 hover:bg-slate-100" aria-label="Fechar detalhes"><X /></button>
