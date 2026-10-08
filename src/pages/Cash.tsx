@@ -129,7 +129,7 @@ export default function Cash() {
         actions={
           <Link
             to="/movimentacoes"
-            className="inline-flex min-h-[52px] items-center gap-2 rounded-xl bg-[#061426] px-5 text-[14px] font-black text-white shadow-[0_12px_28px_rgba(6,20,38,.18)] transition hover:bg-[#0b2b50]"
+            className="inline-flex min-h-[52px] items-center gap-2 rounded-xl bg-[#061426] px-5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#0b2b50]"
           >
             <Plus size={18} />
             Novo lançamento
@@ -137,14 +137,14 @@ export default function Cash() {
         }
       />
 
-      <section className="overflow-hidden rounded-3xl border border-[#17375f] bg-[#061426] text-white shadow-[0_22px_55px_rgba(6,20,38,.2)]">
+      <section className="overflow-hidden rounded-3xl border border-[#17375f] bg-[#061426] text-white shadow-sm">
         <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1.1fr_.9fr]">
           <div className="flex min-h-[230px] flex-col justify-between rounded-2xl border border-white/10 bg-white/[.05] p-6">
             <div>
-              <p className="text-[12px] font-black uppercase tracking-[.28em] text-[#f5c75b]">
+              <p className="text-[12px] font-semibold uppercase tracking-[.28em] text-[#f5c75b]">
                 MW TECH Financeiro
               </p>
-              <h3 className="mt-4 text-[30px] font-black leading-tight tracking-[-0.03em] sm:text-[42px]">
+              <h3 className="mt-4 text-[30px] font-semibold leading-tight tracking-[-0.03em] sm:text-[42px]">
                 Controle rápido de entradas e saídas
               </h3>
               <p className="mt-3 max-w-2xl text-[15px] leading-7 text-blue-100">
@@ -240,7 +240,7 @@ export default function Cash() {
           action={
             <Link
               to="/movimentacoes"
-              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-3 text-[13px] font-black text-[#061426] transition hover:border-[#e8ac35] hover:bg-amber-50"
+              className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-3 text-[13px] font-semibold text-[#061426] transition hover:border-[#e8ac35] hover:bg-amber-50"
             >
               Ver completo <ArrowRight size={16} />
             </Link>
@@ -291,17 +291,17 @@ export default function Cash() {
         </SectionCard>
       </div>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)]">
+      <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 sm:px-7 sm:py-6">
           <div>
-            <h3 className="text-[21px] font-black text-[#061426]">Últimos lançamentos</h3>
+            <h3 className="text-[21px] font-semibold text-[#061426]">Últimos lançamentos</h3>
             <p className="mt-1 text-[13px] text-slate-500">
               Visual rápido das movimentações mais recentes do caixa.
             </p>
           </div>
           <Link
             to="/movimentacoes"
-            className="inline-flex min-h-[42px] items-center gap-2 rounded-xl px-3 text-[14px] font-black text-[#061426] transition hover:bg-blue-50"
+            className="inline-flex min-h-[42px] items-center gap-2 rounded-xl px-3 text-[14px] font-semibold text-[#061426] transition hover:bg-blue-50"
           >
             Abrir entradas e saídas <ArrowRight size={17} />
           </Link>
@@ -310,7 +310,7 @@ export default function Cash() {
         {recent.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left text-[14px]">
-              <thead className="bg-[#061426] text-[12px] font-black uppercase tracking-wide text-white">
+              <thead className="bg-[#061426] text-[12px] font-semibold uppercase tracking-wide text-white">
                 <tr>
                   {["Data", "Descrição", "Tipo", "Conta", "Valor", "Status"].map((item) => (
                     <th className="px-6 py-4" key={item}>
@@ -323,12 +323,12 @@ export default function Cash() {
                 {recent.map((row) => (
                   <tr className="border-t border-slate-100 transition hover:bg-slate-50/70" key={row.id}>
                     <td className="whitespace-nowrap px-6 py-5 text-slate-600">{formatDate(row.data)}</td>
-                    <td className="max-w-[360px] break-words px-6 py-5 font-black text-[#061426]">
+                    <td className="max-w-[360px] break-words px-6 py-5 font-semibold text-[#061426]">
                       {row.descricao}
                     </td>
                     <td className="px-6 py-5 capitalize text-slate-600">{row.tipo.replace("_", " ")}</td>
                     <td className="px-6 py-5 text-slate-600">{row.contas_bancarias?.nome || "—"}</td>
-                    <td className="whitespace-nowrap px-6 py-5 text-right text-[15px] font-black">
+                    <td className="whitespace-nowrap px-6 py-5 text-right text-[15px] font-semibold">
                       <FinancialAmount value={row.valor} kind={row.tipo} />
                     </td>
                     <td className="px-6 py-5">
@@ -374,13 +374,13 @@ function FlowShortcut({
   return (
     <Link
       to={href}
-      className={`group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br ${styles} p-5 shadow-[0_14px_30px_rgba(6,20,38,.18)] transition hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(6,20,38,.25)]`}
+      className={`group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br ${styles} p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-sm`}
     >
       <span className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full bg-white/18" />
       <span className="pointer-events-none absolute -bottom-12 right-8 size-24 rounded-full bg-white/12" />
       <div className="relative flex items-start justify-between gap-3">
         <div>
-          <p className="text-[19px] font-black">{title}</p>
+          <p className="text-[19px] font-semibold">{title}</p>
           <p className="mt-1 text-[13px] font-bold opacity-85">{subtitle}</p>
         </div>
         <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/18">
@@ -388,10 +388,10 @@ function FlowShortcut({
         </span>
       </div>
       <div className="relative">
-        <strong className="block text-[31px] font-black tracking-[-0.03em]">
+        <strong className="block text-[31px] font-semibold tracking-[-0.03em]">
           <FinancialAmount value={value} kind={tone === "orange" ? "saida" : "resultado"} className={tone === "gold" ? "text-[#061426]" : "text-white"} />
         </strong>
-        <span className="mt-4 inline-flex items-center gap-2 text-[14px] font-black">
+        <span className="mt-4 inline-flex items-center gap-2 text-[14px] font-semibold">
           {cta}
           <ArrowRight size={16} className="transition group-hover:translate-x-1" />
         </span>
@@ -404,7 +404,7 @@ function MiniMetric({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3">
       <p className="text-[12px] font-bold uppercase tracking-[.16em] text-blue-100">{label}</p>
-      <b className="mt-1 block truncate text-[18px] font-black text-white">{value}</b>
+      <b className="mt-1 block truncate text-[18px] font-semibold text-white">{value}</b>
     </div>
   );
 }
@@ -422,10 +422,10 @@ function BalanceLine({
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className={`text-[14px] ${strong ? "font-black text-[#061426]" : "font-bold text-slate-500"}`}>
+      <span className={`text-[14px] ${strong ? "font-semibold text-[#061426]" : "font-bold text-slate-500"}`}>
         {label}
       </span>
-      <b className={`${strong ? "text-[22px]" : "text-[17px]"} whitespace-nowrap font-black`}>
+      <b className={`${strong ? "text-[22px]" : "text-[17px]"} whitespace-nowrap font-semibold`}>
         <FinancialAmount value={value} kind={kind} />
       </b>
     </div>
@@ -448,9 +448,9 @@ function AccountSummary({
   return (
     <Link
       to={href}
-      className={`flex min-h-[86px] items-center justify-between gap-4 rounded-2xl border p-4 transition hover:-translate-y-0.5 ${
+      className={`flex min-h-[86px] items-center justify-between gap-4 rounded-2xl border p-4 transition  ${
         featured
-          ? "border-[#17375f] bg-[#061426] text-white shadow-[0_14px_30px_rgba(6,20,38,.18)]"
+          ? "border-[#17375f] bg-[#061426] text-white shadow-sm"
           : "border-slate-200 bg-slate-50/70 hover:bg-white"
       }`}
     >
@@ -462,7 +462,7 @@ function AccountSummary({
           <p className={`text-[13px] font-bold ${featured ? "text-blue-100" : "text-slate-500"}`}>
             {title}
           </p>
-          <b className={`mt-1 block truncate text-[22px] font-black ${featured ? "text-[#f5c75b]" : "text-[#061426]"}`}>
+          <b className={`mt-1 block truncate text-[22px] font-semibold ${featured ? "text-[#f5c75b]" : "text-[#061426]"}`}>
             {money(value)}
           </b>
         </div>
