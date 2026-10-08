@@ -723,3 +723,64 @@ textarea.input {
   text-decoration: line-through;
   color: #94a3b8;
 }
+
+/* MW TECH: impressão legível, com identidade do relatório e paginação natural */
+@media print {
+  @page { size: A4 landscape; margin: 9mm; }
+  .report-sheet {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    padding: 2mm 3mm !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  .report-header {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr) !important;
+    gap: 5mm !important;
+    align-items: center !important;
+    padding-bottom: 3mm !important;
+    margin-bottom: 3mm !important;
+  }
+  .report-company-block { min-width: 0 !important; }
+  .report-screen-logo {
+    display: block !important;
+    flex-shrink: 0 !important;
+    width: 43mm !important;
+    height: 19mm !important;
+    object-fit: contain !important;
+    object-position: left center !important;
+  }
+  .report-print-brand { display: none !important; }
+  .report-company-name { font-size: 10px !important; line-height: 1.3 !important; }
+  .report-company-details p { font-size: 9px !important; line-height: 1.35 !important; }
+  .report-meta {
+    min-width: 0 !important;
+    padding: 3mm !important;
+    border-top-width: .5mm !important;
+  }
+  .report-meta h2 { font-size: 17px !important; }
+  .report-meta p:not(:first-child) { font-size: 9px !important; line-height: 1.3 !important; }
+  .report-summary-card { padding: 2.8mm 3mm !important; }
+  .report-summary-card > span { font-size: 9px !important; letter-spacing: .08em !important; }
+  .report-summary-card strong { font-size: 16px !important; }
+  .report-charts { gap: 3mm !important; margin-top: 3mm !important; }
+  .report-charts > div { padding: 2.5mm !important; }
+  .report-charts .recharts-responsive-container { height: 32mm !important; }
+  .report-table-wrapper {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+  }
+  .report-table {
+    table-layout: auto !important;
+    font-size: 10px !important;
+    break-inside: auto !important;
+  }
+  .report-table thead { display: table-header-group !important; }
+  .report-table tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .report-table th { font-size: 9px !important; padding: 2.3mm !important; }
+  .report-table td { font-size: 9px !important; padding: 2.2mm !important; line-height: 1.35 !important; }
+  .report-footer { font-size: 9px !important; break-inside: avoid !important; }
+  .report-page-number::after { content: "" !important; }
+  .report-page-number { display: none !important; }
+}
