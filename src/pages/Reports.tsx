@@ -317,9 +317,9 @@ function PrintHeader({
     <div className="report-header mb-4 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
       <div className="report-company-block flex min-w-0 items-start gap-4">
         <img
-          src="/mw-tech-logo.png"
+          src="/mw-tech-logo-horizontal.png"
           alt="MW TECH — Sistemas e Soluções Digitais"
-          className="report-screen-logo report-screen-logo--sidebar"
+          className="report-screen-logo"
         />
         <div className="report-company-details min-w-0 pt-0.5">
           <p className="report-company-name mt-1 max-w-[500px] text-[11px] font-semibold leading-snug text-slate-700">{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"}</p>
