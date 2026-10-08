@@ -117,11 +117,11 @@ export function Card({
     blue: "bg-blue-50 text-blue-700",
     green: "bg-emerald-50 text-emerald-700",
     red: "bg-rose-50 text-rose-700",
-    indigo: "bg-indigo-50 text-indigo-700",
+    indigo: "bg-slate-100 text-slate-700",
   }[tone];
 
   return (
-    <div className="group min-h-[154px] rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_10px_32px_rgba(15,35,70,.055)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_40px_rgba(15,35,70,.09)] sm:p-7">
+    <div className="group min-h-[154px] rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm transition  hover:border-slate-300 hover:shadow-sm sm:p-7">
       <div className="flex items-start justify-between gap-5">
         <div className="min-w-0">
           <p className="text-[15px] font-semibold text-slate-600">{title}</p>
@@ -153,7 +153,7 @@ export function Badge({ status }: { status: string }) {
         : "bg-amber-50 text-amber-700 ring-amber-600/10";
 
   return (
-    <span className={`inline-flex items-center rounded-full px-3.5 py-2 text-[13px] font-black capitalize ring-1 ring-inset ${s}`}>
+    <span className={`inline-flex items-center rounded-full px-3.5 py-2 text-[13px] font-semibold capitalize ring-1 ring-inset ${s}`}>
       {status}
     </span>
   );
@@ -183,7 +183,7 @@ export function PageHeader({
   return (
     <section className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h2 className="text-[32px] font-black leading-tight tracking-[-0.02em] text-[#061426] sm:text-[38px]">
+        <h2 className="text-[32px] font-semibold leading-tight tracking-[-0.02em] text-[#061426] sm:text-[38px]">
           {title}
         </h2>
         <p className="mt-2 max-w-3xl text-[15px] leading-6 text-slate-500 sm:text-base">
@@ -219,8 +219,8 @@ const toneClasses: Record<Tone, { icon: string; border: string; value: string }>
     value: "text-[#061426]",
   },
   purple: {
-    icon: "bg-purple-50 text-purple-600",
-    border: "border-t-purple-500",
+    icon: "bg-slate-100 text-slate-700",
+    border: "border-t-slate-400",
     value: "text-[#061426]",
   },
   orange: {
@@ -248,15 +248,11 @@ export function StatCard({
   const c = toneClasses[tone];
   if (featured) {
     return (
-      <div className="relative min-h-[160px] overflow-hidden rounded-2xl border border-[#183a62] bg-[#061426] p-6 text-white shadow-[0_18px_45px_rgba(6,20,38,.22)] sm:p-7">
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-70">
-          <div className="absolute right-[-40px] top-10 h-24 w-64 rounded-[50%] border border-[#e8ac35]/50" />
-          <div className="absolute right-[-20px] top-16 h-20 w-56 rounded-[50%] border border-blue-500/35" />
-        </div>
+      <div className="relative min-h-[160px] overflow-hidden rounded-2xl border border-[#183a62] bg-[#061426] p-6 text-white shadow-sm sm:p-7">
         <div className="relative flex items-start justify-between gap-5">
           <div className="min-w-0">
             <p className="text-[15px] font-bold text-blue-100">{title}</p>
-            <strong className="mt-3 block break-words text-[34px] font-black leading-tight tracking-[-0.02em] text-[#f5c75b]">
+            <strong className="mt-3 block break-words text-[34px] font-semibold leading-tight tracking-[-0.02em] text-[#f5c75b]">
               {value}
             </strong>
             {hint ? <p className="mt-3 text-[13px] text-blue-100">{hint}</p> : null}
@@ -272,11 +268,11 @@ export function StatCard({
   }
 
   return (
-    <div className={`min-h-[154px] rounded-2xl border border-slate-200/90 border-t-[3px] ${c.border} bg-white p-6 shadow-[0_14px_36px_rgba(15,35,70,.06)] sm:p-7`}>
+    <div className={`min-h-[154px] rounded-2xl border border-slate-200/90 border-t-[3px] ${c.border} bg-white p-6 shadow-sm sm:p-7`}>
       <div className="flex items-start justify-between gap-5">
         <div className="min-w-0">
           <p className="text-[15px] font-bold text-slate-600">{title}</p>
-          <strong className={`mt-3 block break-words text-[30px] font-black leading-tight tracking-[-0.02em] sm:text-[34px] ${c.value}`}>
+          <strong className={`mt-3 block break-words text-[30px] font-semibold leading-tight tracking-[-0.02em] sm:text-[34px] ${c.value}`}>
             {value}
           </strong>
           {hint ? <p className="mt-3 text-[13px] leading-5 text-slate-500">{hint}</p> : null}
@@ -307,12 +303,12 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_14px_36px_rgba(15,35,70,.055)] sm:p-7 ${className}`}>
+    <section className={`rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-7 ${className}`}>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 gap-3">
           {Icon ? <Icon size={30} className="mt-0.5 shrink-0 text-[#061426]" /> : null}
           <div className="min-w-0">
-            <h3 className="text-[21px] font-black leading-tight text-[#061426]">{title}</h3>
+            <h3 className="text-[21px] font-semibold leading-tight text-[#061426]">{title}</h3>
             {subtitle ? <p className="mt-1 text-[13px] text-slate-500">{subtitle}</p> : null}
           </div>
         </div>
@@ -325,7 +321,7 @@ export function SectionCard({
 
 export function FilterBar({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
-    <div className={`no-print flex flex-wrap items-center gap-3 rounded-2xl border p-5 shadow-[0_12px_30px_rgba(15,35,70,.055)] ${
+    <div className={`no-print flex flex-wrap items-center gap-3 rounded-2xl border p-5 shadow-sm ${
       dark ? "border-[#1c446d] bg-[#061426] text-white" : "border-slate-200 bg-white"
     }`}>
       {children}
@@ -357,7 +353,7 @@ export function ActionButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-5 text-[14px] font-black transition disabled:cursor-not-allowed disabled:opacity-50 ${cls}`}
+      className={`inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border px-5 text-[14px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${cls}`}
     >
       {children}
     </button>

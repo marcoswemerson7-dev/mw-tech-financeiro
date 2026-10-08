@@ -41,25 +41,20 @@ export default function Login() {
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f4f7fb] p-4 sm:p-6">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 -top-24 size-80 rounded-full bg-[#0b355d]/[.07] blur-3xl" />
-        <div className="absolute -bottom-24 -right-20 size-96 rounded-full bg-[#d9a443]/[.08] blur-3xl" />
-      </div>
-
       <section className="relative w-full max-w-[440px]">
         <div className="mb-5 flex justify-center">
-          <div className="grid size-24 place-items-center overflow-hidden rounded-[24px] bg-[#06192d] shadow-[0_16px_45px_rgba(7,24,45,.18)] ring-1 ring-white">
+          <div className="grid size-24 place-items-center overflow-hidden rounded-[24px] bg-[#06192d] shadow-sm">
             <img src="/mw-tech-logo.png" alt="MW TECH" className="h-[78px] w-[78px] object-contain" />
           </div>
         </div>
 
         <form
           onSubmit={submit}
-          className="rounded-[26px] border border-white/80 bg-white/95 p-6 shadow-[0_24px_80px_rgba(15,23,42,.12)] backdrop-blur sm:p-8"
+          className="rounded-[26px] border border-slate-200 bg-white p-6 shadow-[0_5px_24px_rgba(15,23,42,.07)] sm:p-8"
         >
           <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-[.22em] text-[#b78331]">MW TECH Control</p>
-            <h1 className="mt-2 text-[30px] font-black tracking-[-.035em] text-[#06192d]">Acesse sua conta</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[.22em] text-[#b78331]">MW TECH Control</p>
+            <h1 className="mt-2 text-[30px] font-semibold tracking-[-.035em] text-[#06192d]">Acesse sua conta</h1>
             <p className="mx-auto mt-2 max-w-xs text-[13px] leading-5 text-slate-500">
               Entre usando seu CPF ou e-mail cadastrado.
             </p>
@@ -80,7 +75,7 @@ export default function Login() {
 
           <div className="mt-7 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-[12px] font-black text-slate-700">CPF ou e-mail</span>
+              <span className="mb-2 block text-[12px] font-semibold text-slate-700">CPF ou e-mail</span>
               <div className="relative">
                 <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
@@ -96,7 +91,7 @@ export default function Login() {
             </label>
 
             <label className="block">
-              <span className="mb-2 block text-[12px] font-black text-slate-700">Senha</span>
+              <span className="mb-2 block text-[12px] font-semibold text-slate-700">Senha</span>
               <div className="relative">
                 <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
@@ -129,7 +124,7 @@ export default function Login() {
 
           <button
             disabled={busy || !isAppwriteConfigured}
-            className="mt-6 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#082743] text-[14px] font-black text-white shadow-[0_10px_28px_rgba(8,39,67,.16)] transition hover:bg-[#0b355d] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-6 flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#082743] text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#0b355d] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {busy ? "Entrando..." : "Entrar"}
           </button>
