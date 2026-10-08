@@ -70,7 +70,7 @@ export default function Settings() {
       <form onSubmit={save} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section className="space-y-4">
           {sections.map(({ title, icon: Icon, fields }) => (
-            <div key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_7px_20px_rgba(15,23,42,.04)] sm:p-6">
+            <div key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5 flex items-center gap-3">
                 <span className="grid size-9 place-items-center rounded-lg bg-slate-50 text-[#315a82]"><Icon size={18} /></span>
                 <div><h3 className="text-[15px] font-semibold text-[#0b2239]">{title}</h3><p className="mt-0.5 text-[11px] text-slate-400">Informações administrativas da MW TECH.</p></div>
@@ -92,14 +92,14 @@ export default function Settings() {
             </div>
           ))}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_7px_20px_rgba(15,23,42,.04)] sm:p-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <label className="text-[12px] font-medium text-slate-600">Logo do sistema
               <input name="logo_url" value={data.logo_url || ""} onChange={(e) => change("logo_url", e.target.value)} className="mt-1.5 min-h-[44px] w-full rounded-xl border border-slate-200 px-3.5 text-[14px] font-normal text-[#172b3f] outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-50" />
             </label>
           </div>
         </section>
 
-        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_7px_20px_rgba(15,23,42,.04)]">
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-[11px] font-medium uppercase tracking-[.14em] text-slate-400">Pré-visualização</p>
           <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-5">
             <img src={data.logo_url || defaults.logo_url} alt="MW TECH" className="h-14 w-40 object-contain object-left" />
