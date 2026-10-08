@@ -204,7 +204,7 @@ export default function Reports() {
                 <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 10 }} width={62} />
                 <Tooltip formatter={(v) => money(v)} />
-                <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="valor" radius={[6, 6, 0, 0]} isAnimationActive={false}>
                   <Cell fill="#16a34a" />
                   <Cell fill="#dc2626" />
                 </Bar>
@@ -215,7 +215,7 @@ export default function Reports() {
             <h4 className="text-xs font-semibold uppercase text-slate-500">Despesas por status</h4>
             <ResponsiveContainer width="100%" height={138}>
               <PieChart>
-                <Pie data={expenseByStatus} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58}>
+                <Pie data={expenseByStatus} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58} isAnimationActive={false}>
                   {expenseByStatus.map((x) => <Cell key={x.status} fill={x.status === "pago" ? "#16a34a" : x.status === "pendente" ? "#f59e0b" : "#dc2626"} />)}
                 </Pie>
                 <Tooltip formatter={(v) => money(v)} />
