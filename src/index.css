@@ -916,14 +916,14 @@ textarea.input {
     overflow-wrap: anywhere !important;
     word-break: normal !important;
   }
-  .report-table th:nth-child(1) { width: 13% !important; }
-  .report-table th:nth-child(2) { width: 32% !important; }
-  .report-table th:nth-child(3) { width: 30% !important; }
+  .report-table th:nth-child(1) { width: 12% !important; }
+  .report-table th:nth-child(2) { width: 26% !important; }
+  .report-table th:nth-child(3) { width: 24% !important; }
   .report-table th:nth-child(4) { width: 10% !important; }
-  .report-table th:nth-child(5) { width: 15% !important; }
-  .report-table th:nth-child(6) { width: 0 !important; }
+  .report-table th:nth-child(5) { width: 16% !important; }
+  .report-table th:nth-child(6) { width: 12% !important; }
   .report-table th:nth-child(7) { width: 0 !important; }
-  .report-table th:nth-child(6), .report-table td:nth-child(6) { display: none !important; }
+  
   .report-table thead { display: table-header-group !important; }
   .report-table tr { break-inside: avoid !important; }
   .report-footer {
