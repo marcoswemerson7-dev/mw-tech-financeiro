@@ -152,14 +152,14 @@ export default function Reports() {
           </label>
           <button
             onClick={() => print()}
-            className="inline-flex min-h-[56px] items-center gap-2 rounded-xl border border-[#e8ac35]/70 px-5 text-[14px] font-black text-white transition hover:bg-white/[.07]"
+            className="inline-flex min-h-[56px] items-center gap-2 rounded-xl border border-[#e8ac35]/70 px-5 text-[14px] font-semibold text-white transition hover:bg-white/[.07]"
           >
             <Printer size={16} />
             Imprimir relatório
           </button>
           <button
             onClick={exportExcel}
-            className="inline-flex min-h-[56px] items-center gap-2 rounded-xl border border-emerald-500 px-5 text-[14px] font-black text-emerald-300 transition hover:bg-emerald-500/10"
+            className="inline-flex min-h-[56px] items-center gap-2 rounded-xl border border-emerald-500 px-5 text-[14px] font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
           >
             <FileSpreadsheet size={16} />
             Excel
@@ -189,7 +189,7 @@ export default function Reports() {
               <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
                 {n}
               </span>
-              <strong className="mt-1 block text-xl font-black tracking-tight">
+              <strong className="mt-1 block text-xl font-semibold tracking-tight">
                 <FinancialAmount value={v} kind={String(kind)} />
               </strong>
             </div>
@@ -197,7 +197,7 @@ export default function Reports() {
         </div>
         {(hasChartData || hasExpenseStatusData) && <div className="report-charts no-break mt-5 grid gap-4 lg:grid-cols-2">
           {hasChartData && <div className="rounded-xl border border-slate-200 p-4">
-            <h4 className="text-xs font-black uppercase text-slate-500">Entradas x Saídas</h4>
+            <h4 className="text-xs font-semibold uppercase text-slate-500">Entradas x Saídas</h4>
             <ResponsiveContainer width="100%" height={150}>
               <BarChart data={chartData}>
                 <CartesianGrid stroke="#edf0f4" vertical={false} />
@@ -212,7 +212,7 @@ export default function Reports() {
             </ResponsiveContainer>
           </div>}
           {hasExpenseStatusData && <div className="rounded-xl border border-slate-200 p-4">
-            <h4 className="text-xs font-black uppercase text-slate-500">Despesas por status</h4>
+            <h4 className="text-xs font-semibold uppercase text-slate-500">Despesas por status</h4>
             <ResponsiveContainer width="100%" height={150}>
               <PieChart>
                 <Pie data={expenseByStatus} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58}>
@@ -250,7 +250,7 @@ export default function Reports() {
                     <td className="max-w-[260px] whitespace-normal break-words px-3 py-3.5 font-semibold text-slate-800">{x.descricao}</td>
                     <td className="max-w-[250px] whitespace-normal break-words px-3 py-3.5 text-slate-500">{x.conta}</td>
                     <td className="whitespace-nowrap px-3 py-3.5">{x.tipo}</td>
-                    <td className="whitespace-nowrap px-3 py-3.5 text-right font-black">
+                    <td className="whitespace-nowrap px-3 py-3.5 text-right font-semibold">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
                     </td>
                     <td className="px-3">
@@ -266,7 +266,7 @@ export default function Reports() {
               </tbody>
             </table>
           ) : <div className="report-empty-state rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-[#0b2b66]">Sem movimentações no período</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#0b2b66]">Sem movimentações no período</p>
             <p className="mt-2 text-sm text-slate-500">Não foram encontrados lançamentos entre {format(from)} e {format(to)} para os filtros selecionados.</p>
           </div>}
         </div>
@@ -336,7 +336,7 @@ function PrintHeader({
       </div>
       <div className="report-meta shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-right">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b7791f]">Documento</p>
-        <h2 className="mt-1 text-xl font-black text-[#0b1d3a]">{title}</h2>
+        <h2 className="mt-1 text-xl font-semibold text-[#0b1d3a]">{title}</h2>
         <p className="mt-1 text-xs font-semibold text-slate-600">{subtitle}</p>
         <p className="mt-0.5 text-[11px] text-slate-500">Emitido em {new Date().toLocaleString("pt-BR")}</p>
       </div>
