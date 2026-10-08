@@ -257,15 +257,15 @@ export default function Audit() {
   return <div className="mx-auto w-full max-w-[1480px] space-y-6">
     <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div>
-        <Link to="/monitoramento" className="mb-3 inline-flex items-center gap-2 text-xs font-black text-blue-700 hover:text-blue-900"><ArrowLeft size={15}/> Voltar ao monitoramento</Link>
-        <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-[#b57b19]"><ShieldCheck size={16}/> Auditoria do sistema</div>
-        <h1 className="text-3xl font-black tracking-tight text-[#07182d]">{systemName}</h1>
+        <Link to="/monitoramento" className="mb-3 inline-flex items-center gap-2 text-xs font-semibold text-blue-700 hover:text-blue-900"><ArrowLeft size={15}/> Voltar ao monitoramento</Link>
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.16em] text-[#b57b19]"><ShieldCheck size={16}/> Auditoria do sistema</div>
+        <h1 className="text-3xl font-semibold tracking-tight text-[#07182d]">{systemName}</h1>
         <p className="mt-1 text-sm text-slate-500">Histórico individual deste órgão. Os dados de outros clientes não são misturados nesta visão.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => void load()} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/>Atualizar</button>
-        <button onClick={exportCsv} disabled={!filtered.length} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm disabled:opacity-50"><Download size={16}/>CSV/Excel</button>
-        <button onClick={printReport} disabled={!filtered.length} className="flex items-center gap-2 rounded-xl bg-[#082743] px-4 py-2.5 text-sm font-black text-white shadow-sm disabled:opacity-50"><FileDown size={16}/>Relatório PDF</button>
+        <button onClick={() => void load()} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"><RefreshCw size={16} className={loading ? "animate-spin" : ""}/>Atualizar</button>
+        <button onClick={exportCsv} disabled={!filtered.length} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm disabled:opacity-50"><Download size={16}/>CSV/Excel</button>
+        <button onClick={printReport} disabled={!filtered.length} className="flex items-center gap-2 rounded-xl bg-[#082743] px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-50"><FileDown size={16}/>Relatório PDF</button>
       </div>
     </div>
 
@@ -280,12 +280,12 @@ export default function Audit() {
         ["Ações críticas", stats.critical, AlertTriangle],
         ["Integração", source?.configured && !source?.error ? "Ativa" : "Pendente", ShieldCheck],
       ].map(([label,value,Icon]: any) => <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-start justify-between"><div><p className="text-xs font-bold text-slate-500">{label}</p><p className="mt-1 text-2xl font-black text-[#07182d]">{value}</p></div><span className="grid size-10 place-items-center rounded-xl bg-slate-50 text-[#0a3155]"><Icon size={20}/></span></div>
+        <div className="flex items-start justify-between"><div><p className="text-xs font-bold text-slate-500">{label}</p><p className="mt-1 text-2xl font-semibold text-[#07182d]">{value}</p></div><span className="grid size-10 place-items-center rounded-xl bg-slate-50 text-[#0a3155]"><Icon size={20}/></span></div>
       </div>)}
     </div>
 
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2 text-sm font-black text-[#07182d]"><Filter size={17}/>Filtros desta prefeitura</div>
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#07182d]"><Filter size={17}/>Filtros desta prefeitura</div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="relative xl:col-span-2"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Usuário, processo, ação ou descrição..." className={inputClass+" w-full pl-9"}/></div>
         <select value={level} onChange={e=>setLevel(e.target.value)} className={inputClass}><option value="all">Toda criticidade</option><option value="critical">Crítica</option><option value="attention">Atenção</option><option value="normal">Normal</option></select>
@@ -312,8 +312,8 @@ export default function Audit() {
                 <td className="px-4 py-3 font-semibold text-slate-600">{r.module || "—"}</td>
                 <td className="max-w-[300px] px-4 py-3"><b className="block text-slate-700">{ACTION_LABELS[r.action_type || ""] || r.action_type || "—"}</b><span className="line-clamp-1 text-[10px] text-slate-400">{r.description || ""}</span></td>
                 <td className="px-4 py-3 font-mono font-bold text-slate-600">{r.process_number || "—"}</td>
-                <td className="px-4 py-3"><span className={"rounded-full px-2.5 py-1 text-[10px] font-black uppercase "+(sev==="critical"?"bg-rose-50 text-rose-700":sev==="attention"?"bg-amber-50 text-amber-700":"bg-slate-100 text-slate-600")}>{sev==="critical"?"Crítica":sev==="attention"?"Atenção":"Normal"}</span></td>
-                <td className="px-4 py-3 text-center"><button onClick={()=>setSelected(r)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-black text-blue-700 hover:bg-blue-50"><Eye size={14}/>Ver</button></td>
+                <td className="px-4 py-3"><span className={"rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase "+(sev==="critical"?"bg-rose-50 text-rose-700":sev==="attention"?"bg-amber-50 text-amber-700":"bg-slate-100 text-slate-600")}>{sev==="critical"?"Crítica":sev==="attention"?"Atenção":"Normal"}</span></td>
+                <td className="px-4 py-3 text-center"><button onClick={()=>setSelected(r)} className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 font-semibold text-blue-700 hover:bg-blue-50"><Eye size={14}/>Ver</button></td>
               </tr>;
             })}
           </tbody>
@@ -322,13 +322,13 @@ export default function Audit() {
     </div>
 
     {selected && <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/65 p-4">
-      <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-[0_30px_100px_rgba(0,0,0,.35)]">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5"><div><div className="text-xs font-black uppercase tracking-wider text-[#b57b19]">{systemName}</div><h2 className="text-xl font-black text-[#07182d]">{ACTION_LABELS[selected.action_type || ""] || selected.action_type}</h2></div><button onClick={()=>setSelected(null)} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={20}/></button></div>
+      <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-sm">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5"><div><div className="text-xs font-semibold uppercase tracking-wider text-[#b57b19]">{systemName}</div><h2 className="text-xl font-semibold text-[#07182d]">{ACTION_LABELS[selected.action_type || ""] || selected.action_type}</h2></div><button onClick={()=>setSelected(null)} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={20}/></button></div>
         <div className="grid gap-5 p-6 md:grid-cols-2">
           <div className="space-y-3 rounded-2xl border border-slate-200 p-4"><b className="text-sm text-[#07182d]">Identificação</b>{[["Data/Hora",fmtDate(selected.created_at)],["Usuário",selected.user_name],["E-mail",selected.user_email],["Cargo",selected.user_role],["Módulo",selected.module],["Processo",selected.process_number],["Entidade",selected.entity_id]].map(([k,v])=><div key={k} className="flex justify-between gap-4 border-t border-slate-100 pt-2 text-xs"><span className="font-bold text-slate-400">{k}</span><span className="text-right font-semibold text-slate-700">{v || "—"}</span></div>)}</div>
           <div className="space-y-3 rounded-2xl border border-slate-200 p-4"><b className="text-sm text-[#07182d]">Descrição</b><p className="text-sm leading-6 text-slate-600">{selected.description || "Sem descrição adicional."}</p><div className="border-t border-slate-100 pt-3 text-[11px] text-slate-400">{selected.user_agent || "Dispositivo não informado"}{selected.ip_address ? ` · IP ${selected.ip_address}` : ""}</div></div>
-          <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-4"><div className="mb-3 flex items-center gap-2 font-black text-rose-800"><FileText size={16}/>Antes</div><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-5 text-slate-700">{jsonText(selected.before_data) || "Sem dados anteriores registrados."}</pre></div>
-          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4"><div className="mb-3 flex items-center gap-2 font-black text-emerald-800"><FileText size={16}/>Depois</div><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-5 text-slate-700">{jsonText(selected.after_data) || "Sem dados posteriores registrados."}</pre></div>
+          <div className="rounded-2xl border border-rose-100 bg-rose-50/40 p-4"><div className="mb-3 flex items-center gap-2 font-semibold text-rose-800"><FileText size={16}/>Antes</div><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-5 text-slate-700">{jsonText(selected.before_data) || "Sem dados anteriores registrados."}</pre></div>
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4"><div className="mb-3 flex items-center gap-2 font-semibold text-emerald-800"><FileText size={16}/>Depois</div><pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-5 text-slate-700">{jsonText(selected.after_data) || "Sem dados posteriores registrados."}</pre></div>
         </div>
       </div>
     </div>}
