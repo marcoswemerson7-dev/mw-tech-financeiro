@@ -3,7 +3,7 @@ import { CalendarDays, FileSpreadsheet, Filter, Printer, ReceiptText } from "luc
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getReportData } from "../services/reports";
 import { getExpenses } from "../services/expenses";
-import { money, Badge, dateOnly, formatDate, FilterBar, PageHeader, FinancialAmount } from "../components/UI";
+import { money, Badge, dateOnly, formatDate, PageHeader, FinancialAmount } from "../components/UI";
 type Mov = {
   id: string;
   data: string;
@@ -121,11 +121,11 @@ export default function Reports() {
           subtitle="Emita relatórios financeiros, acompanhe períodos e gere recibos com visual profissional."
         />
       </div>
-      <FilterBar dark>
+      <div className="no-print rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm lg:px-5"><div className="flex flex-wrap items-end gap-3">
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="min-h-[56px] min-w-[220px] rounded-xl border border-white/15 bg-white/[.07] px-4 text-[15px] font-semibold text-white outline-none"
+            className="h-11 min-w-[170px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           >
             <option value="">Todos os tipos</option>
             <option value="Receita">Entradas</option>
@@ -135,42 +135,42 @@ export default function Reports() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="min-h-[56px] min-w-[220px] rounded-xl border border-white/15 bg-white/[.07] px-4 text-[15px] font-semibold text-white outline-none"
+            className="h-11 min-w-[170px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           >
             <option value="">Todos os status</option>
             <option value="pago">Pago</option>
             <option value="pendente">Pendente</option>
             <option value="atrasado">Atrasado</option>
           </select>
-          <label className="min-w-[190px] rounded-xl border border-white/15 bg-white/[.07] px-4 py-2 text-xs font-bold text-blue-100">
+          <label className="min-w-[165px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
             <span className="flex items-center gap-2"><CalendarDays size={15} /> Data inicial</span>
-            <input aria-label="Data inicial" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 w-full bg-transparent text-[15px] font-semibold text-white outline-none" />
+            <input aria-label="Data inicial" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 w-full bg-transparent text-sm font-semibold text-slate-800 outline-none" />
           </label>
-          <label className="min-w-[190px] rounded-xl border border-white/15 bg-white/[.07] px-4 py-2 text-xs font-bold text-blue-100">
+          <label className="min-w-[165px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
             <span className="flex items-center gap-2"><CalendarDays size={15} /> Data final</span>
-            <input aria-label="Data final" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 w-full bg-transparent text-[15px] font-semibold text-white outline-none" />
+            <input aria-label="Data final" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 w-full bg-transparent text-sm font-semibold text-slate-800 outline-none" />
           </label>
           <button
             onClick={() => print()}
-            className="inline-flex min-h-[56px] items-center gap-2 rounded-xl border border-[#e8ac35]/70 px-5 text-[14px] font-semibold text-white transition hover:bg-white/[.07]"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0b2b66] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#143e82]"
           >
             <Printer size={16} />
             Imprimir relatório
           </button>
           <button
             onClick={exportExcel}
-            className="inline-flex min-h-[56px] items-center gap-2 rounded-xl border border-emerald-500 px-5 text-[14px] font-semibold text-emerald-300 transition hover:bg-emerald-500/10"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-white px-4 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
           >
             <FileSpreadsheet size={16} />
             Excel
           </button>
-          <span className="ml-auto hidden items-center gap-2 text-[13px] font-bold text-blue-100 xl:inline-flex">
+          <span className="ml-auto inline-flex items-center gap-2 self-center text-xs font-semibold text-slate-600">
             <Filter size={16} />
             {filtered.length} registro{filtered.length === 1 ? "" : "s"}
           </span>
-      </FilterBar>
+        </div></div>
       <section
-        className={`report-sheet mx-auto max-w-[1400px] rounded-2xl border border-slate-200 bg-white p-7 shadow-sm ${receipt ? "print:hidden" : ""}`}
+        className={`report-sheet mx-auto max-w-[1400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 ${receipt ? "print:hidden" : ""}`}
       >
         <PrintHeader company={company} title="Relatório Financeiro" subtitle={`Período selecionado: ${format(from)} a ${format(to)}`} />
         <div className="report-summary grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2 lg:grid-cols-3">
@@ -184,21 +184,21 @@ export default function Reports() {
           ].map(([n, v, tone, kind]) => (
             <div
               key={String(n)}
-              className={`report-summary-card report-summary-card--${tone} border-b border-r border-slate-200 p-4`}
+              className={`report-summary-card report-summary-card--${tone} border-b border-r border-slate-200 bg-slate-50/60 px-4 py-3`}
             >
               <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
                 {n}
               </span>
-              <strong className="mt-1 block text-xl font-semibold tracking-tight">
+              <strong className="mt-1 block text-lg font-semibold tracking-tight">
                 <FinancialAmount value={v} kind={String(kind)} />
               </strong>
             </div>
           ))}
         </div>
-        {(hasChartData || hasExpenseStatusData) && <div className="report-charts no-break mt-5 grid gap-4 lg:grid-cols-2">
-          {hasChartData && <div className="rounded-xl border border-slate-200 p-4">
+        {(hasChartData || hasExpenseStatusData) && <div className="report-charts no-break mt-4 grid gap-3 lg:grid-cols-2">
+          {hasChartData && <div className="rounded-xl border border-slate-200 p-3 sm:p-4">
             <h4 className="text-xs font-semibold uppercase text-slate-500">Entradas x Saídas</h4>
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width="100%" height={138}>
               <BarChart data={chartData}>
                 <CartesianGrid stroke="#edf0f4" vertical={false} />
                 <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
@@ -211,19 +211,19 @@ export default function Reports() {
               </BarChart>
             </ResponsiveContainer>
           </div>}
-          {hasExpenseStatusData && <div className="rounded-xl border border-slate-200 p-4">
+          {hasExpenseStatusData && <div className="rounded-xl border border-slate-200 p-3 sm:p-4">
             <h4 className="text-xs font-semibold uppercase text-slate-500">Despesas por status</h4>
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width="100%" height={138}>
               <PieChart>
                 <Pie data={expenseByStatus} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58}>
-                  {expenseByStatus.map((x, i) => <Cell key={x.status} fill={["#f59e0b", "#16a34a", "#dc2626"][i]} />)}
+                  {expenseByStatus.map((x) => <Cell key={x.status} fill={x.status === "pago" ? "#16a34a" : x.status === "pendente" ? "#f59e0b" : "#dc2626"} />)}
                 </Pie>
                 <Tooltip formatter={(v) => money(v)} />
               </PieChart>
             </ResponsiveContainer>
           </div>}
         </div>}
-        <div className="report-table-wrapper mt-6 overflow-x-auto">
+        <div className="report-table-wrapper mt-4 overflow-x-auto rounded-lg border border-slate-200">
           {filtered.length ? (
             <table className="report-table w-full border-collapse text-left text-xs">
               <thead className="bg-[#061426] text-[10px] uppercase tracking-[0.12em] text-white">
@@ -237,7 +237,7 @@ export default function Reports() {
                     "Status",
                     "Recibo",
                   ].map((x) => (
-                    <th key={x} className="px-3 py-3.5">
+                    <th key={x} className="px-3 py-2.5">
                       {x}
                     </th>
                   ))}
@@ -246,17 +246,17 @@ export default function Reports() {
               <tbody>
                 {filtered.map((x) => (
                   <tr key={x.tipo + x.id} className="border-b">
-                    <td className="whitespace-nowrap px-3 py-3.5 text-slate-600">{formatDate(x.data)}</td>
-                    <td className="max-w-[260px] whitespace-normal break-words px-3 py-3.5 font-semibold text-slate-800">{x.descricao}</td>
-                    <td className="max-w-[250px] whitespace-normal break-words px-3 py-3.5 text-slate-500">{x.conta}</td>
-                    <td className="whitespace-nowrap px-3 py-3.5">{x.tipo}</td>
-                    <td className="whitespace-nowrap px-3 py-3.5 text-right font-semibold">
+                    <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{formatDate(x.data)}</td>
+                    <td className="max-w-[260px] whitespace-normal break-words px-3 py-2.5 font-semibold text-slate-800">{x.descricao}</td>
+                    <td className="max-w-[250px] whitespace-normal break-words px-3 py-2.5 text-slate-500">{x.conta}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5">{x.tipo}</td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
                     </td>
                     <td className="px-3">
                       <Badge status={x.status} />
                     </td>
-                    <td className="no-print px-3 py-3.5">
+                    <td className="no-print px-3 py-2.5">
                       <button onClick={() => print(x)} title="Imprimir recibo">
                         <ReceiptText size={17} />
                       </button>
@@ -314,12 +314,12 @@ function PrintHeader({
   subtitle: string;
 }) {
   return (
-    <div className="report-header mb-6 flex items-start justify-between gap-8 border-b-0 pb-5">
+    <div className="report-header mb-4 flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-4">
       <div className="report-company-block flex min-w-0 items-start gap-4">
         <img
           src={company.logo_url || "/mw-tech-logo-horizontal.png"}
           alt="Logo MW TECH"
-          className="report-screen-logo report-logo h-[68px] w-[156px] shrink-0 object-contain object-left"
+          className="report-screen-logo report-logo h-[72px] w-[145px] shrink-0 object-contain object-left"
         />
         <div className="report-print-brand" aria-label="MW TECH">
           <span className="report-symbol" aria-hidden="true">
@@ -334,7 +334,7 @@ function PrintHeader({
           <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{[company.telefone, company.email || "marcoswemerson7@gmail.com"].filter(Boolean).join(" · ")}</p>
         </div>
       </div>
-      <div className="report-meta shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-right">
+      <div className="report-meta rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-right">
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b7791f]">Documento</p>
         <h2 className="mt-1 text-xl font-semibold text-[#0b1d3a]">{title}</h2>
         <p className="mt-1 text-xs font-semibold text-slate-600">{subtitle}</p>
