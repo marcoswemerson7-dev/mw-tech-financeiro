@@ -37,7 +37,7 @@ import {
 import { isAppwriteConfigured as isConfigured } from "../lib/appwrite";
 import { money, Empty, dateOnly, formatDate, ActionButton, FilterBar, IconAction, PageHeader, StatCard, Badge, FinancialAmount, Toast } from "../components/UI";
 
-export default function Transactions() {
+export default function Transactions({ onOpenCadastros }: { onOpenCadastros?: () => void }) {
   const [rows, setRows] = useState<Movement[]>([]),
     [accounts, setAccounts] = useState<Account[]>([]),
     [counterparties, setCounterparties] = useState<Counterparty[]>([]),
@@ -241,7 +241,7 @@ export default function Transactions() {
         subtitle="Consulte por período e mantenha as movimentações organizadas."
         actions={
           <>
-            <ActionButton onClick={() => setPartyOpen(true)} tone="outline">
+            <ActionButton onClick={() => onOpenCadastros ? onOpenCadastros() : setPartyOpen(true)} tone="outline">
               <UserRoundPlus size={18} /> Cadastros
             </ActionButton>
             <ActionButton onClick={() => { setEdit(null); setDraft(null); setLaunchType("entrada"); setOpen(true); }}>
