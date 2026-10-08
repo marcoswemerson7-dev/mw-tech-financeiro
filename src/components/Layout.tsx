@@ -262,7 +262,7 @@ export default function Layout() {
 
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
 
-      <div className="lg:pl-[254px]">
+      <div className="app-content-shell lg:pl-[254px]">
         <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-[#102a43] px-4 text-white shadow-sm sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
             <button className="grid size-9 place-items-center rounded-lg text-white/90 transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
