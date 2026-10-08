@@ -89,40 +89,30 @@ export default function Dashboard() {
   return (
     <div className="mx-auto w-full max-w-[1540px] space-y-4 pb-4">
       <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
-        <div className="pointer-events-none absolute inset-y-0 left-[47%] hidden w-[28%] overflow-hidden lg:block">
-          <div className="absolute inset-0 bg-[#f8fafc]" />
-          <div className="absolute bottom-2 left-8 h-20 w-8 rounded-t-md bg-slate-200/60" />
-          <div className="absolute bottom-2 left-20 h-28 w-10 rounded-t-md bg-amber-200/45" />
-          <div className="absolute bottom-2 left-36 h-24 w-9 rounded-t-md bg-blue-200/55" />
-          <div className="absolute bottom-2 left-52 h-16 w-7 rounded-t-md bg-slate-300/50" />
-          <div className="absolute bottom-0 left-5 right-4 h-8 bg-emerald-50/60" />
-        </div>
-
-        <div className="relative grid gap-4 xl:grid-cols-[1.42fr_.62fr_.56fr] xl:items-center">
+        <div className="relative grid gap-4 xl:grid-cols-[1.3fr_.72fr_.65fr] xl:items-center">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Control</p>
-            <h1 className="mt-1 text-[30px] font-semibold tracking-[-.025em] text-[#0b2239] sm:text-[36px]">Painel executivo</h1>
+            <h1 className="mt-1 text-[28px] font-semibold tracking-[-.025em] text-[#0b2239] sm:text-[32px]">Painel executivo</h1>
             <p className="mt-1 text-[13px] text-slate-500">Indicadores essenciais da operação, reunidos em um só lugar.</p>
           </div>
 
-          <div className="rounded-xl border border-amber-100/90 bg-amber-50/50 px-4 py-3 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
             <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-amber-500 shadow-sm"><Sun size={22} /></span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-[#a77a28] border border-slate-200"><Sun size={20} /></span>
               <div>
                 <p className="text-[14px] font-semibold text-[#0b2239]">Bom dia, {firstName}!</p>
-                <p className="mt-1 text-[10px] capitalize leading-4 text-slate-500">Hoje é {dateLabel}.</p>
-                <p className="text-[10px] text-slate-400">Vamos em frente!</p>
+                <p className="mt-1 text-[12px] capitalize leading-5 text-slate-600">Hoje é {dateLabel}.</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 shadow-sm">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
             <div className="flex items-start gap-3">
               <span className="mt-1 size-3 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-50" />
               <div>
-                <p className="text-[10px] font-medium text-slate-500">Status do ambiente</p>
+                <p className="text-[12px] font-medium text-slate-600">Status do ambiente</p>
                 <p className="mt-0.5 text-[15px] font-semibold text-[#0b2239]">Operação normal</p>
-                <p className="mt-1 text-[10px] text-slate-400">Todos os sistemas funcionando.</p>
+                <p className="mt-1 text-[12px] text-slate-600">Todos os sistemas funcionando.</p>
               </div>
             </div>
           </div>
@@ -133,7 +123,7 @@ export default function Dashboard() {
         <MetricCard icon={<ArrowUpRight size={22} />} title="A receber hoje" value={brl(receberHoje)} hint={`${recebimentosHoje} lançamento${recebimentosHoje === 1 ? "" : "s"}`} href="/movimentacoes" tone="green" />
         <MetricCard icon={<ArrowDownRight size={22} />} title="A pagar hoje" value={brl(pagarHoje)} hint={`${pagamentosHoje} lançamento${pagamentosHoje === 1 ? "" : "s"}`} href="/despesas" tone="orange" />
         <MetricCard icon={<Landmark size={22} />} title="Saldo em caixa" value={brl(account)} hint="Saldo consolidado" href="/caixa" tone="blue" />
-        <MetricCard icon={<UsersRound size={22} />} title="Usuários ativos" value={String(usersCount)} hint="Acessos habilitados" href="/usuarios" tone="purple" />
+        <MetricCard icon={<UsersRound size={22} />} title="Usuários ativos" value={String(usersCount)} hint="Acessos habilitados" href="/usuarios" tone="blue" />
       </section>
 
       <section className="grid gap-3 xl:grid-cols-[2.1fr_.82fr]">
@@ -206,21 +196,20 @@ export default function Dashboard() {
 
 function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode; title: string; value: string; hint: string; href: string; tone: "green" | "orange" | "blue" | "purple" }) {
   const style = {
-    green: "bg-emerald-50 text-emerald-600",
-    orange: "bg-orange-50 text-orange-600",
-    blue: "bg-blue-50 text-blue-600",
-    purple: "bg-violet-50 text-violet-600",
+    green: "bg-emerald-50 text-emerald-700",
+    orange: "bg-amber-50 text-amber-700",
+    blue: "bg-slate-100 text-[#274c6b]",
+    purple: "bg-slate-100 text-[#274c6b]",
   }[tone];
   return (
-    <a href={href} className="group relative rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition  hover:shadow-md">
-      <MoreHorizontal size={15} className="absolute right-4 top-4 text-slate-400" />
-      <div className="flex items-start gap-4 pr-5">
-        <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${style}`}>{icon}</span>
+    <a href={href} className="group relative rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300">
+      <div className="flex items-start gap-3">
+        <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${style}`}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium text-[#18324d]">{title}</p>
-          <p className="mt-1 truncate text-[23px] font-semibold tracking-[-.025em] text-[#0b2239]">{value}</p>
-          <p className="mt-1 text-[10px] text-slate-400">{hint}</p>
-          <p className="mt-3 text-right text-[10px] font-medium text-blue-600">Ver detalhes →</p>
+          <p className="text-[12px] font-medium text-[#334155]">{title}</p>
+          <p className="mt-1 truncate text-[22px] font-semibold tracking-[-.025em] text-[#0b2239]">{value}</p>
+          <p className="mt-1 text-[12px] text-slate-500">{hint}</p>
+          <p className="mt-2 text-right text-[11px] font-medium text-[#245477]">Ver detalhes →</p>
         </div>
       </div>
     </a>
