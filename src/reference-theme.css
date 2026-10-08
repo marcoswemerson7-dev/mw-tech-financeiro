@@ -161,3 +161,10 @@ main [class*="backdrop-blur"] { backdrop-filter: none !important; -webkit-backdr
 main [class*="shadow-[0_"], main [class*="shadow-xl"], main [class*="shadow-2xl"] { box-shadow: 0 1px 4px rgba(18,35,54,.07) !important; }
 main [class*="text-shadow"], main [class*="drop-shadow"] { text-shadow: none !important; filter: none !important; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* Unified executive-style surfaces and text */
+main [class*="bg-gradient-to-"] { background-image: none !important; }
+main [class*="hover:-translate-y"] { transform: none !important; }
+main [class*="font-black"] { font-weight: 650 !important; }
+main [class*="blur-3xl"] { filter: none !important; opacity: 0 !important; }
+main [class*="shadow-md"], main [class*="shadow-lg"] { box-shadow: 0 2px 8px rgba(18,35,54,.075) !important; }
