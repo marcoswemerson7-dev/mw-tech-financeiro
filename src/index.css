@@ -806,3 +806,26 @@ textarea.input {
   .report-footer { margin-top: 4mm !important; gap: 2mm 4mm !important; font-size: 8px !important; break-inside: avoid !important; }
   .report-page-number { display: none !important; }
 }
+
+/* A barra lateral é fixa; na impressão o contêiner precisa ocupar a folha inteira. */
+@media print {
+  .app-content-shell,
+  #root .app-content-shell {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    transform: none !important;
+  }
+  .app-content-shell > main {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .report-sheet {
+    margin-inline: 0 !important;
+    width: 100% !important;
+  }
+}
