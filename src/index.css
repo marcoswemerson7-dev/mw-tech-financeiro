@@ -975,3 +975,33 @@ textarea.input {
   .report-table .no-print { display: none !important; }
   .report-footer { margin-top: 5mm !important; }
 }
+
+/* Corrige o recuo da navegação: o sidebar some na impressão, mas seus 254px não. */
+@media print {
+  .lg\\:pl-\\[254px\\] {
+    padding-left: 0 !important;
+  }
+  #root > div > div.lg\\:pl-\\[254px\\] {
+    padding-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  #root > div, #root > div > div, main, main > div {
+    box-sizing: border-box !important;
+    max-width: none !important;
+  }
+  .report-sheet {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .report-table td:nth-child(6) {
+    font-size: 8px !important;
+  }
+  .report-table td:nth-child(6) > span,
+  .report-table td:nth-child(6) > div {
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    font-size: 8px !important;
+  }
+}
