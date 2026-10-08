@@ -181,12 +181,6 @@ export default function Cash() {
         <SectionCard title="Posição das contas" subtitle="Dinheiro disponível agora" icon={Banknote}>
           <div className="space-y-3">
             <AccountSummary
-              title="Caixa físico"
-              value={totals.cash}
-              icon={<Banknote size={22} />}
-              href="/contas"
-            />
-            <AccountSummary
               title="Bancos"
               value={totals.bank}
               icon={<Landmark size={22} />}
