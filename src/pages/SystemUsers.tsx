@@ -221,11 +221,11 @@ export default function SystemUsers() {
 
       <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
         {([["all","Todos"],["rg","Ribeiro Gonçalves"],["bg","Baixa Grande do Ribeiro"]] as const).map(([id,label]) => (
-          <button key={id} onClick={() => setTenantFilter(id)} className={`rounded-lg px-4 py-2 text-xs font-black transition ${tenant === id ? "bg-[#082743] text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
+          <button key={id} onClick={() => setTenantFilter(id)} className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${tenant === id ? "bg-[#082743] text-white" : "text-slate-600 hover:bg-slate-100"}`}>{label}</button>
         ))}
         <div className="ml-auto flex gap-1 rounded-lg bg-slate-100 p-1">
-          <button onClick={() => setTab("users")} className={`rounded-md px-3 py-1.5 text-xs font-black ${tab === "users" ? "bg-white text-[#07182d] shadow-sm" : "text-slate-500"}`}>Usuários</button>
-          <button onClick={() => setTab("incidents")} className={`rounded-md px-3 py-1.5 text-xs font-black ${tab === "incidents" ? "bg-white text-[#07182d] shadow-sm" : "text-slate-500"}`}>Incidentes {filteredIncidents.length ? `(${filteredIncidents.length})` : ""}</button>
+          <button onClick={() => setTab("users")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${tab === "users" ? "bg-white text-[#07182d] shadow-sm" : "text-slate-500"}`}>Usuários</button>
+          <button onClick={() => setTab("incidents")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${tab === "incidents" ? "bg-white text-[#07182d] shadow-sm" : "text-slate-500"}`}>Incidentes {filteredIncidents.length ? `(${filteredIncidents.length})` : ""}</button>
         </div>
       </div>
 
@@ -272,9 +272,9 @@ export default function SystemUsers() {
                         </td>
                         <td className="px-5 py-4 font-semibold text-slate-600">{tenantNames[user.tenant]}</td>
                         <td className="px-5 py-4"><b className="block text-slate-700">{user.role || user.function || "—"}</b><span className="text-[11px] text-slate-500">{user.sector || user.fiscalSecretaria || "Sem setor"}</span></td>
-                        <td className="px-5 py-4"><span className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${statusClass(user.status)}`}>{user.status || "—"}</span></td>
+                        <td className="px-5 py-4"><span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${statusClass(user.status)}`}>{user.status || "—"}</span></td>
                         <td className="px-5 py-4 text-slate-600">{dateTime(user.lastSignInAt)}</td>
-                        <td className="px-5 py-4 font-black text-[#07182d]">{user.actions24h}</td>
+                        <td className="px-5 py-4 font-semibold text-[#07182d]">{user.actions24h}</td>
                         <td className="px-5 py-4 text-slate-600">{dateTime(user.lastActionAt)}</td>
                       </tr>
                     ))}
@@ -313,23 +313,23 @@ export default function SystemUsers() {
 }
 
 function UserDrawer({ user, busy, onClose, onEdit, onStatus, onForcePassword }: { user: ObservabilityUser; busy: boolean; onClose: () => void; onEdit: () => void; onStatus: (status: "Ativo" | "Inativo" | "Suspenso") => void; onForcePassword: () => void }) {
-  return <div className="fixed inset-0 z-[90] grid place-items-center bg-[#061426]/70 p-3 backdrop-blur-[2px] sm:p-5">
+  return <div className="fixed inset-0 z-[90] grid place-items-center bg-[#061426]/70 p-3  sm:p-5">
     <button className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Fechar detalhes"/>
     <div
-      className="relative z-10 flex max-h-[94vh] w-full max-w-[980px] flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_28px_90px_rgba(3,18,35,.35)]"
+      className="relative z-10 flex max-h-[94vh] w-full max-w-[980px] flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm"
       style={{ background: "#ffffff", color: "#0f172a" }}
     >
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#06192d] via-[#0a3155] to-[#0b416d] px-5 py-5 text-white sm:px-7">
+      <div className="relative overflow-hidden bg-[#102a43] px-5 py-5 text-white sm:px-7">
         <div className="absolute -right-12 -top-16 size-56 rounded-full bg-white/[.06] blur-2xl"/>
         <div className="relative flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
             {user.photoUrl ? <img src={user.photoUrl} alt="" className="size-16 shrink-0 rounded-2xl border border-white/20 object-cover shadow-lg sm:size-20"/> : <span className="grid size-16 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/10 text-white sm:size-20"><UserRound size={30}/></span>}
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[.16em] text-white/55">Detalhes do usuário · {tenantNames[user.tenant]}</p>
-              <h2 className="mt-1 truncate text-xl font-black sm:text-2xl">{user.name}</h2>
+              <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-white/55">Detalhes do usuário · {tenantNames[user.tenant]}</p>
+              <h2 className="mt-1 truncate text-xl font-semibold sm:text-2xl">{user.name}</h2>
               <p className="mt-1 truncate text-xs text-blue-100 sm:text-sm">{user.email}</p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/15 px-2.5 py-1 text-[10px] font-black text-emerald-100">{user.status || "—"}</span>
+                <span className="rounded-full border border-emerald-300/30 bg-emerald-300/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-100">{user.status || "—"}</span>
                 {(user.role || user.function) && <span className="rounded-full border border-white/15 bg-white/[.08] px-2.5 py-1 text-[10px] font-bold text-white/85">{user.role || user.function}</span>}
                 {(user.sector || user.fiscalSecretaria) && <span className="rounded-full border border-white/15 bg-white/[.08] px-2.5 py-1 text-[10px] font-bold text-white/85">{user.sector || user.fiscalSecretaria}</span>}
               </div>
@@ -376,15 +376,15 @@ function UserDrawer({ user, busy, onClose, onEdit, onStatus, onForcePassword }: 
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <h4 className="text-xs font-black uppercase tracking-wide text-slate-400">Administração</h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Administração</h4>
               <p className="mt-1 text-xs leading-5 text-slate-500">As ações abaixo são registradas na auditoria do sistema.</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <button disabled={busy} onClick={onEdit} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-black text-blue-700 hover:bg-blue-100 disabled:opacity-50"><Pencil size={15}/>Editar cadastro</button>
-                <button disabled={busy} onClick={onForcePassword} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-black text-amber-700 hover:bg-amber-100 disabled:opacity-50"><RotateCcw size={15}/>Exigir nova senha</button>
+                <button disabled={busy} onClick={onEdit} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50"><Pencil size={15}/>Editar cadastro</button>
+                <button disabled={busy} onClick={onForcePassword} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50"><RotateCcw size={15}/>Exigir nova senha</button>
                 {user.status.toLowerCase() === "ativo" ? <>
-                  <button disabled={busy} onClick={() => onStatus("Suspenso")} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 text-xs font-black text-orange-700 hover:bg-orange-100 disabled:opacity-50"><UserX size={15}/>Suspender</button>
-                  <button disabled={busy} onClick={() => onStatus("Inativo")} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-black text-rose-700 hover:bg-rose-100 disabled:opacity-50"><UserX size={15}/>Inativar</button>
-                </> : <button disabled={busy} onClick={() => onStatus("Ativo")} className="sm:col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-black text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"><UserCheck size={15}/>Reativar usuário</button>}
+                  <button disabled={busy} onClick={() => onStatus("Suspenso")} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 text-xs font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-50"><UserX size={15}/>Suspender</button>
+                  <button disabled={busy} onClick={() => onStatus("Inativo")} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"><UserX size={15}/>Inativar</button>
+                </> : <button disabled={busy} onClick={() => onStatus("Ativo")} className="sm:col-span-2 flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"><UserCheck size={15}/>Reativar usuário</button>}
               </div>
               <p className="mt-3 text-[10px] leading-4 text-slate-400">Não há exclusão definitiva aqui. Inativar preserva processos, auditoria e histórico ligados ao usuário.</p>
             </div>
@@ -393,7 +393,7 @@ function UserDrawer({ user, busy, onClose, onEdit, onStatus, onForcePassword }: 
               <div className="flex items-start gap-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm ring-1 ring-blue-100"><Activity size={18}/></span>
                 <div className="min-w-0">
-                  <span className="text-[10px] font-black uppercase tracking-wide text-blue-500">Última atividade registrada</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-500">Última atividade registrada</span>
                   <b className="mt-1 block text-sm text-[#07182d]">{user.lastAction.type || "Ação"} · {user.lastAction.module || "Sistema"}</b>
                   <p className="mt-1 text-xs leading-5 text-slate-600">{user.lastAction.description || "Sem descrição."}</p>
                   <p className="mt-2 text-[10px] font-semibold text-slate-400">{dateTime(user.lastActionAt)}</p>
@@ -401,7 +401,7 @@ function UserDrawer({ user, busy, onClose, onEdit, onStatus, onForcePassword }: 
               </div>
             </div> : <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">Nenhuma atividade registrada para este usuário.</div>}
 
-            {user.notes && <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Observações</span><p className="mt-2 text-sm leading-6 text-slate-600">{user.notes}</p></div>}
+            {user.notes && <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Observações</span><p className="mt-2 text-sm leading-6 text-slate-600">{user.notes}</p></div>}
           </div>
         </div>
       </div>
@@ -433,41 +433,41 @@ function UserFormModal({ mode, busy, user, initialTenant, onClose, onSubmit }: {
     });
   }
 
-  return <div className="fixed inset-0 z-[95] grid place-items-center bg-[#061426]/70 p-3 backdrop-blur-[2px] sm:p-5">
+  return <div className="fixed inset-0 z-[95] grid place-items-center bg-[#061426]/70 p-3  sm:p-5">
     <button className="absolute inset-0 cursor-default" onClick={onClose} aria-label="Fechar"/>
-    <form onSubmit={submit} className="relative z-10 max-h-[94vh] w-full max-w-[820px] overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-[0_28px_90px_rgba(3,18,35,.35)]">
+    <form onSubmit={submit} className="relative z-10 max-h-[94vh] w-full max-w-[820px] overflow-y-auto rounded-[24px] border border-slate-200 bg-white shadow-sm">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 sm:px-7">
-        <div><h2 className="text-xl font-black text-[#07182d]">{mode === "create" ? "Adicionar usuário" : "Editar usuário"}</h2><p className="mt-1 text-xs text-slate-500">{mode === "create" ? "Crie a conta diretamente no sistema selecionado." : tenantNames[user!.tenant]}</p></div>
+        <div><h2 className="text-xl font-semibold text-[#07182d]">{mode === "create" ? "Adicionar usuário" : "Editar usuário"}</h2><p className="mt-1 text-xs text-slate-500">{mode === "create" ? "Crie a conta diretamente no sistema selecionado." : tenantNames[user!.tenant]}</p></div>
         <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-xl hover:bg-slate-100"><X size={19}/></button>
       </div>
       <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-7">
-        {mode === "create" && <label className="text-xs font-black text-slate-600">Sistema<select value={targetTenant} onChange={(e)=>setTargetTenant(e.target.value as ObservabilityTenant)} className="input mt-2"><option value="rg">Ribeiro Gonçalves</option><option value="bg">Baixa Grande do Ribeiro</option></select></label>}
-        <label className="text-xs font-black text-slate-600">Nome completo<input name="fullName" required defaultValue={user?.name || ""} className="input mt-2"/></label>
-        {mode === "create" && <label className="text-xs font-black text-slate-600">E-mail<input name="email" type="email" required className="input mt-2"/></label>}
-        {mode === "create" && <label className="text-xs font-black text-slate-600">Senha temporária<input name="temporaryPassword" type="password" minLength={8} required className="input mt-2" placeholder="Mínimo 8 caracteres"/></label>}
-        {mode === "create" && <label className="text-xs font-black text-slate-600">CPF<input name="cpf" inputMode="numeric" className="input mt-2" placeholder="000.000.000-00"/></label>}
-        <label className="text-xs font-black text-slate-600">Perfil<select name="role" defaultValue={user?.role || "usuario"} className="input mt-2">{roles.map((role)=><option key={role} value={role}>{role}</option>)}</select></label>
-        <label className="text-xs font-black text-slate-600">Telefone<input name="phone" defaultValue={user?.phone || ""} className="input mt-2"/></label>
-        <label className="text-xs font-black text-slate-600">Setor<input name="sector" defaultValue={user?.sector || ""} className="input mt-2"/></label>
-        <label className="text-xs font-black text-slate-600">Função<input name="functionName" defaultValue={user?.function || ""} className="input mt-2"/></label>
-        <label className="text-xs font-black text-slate-600">Secretaria/fiscalização<input name="fiscalSecretaria" defaultValue={user?.fiscalSecretaria || ""} className="input mt-2"/></label>
-        <label className="text-xs font-black text-slate-600 sm:col-span-2">Observações<textarea name="notes" defaultValue={user?.notes || ""} rows={3} className="input mt-2 h-auto py-3"/></label>
+        {mode === "create" && <label className="text-xs font-semibold text-slate-600">Sistema<select value={targetTenant} onChange={(e)=>setTargetTenant(e.target.value as ObservabilityTenant)} className="input mt-2"><option value="rg">Ribeiro Gonçalves</option><option value="bg">Baixa Grande do Ribeiro</option></select></label>}
+        <label className="text-xs font-semibold text-slate-600">Nome completo<input name="fullName" required defaultValue={user?.name || ""} className="input mt-2"/></label>
+        {mode === "create" && <label className="text-xs font-semibold text-slate-600">E-mail<input name="email" type="email" required className="input mt-2"/></label>}
+        {mode === "create" && <label className="text-xs font-semibold text-slate-600">Senha temporária<input name="temporaryPassword" type="password" minLength={8} required className="input mt-2" placeholder="Mínimo 8 caracteres"/></label>}
+        {mode === "create" && <label className="text-xs font-semibold text-slate-600">CPF<input name="cpf" inputMode="numeric" className="input mt-2" placeholder="000.000.000-00"/></label>}
+        <label className="text-xs font-semibold text-slate-600">Perfil<select name="role" defaultValue={user?.role || "usuario"} className="input mt-2">{roles.map((role)=><option key={role} value={role}>{role}</option>)}</select></label>
+        <label className="text-xs font-semibold text-slate-600">Telefone<input name="phone" defaultValue={user?.phone || ""} className="input mt-2"/></label>
+        <label className="text-xs font-semibold text-slate-600">Setor<input name="sector" defaultValue={user?.sector || ""} className="input mt-2"/></label>
+        <label className="text-xs font-semibold text-slate-600">Função<input name="functionName" defaultValue={user?.function || ""} className="input mt-2"/></label>
+        <label className="text-xs font-semibold text-slate-600">Secretaria/fiscalização<input name="fiscalSecretaria" defaultValue={user?.fiscalSecretaria || ""} className="input mt-2"/></label>
+        <label className="text-xs font-semibold text-slate-600 sm:col-span-2">Observações<textarea name="notes" defaultValue={user?.notes || ""} rows={3} className="input mt-2 h-auto py-3"/></label>
         {mode === "create" && <div className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">A senha informada é usada apenas para criar a conta e não é armazenada no MW TECH Control. O usuário será marcado para trocar a senha no primeiro acesso.</div>}
-        <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={onClose} disabled={busy} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-black text-slate-600">Cancelar</button><button type="submit" disabled={busy} className="rounded-xl bg-[#082743] px-5 py-2.5 text-xs font-black text-white disabled:opacity-50">{busy ? "Salvando..." : mode === "create" ? "Criar usuário" : "Salvar alterações"}</button></div>
+        <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={onClose} disabled={busy} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600">Cancelar</button><button type="submit" disabled={busy} className="rounded-xl bg-[#082743] px-5 py-2.5 text-xs font-semibold text-white disabled:opacity-50">{busy ? "Salvando..." : mode === "create" ? "Criar usuário" : "Salvar alterações"}</button></div>
       </div>
     </form>
   </div>;
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section><h4 className="mb-2 text-xs font-black uppercase tracking-wide text-slate-400">{title}</h4><div className="grid gap-2 sm:grid-cols-2">{children}</div></section>;
+  return <section><h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h4><div className="grid gap-2 sm:grid-cols-2">{children}</div></section>;
 }
 
 function Info({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return <div className="rounded-xl border border-slate-200 p-3"><span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wide text-slate-400">{icon}{label}</span><b className="mt-1 block break-words text-[13px] text-[#07182d]">{value}</b></div>;
+  return <div className="rounded-xl border border-slate-200 p-3"><span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">{icon}{label}</span><b className="mt-1 block break-words text-[13px] text-[#07182d]">{value}</b></div>;
 }
 
 function Summary({ label, value, icon, tone = "blue" }: { label: string; value: number; icon: React.ReactNode; tone?: "blue" | "green" | "gold" | "violet" }) {
   const cls = tone === "green" ? "bg-emerald-50 text-emerald-700" : tone === "gold" ? "bg-amber-50 text-amber-700" : tone === "violet" ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700";
-  return <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-lg ${cls}`}>{icon}</span><div><span className="text-[11px] font-bold text-slate-500">{label}</span><b className="block text-2xl font-black text-[#07182d]">{value}</b></div></div>;
+  return <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-lg ${cls}`}>{icon}</span><div><span className="text-[11px] font-bold text-slate-500">{label}</span><b className="block text-2xl font-semibold text-[#07182d]">{value}</b></div></div>;
 }
