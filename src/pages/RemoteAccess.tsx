@@ -154,18 +154,18 @@ export default function RemoteAccess() {
 
   return (
     <div className="mx-auto w-full max-w-[1540px] space-y-4 pb-8">
-      <section className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_7px_24px_rgba(15,23,42,.045)] sm:px-6">
+      <section className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]"><Monitor size={15}/> MW TECH Control</p>
             <h1 className="mt-1 text-[28px] font-semibold tracking-[-.025em] text-[#0b2239] sm:text-[32px]">Acesso remoto · AnyDesk</h1>
             <p className="mt-1.5 max-w-3xl text-[13px] text-slate-500">Gerencie os computadores por órgão, setor e responsável em uma visão simples e organizada.</p>
           </div>
-          <button onClick={openNew} className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0b3154] px-4 text-[13px] font-semibold text-white shadow-[0_8px_18px_rgba(11,49,84,.16)] transition hover:bg-[#12456f]"><Plus size={17}/> Adicionar dispositivo</button>
+          <button onClick={openNew} className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#0b3154] px-4 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#12456f]"><Plus size={17}/> Adicionar dispositivo</button>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_6px_18px_rgba(15,23,42,.04)]">
+      <section className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
         <div className="relative">
           <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar órgão, computador, setor, responsável ou ID AnyDesk..." className="h-11 w-full rounded-xl border border-slate-200 bg-[#f8fafc] pl-11 pr-4 text-[13px] outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100/60" />
@@ -192,7 +192,7 @@ export default function RemoteAccess() {
               {organizations.map(([org, items]) => {
                 const theme = orgTheme(org);
                 return (
-                  <section key={org} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_7px_22px_rgba(15,23,42,.045)]">
+                  <section key={org} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <header className={`bg-gradient-to-r ${theme.header} px-4 py-3.5 text-white sm:px-5`}>
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
@@ -205,7 +205,7 @@ export default function RemoteAccess() {
 
                     <div className="grid gap-3 p-3 sm:p-4 md:grid-cols-2 2xl:grid-cols-3">
                       {items.map((device) => (
-                        <article key={device.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,.035)] transition hover:border-slate-300 hover:shadow-[0_8px_20px_rgba(15,23,42,.06)]">
+                        <article key={device.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-sm">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-3">
                               <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-[#0b3154]"><Monitor size={19}/></div>
@@ -242,7 +242,7 @@ export default function RemoteAccess() {
       )}
 
       {modalOpen && <div className="fixed inset-0 z-[90] grid place-items-center overflow-y-auto bg-slate-950/65 p-4">
-        <div className="my-6 w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-[0_30px_100px_rgba(0,0,0,.35)]">
+        <div className="my-6 w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><div><h3 className="text-lg font-semibold text-[#0b2239]">{editing ? "Editar dispositivo" : "Adicionar dispositivo"}</h3><p className="text-[11px] text-slate-500">Cadastre o órgão e os dados necessários para o acesso remoto.</p></div><button onClick={() => setModalOpen(false)} className="grid size-8 place-items-center rounded-lg hover:bg-slate-100"><X size={18}/></button></div>
           <form onSubmit={save} className="grid gap-4 p-5 sm:grid-cols-2">
             <label className="text-[12px] font-medium text-slate-600">Tipo de órgão<select value={form.tipo_orgao} onChange={(e) => setForm({ ...form, tipo_orgao: e.target.value })} className="input mt-2">{organizationTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
