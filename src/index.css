@@ -936,3 +936,42 @@ textarea.input {
     break-inside: avoid !important;
   }
 }
+
+/* A4 paisagem: corresponde à orientação solicitada e evita o encolhimento observado no PDF. */
+@media print {
+  @page { size: A4 landscape; margin: 9mm; }
+  @page expense-receipt { size: A4 portrait; margin: 10mm; }
+  html, body, #root, #root > div, main { width: 100% !important; max-width: none !important; overflow: visible !important; }
+  .report-sheet { width: 100% !important; max-width: none !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; }
+  .report-header { grid-template-columns: minmax(0, 1fr) 78mm !important; gap: 7mm !important; }
+  .report-screen-logo {
+    display: block !important; width: 49mm !important; max-width: 49mm !important;
+    height: 23mm !important; flex: 0 0 49mm !important; object-fit: contain !important;
+  }
+  .report-print-brand { display: none !important; }
+  .report-meta { width: 100% !important; }
+  .report-meta h2 { font-size: 17px !important; }
+  .report-company-name { font-size: 9px !important; }
+  .report-company-details p { font-size: 8px !important; }
+  .report-summary-card { padding: 3mm !important; }
+  .report-summary-card strong { font-size: 15px !important; }
+  .report-charts { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 5mm !important; }
+  .report-charts .recharts-responsive-container { height: 37mm !important; }
+  .report-table-wrapper { border-radius: 2mm !important; width: 100% !important; overflow: visible !important; }
+  .report-table { width: 100% !important; min-width: 0 !important; table-layout: fixed !important; font-size: 9px !important; }
+  .report-table th, .report-table td {
+    box-sizing: border-box !important; padding: 2.4mm 2mm !important; font-size: 9px !important;
+    white-space: normal !important; overflow-wrap: anywhere !important; word-break: normal !important;
+  }
+  .report-table th:nth-child(1) { width: 11% !important; }
+  .report-table th:nth-child(2) { width: 30% !important; }
+  .report-table th:nth-child(3) { width: 29% !important; }
+  .report-table th:nth-child(4) { width: 10% !important; }
+  .report-table th:nth-child(5) { width: 12% !important; }
+  .report-table th:nth-child(6) { width: 8% !important; }
+  .report-table th:nth-child(7) { display: none !important; }
+  .report-table thead { display: table-header-group !important; }
+  .report-table tr { break-inside: avoid !important; }
+  .report-table .no-print { display: none !important; }
+  .report-footer { margin-top: 5mm !important; }
+}
