@@ -36,6 +36,7 @@ const Transactions = lazyWithRecovery(() => import("./pages/Transactions"), "tra
 const DataPage = lazyWithRecovery(() => import("./pages/DataPage"), "data-page");
 const Expenses = lazyWithRecovery(() => import("./pages/Expenses"), "expenses");
 const Reports = lazyWithRecovery(() => import("./pages/Reports"), "reports");
+const FinancialDocuments = lazyWithRecovery(() => import("./pages/FinancialDocuments"), "financial-documents");
 const Settings = lazyWithRecovery(() => import("./pages/Settings"), "settings");
 const Accounts = lazyWithRecovery(() => import("./pages/Accounts"), "accounts");
 const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "support");
@@ -165,6 +166,7 @@ export default function App() {
               <Route path="contas" element={<Accounts />} />
               <Route path="despesas" element={<Expenses />} />
               <Route path="relatorios" element={<Reports />} />
+              <Route path="documentos-financeiros" element={<FinancialDocuments />} />
               <Route path="armazenamento" element={<Storage />} />
               <Route path="acesso-remoto" element={<RemoteAccess />} />
               <Route path="suporte" element={<SupportCenter />} />
