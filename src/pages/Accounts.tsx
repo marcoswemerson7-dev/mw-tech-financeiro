@@ -180,7 +180,7 @@ export default function Accounts() {
         {visible.map((a) => (
           <div
             key={a.id}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_36px_rgba(15,35,70,.055)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_42px_rgba(15,35,70,.09)]"
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition  hover:shadow-sm"
           >
             <div className="h-1.5 bg-[#0b2b66]" style={{ background: a.cor || "#0b2b66" }} />
             <div className="p-6 sm:p-7">
@@ -189,7 +189,7 @@ export default function Accounts() {
                   <BankLogo code={a.codigo_banco} name={a.banco} size="lg" imageUrl={a.logo_url || (isConfigured ? getBankLogoView(a.id) : undefined)} />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
-                      <b className="block text-[24px] font-black leading-tight text-[#061426]">{a.banco || a.nome}</b>
+                      <b className="block text-[24px] font-semibold leading-tight text-[#061426]">{a.banco || a.nome}</b>
                       <Badge status={a.tipo_conta || "conta"} />
                     </div>
                     <span className="mt-1 block text-[15px] text-slate-500">
@@ -216,7 +216,7 @@ export default function Accounts() {
                 <Info icon={<UserRound size={20} />} label="Titular" value={a.nome || "Não informado"} />
                 <div className="rounded-xl bg-slate-50 p-4">
                   <span className="text-[14px] font-bold text-slate-500">Saldo atual</span>
-                  <strong className="mt-1 block text-[29px] font-black tracking-[-0.02em] text-[#061426]">{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
+                  <strong className="mt-1 block text-[29px] font-semibold tracking-[-0.02em] text-[#061426]">{money(a.saldo_atual ?? a.saldo_inicial)}</strong>
                 </div>
               </div>
               {a.observacao && <p className="mt-4 rounded-xl border border-slate-100 p-3 text-sm text-slate-500">{a.observacao}</p>}
@@ -300,7 +300,7 @@ function Info({ icon, label, value }: { icon: ReactNode; label: string; value: s
         <span className="text-slate-500">{icon}</span>
         <span className="text-[14px] font-bold">{label}</span>
       </div>
-      <b className="mt-2 block break-words text-[18px] font-black text-[#061426]">{value}</b>
+      <b className="mt-2 block break-words text-[18px] font-semibold text-[#061426]">{value}</b>
     </div>
   );
 }
