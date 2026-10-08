@@ -90,12 +90,12 @@ export default function Dashboard() {
     <div className="mx-auto w-full max-w-[1540px] space-y-4 pb-4">
       <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
         <div className="pointer-events-none absolute inset-y-0 left-[47%] hidden w-[28%] overflow-hidden lg:block">
-          <div className="absolute inset-0 bg-gradient-to-r from-white via-amber-50/70 to-white" />
+          <div className="absolute inset-0 bg-[#f8fafc]" />
           <div className="absolute bottom-2 left-8 h-20 w-8 rounded-t-md bg-slate-200/60" />
           <div className="absolute bottom-2 left-20 h-28 w-10 rounded-t-md bg-amber-200/45" />
           <div className="absolute bottom-2 left-36 h-24 w-9 rounded-t-md bg-blue-200/55" />
           <div className="absolute bottom-2 left-52 h-16 w-7 rounded-t-md bg-slate-300/50" />
-          <div className="absolute bottom-0 left-5 right-4 h-8 bg-gradient-to-t from-emerald-100/70 to-transparent" />
+          <div className="absolute bottom-0 left-5 right-4 h-8 bg-emerald-50/60" />
         </div>
 
         <div className="relative grid gap-4 xl:grid-cols-[1.42fr_.62fr_.56fr] xl:items-center">
@@ -105,7 +105,7 @@ export default function Dashboard() {
             <p className="mt-1 text-[13px] text-slate-500">Indicadores essenciais da operação, reunidos em um só lugar.</p>
           </div>
 
-          <div className="rounded-xl border border-amber-100/90 bg-gradient-to-br from-amber-50 to-white px-4 py-3 shadow-sm">
+          <div className="rounded-xl border border-amber-100/90 bg-amber-50/50 px-4 py-3 shadow-sm">
             <div className="flex items-start gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-amber-500 shadow-sm"><Sun size={22} /></span>
               <div>
@@ -116,7 +116,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white px-4 py-3 shadow-sm">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 shadow-sm">
             <div className="flex items-start gap-3">
               <span className="mt-1 size-3 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-50" />
               <div>
@@ -212,7 +212,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
     purple: "bg-violet-50 text-violet-600",
   }[tone];
   return (
-    <a href={href} className="group relative rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_7px_20px_rgba(15,23,42,.04)] transition hover:-translate-y-0.5 hover:shadow-md">
+    <a href={href} className="group relative rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm transition  hover:shadow-md">
       <MoreHorizontal size={15} className="absolute right-4 top-4 text-slate-400" />
       <div className="flex items-start gap-4 pr-5">
         <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${style}`}>{icon}</span>
@@ -229,7 +229,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
 
 function Panel({ title, icon, subtitle, actionHref, rightLabel, children }: { title: string; icon: ReactNode; subtitle?: string; actionHref?: string; rightLabel?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_7px_20px_rgba(15,23,42,.04)]">
+    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg bg-slate-50 text-[#1f4f7b]">{icon}</span>
@@ -249,7 +249,7 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
   const pct = Math.max(0, Math.min(100, data?.percent || 0));
   const folders = data?.folders || [];
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_7px_20px_rgba(15,23,42,.04)]">
+    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
       <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="relative grid size-10 place-items-center overflow-hidden rounded-lg bg-white shadow-sm">
@@ -269,13 +269,13 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
       {error && <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-[10px] text-amber-700">{error}</p>}
 
       <div className="grid gap-4 lg:grid-cols-[.92fr_1.4fr]">
-        <div className="rounded-xl bg-gradient-to-br from-[#0a2947] to-[#08233d] p-4 text-white">
+        <div className="rounded-xl bg-[#102a43] p-4 text-white">
           <p className="text-[10px] font-medium text-slate-300">Uso do armazenamento</p>
           <div className="mt-1.5 flex items-end justify-between gap-3">
             <p className="text-[30px] font-semibold tracking-[-.03em]">{pct.toFixed(1)}%</p>
             <p className="pb-1 text-[10px] text-slate-300">{Number(data?.usedGb || 0).toFixed(2)} GB de {Number(data?.totalGb || 0).toFixed(0)} GB</p>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-blue-400" style={{ width: `${pct}%` }} /></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#c5a063]" style={{ width: `${pct}%` }} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <div className="rounded-lg bg-white/[.07] px-3 py-2.5"><p className="text-[10px] text-slate-300">Disponível</p><p className="mt-1 text-[13px] font-semibold">{Number(data?.availableGb || 0).toFixed(2)} GB</p></div>
             <div className="rounded-lg bg-white/[.07] px-3 py-2.5"><p className="text-[10px] text-slate-300">Plano</p><p className="mt-1 text-[13px] font-semibold">{Number(data?.totalGb || 0).toFixed(0)} GB</p></div>
@@ -306,7 +306,7 @@ function InfoRow({ icon, label, subtitle, value, success = false }: { icon: Reac
 }
 
 function Quick({ href, icon, label, external = false }: { href: string; icon: ReactNode; label: string; external?: boolean }) {
-  return <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-2 text-center text-[10px] font-medium text-[#17324d] transition hover:-translate-y-0.5 hover:bg-blue-50 hover:text-blue-700">{icon}<span>{label}</span></a>;
+  return <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-2 text-center text-[10px] font-medium text-[#17324d] transition  hover:bg-blue-50 hover:text-blue-700">{icon}<span>{label}</span></a>;
 }
 
 function buildChart(rows: Movement[]) {
