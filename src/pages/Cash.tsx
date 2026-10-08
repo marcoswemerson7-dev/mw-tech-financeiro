@@ -8,9 +8,10 @@ import {
   Banknote,
   Clock3,
   Landmark,
-  LayoutGrid,
+  ChartNoAxesColumnIncreasing,
+  CalendarDays,
+  ReceiptText,
   Plus,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 import {
@@ -39,7 +40,6 @@ import {
   money,
   PageHeader,
   SectionCard,
-  StatCard,
 } from "../components/UI";
 
 type ExpenseRow = {
@@ -122,7 +122,7 @@ export default function Cash() {
   const recent = movements.slice(0, 6);
 
   return (
-    <div className="space-y-7 lg:space-y-8">
+    <div className="space-y-5 lg:space-y-5">
       <PageHeader
         title="Caixa"
         subtitle="Central financeira para receber, pagar, acompanhar entradas e saídas e enxergar o saldo em tempo real."
@@ -137,117 +137,29 @@ export default function Cash() {
         }
       />
 
-      <section className="overflow-hidden rounded-3xl border border-[#17375f] bg-[#061426] text-white shadow-sm">
-        <div className="grid gap-6 p-6 sm:p-7 xl:grid-cols-[1.1fr_.9fr]">
-          <div className="flex min-h-[230px] flex-col justify-between rounded-2xl border border-white/10 bg-white/[.05] p-6">
-            <div>
-              <p className="text-[12px] font-semibold uppercase tracking-[.28em] text-[#f5c75b]">
-                MW TECH Financeiro
-              </p>
-              <h3 className="mt-4 text-[30px] font-semibold leading-tight tracking-[-0.03em] sm:text-[42px]">
-                Controle rápido de entradas e saídas
-              </h3>
-              <p className="mt-3 max-w-2xl text-[15px] leading-7 text-blue-100">
-                Clique nos blocos para ir direto ao recebimento, pagamento ou fluxo de caixa.
-                Tudo pensado para lançar, consultar e decidir sem travar a rotina.
-              </p>
-            </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <MiniMetric label="Disponível" value={money(available)} />
-              <MiniMetric label="Resultado do mês" value={<FinancialAmount value={monthResult} kind="resultado" />} />
-              <MiniMetric label="Movimentações" value={String(totals.monthCount)} />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FlowShortcut
-              title="Receber"
-              subtitle="Entradas e recebimentos"
-              value={totals.todayIn}
-              href="/receitas"
-              cta="Ir para receber"
-              icon={<ArrowUpRight size={25} />}
-              tone="green"
-            />
-            <FlowShortcut
-              title="Pagar"
-              subtitle="Contas e despesas"
-              value={totals.pendingAmount || totals.todayOut}
-              href="/despesas"
-              cta="Ir para pagar"
-              icon={<ArrowDownRight size={25} />}
-              tone="orange"
-            />
-            <FlowShortcut
-              title="Fluxo"
-              subtitle="Entradas e saídas"
-              value={monthResult}
-              href="/movimentacoes"
-              cta="Ver fluxo"
-              icon={<TrendingUp size={25} />}
-              tone="blue"
-            />
-            <FlowShortcut
-              title="Contas"
-              subtitle="Saldos bancários"
-              value={available}
-              href="/contas"
-              cta="Ver contas"
-              icon={<Landmark size={25} />}
-              tone="gold"
-            />
-          </div>
-        </div>
-      </section>
-
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Entradas hoje"
-          value={money(totals.todayIn)}
-          icon={<ArrowUpRight size={27} />}
-          tone="green"
-          hint="Recebimentos lançados na data atual"
-        />
-        <StatCard
-          title="Saídas hoje"
-          value={<FinancialAmount value={totals.todayOut} kind="saida" />}
-          icon={<ArrowDownRight size={27} />}
-          tone="red"
-          hint="Pagamentos e retiradas de hoje"
-        />
-        <StatCard
-          title="A pagar no mês"
-          value={<FinancialAmount value={totals.pendingAmount} kind="pendente" />}
-          icon={<Clock3 size={27} />}
-          tone="orange"
-          hint={`${totals.pendingCount} pendência${totals.pendingCount === 1 ? "" : "s"} em aberto`}
-        />
-        <StatCard
-          title="Saldo disponível"
-          value={money(available)}
-          icon={<Wallet size={27} />}
-          tone="gold"
-          hint="Soma do caixa e contas bancárias"
-          featured
-        />
+      <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+        <CashMetric title="Entradas hoje" value={money(totals.todayIn)} hint="Recebimentos lançados na data atual" icon={<ArrowUpRight size={24} />} tone="green" href="/receitas" />
+        <CashMetric title="Saídas hoje" value={<FinancialAmount value={totals.todayOut} kind="saida" />} hint="Pagamentos e retiradas de hoje" icon={<ArrowDownRight size={24} />} tone="red" href="/movimentacoes" />
+        <CashMetric title="A pagar no mês" value={<FinancialAmount value={totals.pendingAmount} kind="pendente" />} hint={`${totals.pendingCount} pendência${totals.pendingCount === 1 ? "" : "s"} em aberto`} icon={<Clock3 size={24} />} tone="orange" href="/despesas" />
+        <CashMetric title="Saldo disponível" value={money(available)} hint="Soma do caixa e contas bancárias" icon={<Wallet size={24} />} tone="gold" href="/contas" />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.18fr_.82fr]">
+      <div className="grid gap-5 xl:grid-cols-[1.55fr_1fr]">
         <SectionCard
           title="Fluxo de caixa"
           subtitle={`Entradas e saídas de ${monthLabel.format(now)}`}
-          icon={LayoutGrid}
+          icon={ChartNoAxesColumnIncreasing}
           action={
             <Link
               to="/movimentacoes"
               className="inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-slate-200 px-3 text-[13px] font-semibold text-[#061426] transition hover:border-[#e8ac35] hover:bg-amber-50"
             >
-              Ver completo <ArrowRight size={16} />
+              <CalendarDays size={16} /> Últimos 6 meses <ArrowRight size={16} />
             </Link>
           }
         >
-          <div className="grid gap-5 lg:grid-cols-[1fr_230px]">
-            <ResponsiveContainer width="100%" height={320}>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_210px]">
+            <div className="min-w-0"><ResponsiveContainer width="100%" height={260}>
               <BarChart data={chart} barGap={10}>
                 <CartesianGrid stroke="#edf0f4" vertical={false} />
                 <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
@@ -256,8 +168,8 @@ export default function Cash() {
                 <Bar name="Entradas" dataKey="entradas" fill="#059669" radius={[8, 8, 0, 0]} maxBarSize={38} />
                 <Bar name="Saídas" dataKey="saidas" fill="#e11d48" radius={[8, 8, 0, 0]} maxBarSize={38} />
               </BarChart>
-            </ResponsiveContainer>
-            <div className="grid content-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+            </ResponsiveContainer><div className="mt-1 flex gap-5 pl-5 text-xs font-medium text-slate-500"><span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-emerald-600" />Entradas</span><span className="flex items-center gap-2"><i className="size-2.5 rounded-full bg-rose-600" />Saídas</span></div></div>
+            <div className="grid content-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
               <BalanceLine label="Entradas" value={totals.monthIn} kind="entrada" />
               <BalanceLine label="Saídas" value={totals.monthOut} kind="saida" />
               <div className="my-1 h-px bg-slate-200" />
@@ -267,7 +179,7 @@ export default function Cash() {
         </SectionCard>
 
         <SectionCard title="Posição das contas" subtitle="Dinheiro disponível agora" icon={Banknote}>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <AccountSummary
               title="Caixa físico"
               value={totals.cash}
@@ -292,9 +204,9 @@ export default function Cash() {
       </div>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 sm:px-7 sm:py-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
           <div>
-            <h3 className="text-[21px] font-semibold text-[#061426]">Últimos lançamentos</h3>
+            <h3 className="flex items-center gap-3 text-[20px] font-semibold text-[#061426]"><ReceiptText size={21} /> Últimos lançamentos</h3>
             <p className="mt-1 text-[13px] text-slate-500">
               Visual rápido das movimentações mais recentes do caixa.
             </p>
@@ -309,11 +221,11 @@ export default function Cash() {
 
         {recent.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-[14px]">
-              <thead className="bg-[#061426] text-[12px] font-semibold uppercase tracking-wide text-white">
+            <table className="w-full min-w-[860px] text-left text-[13px]">
+              <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
                 <tr>
                   {["Data", "Descrição", "Tipo", "Conta", "Valor", "Status"].map((item) => (
-                    <th className="px-6 py-4" key={item}>
+                    <th className="px-5 py-3" key={item}>
                       {item}
                     </th>
                   ))}
@@ -322,16 +234,16 @@ export default function Cash() {
               <tbody>
                 {recent.map((row) => (
                   <tr className="border-t border-slate-100 transition hover:bg-slate-50/70" key={row.id}>
-                    <td className="whitespace-nowrap px-6 py-5 text-slate-600">{formatDate(row.data)}</td>
-                    <td className="max-w-[360px] break-words px-6 py-5 font-semibold text-[#061426]">
+                    <td className="whitespace-nowrap px-5 py-3.5 text-slate-600">{formatDate(row.data)}</td>
+                    <td className="max-w-[360px] break-words px-5 py-3.5 font-semibold text-[#061426]">
                       {row.descricao}
                     </td>
-                    <td className="px-6 py-5 capitalize text-slate-600">{row.tipo.replace("_", " ")}</td>
-                    <td className="px-6 py-5 text-slate-600">{row.contas_bancarias?.nome || "—"}</td>
-                    <td className="whitespace-nowrap px-6 py-5 text-right text-[15px] font-semibold">
+                    <td className="px-5 py-3.5"><span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${row.tipo.toLowerCase().includes("entrada") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{row.tipo.toLowerCase().includes("entrada") ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}{row.tipo.replace("_", " ")}</span></td>
+                    <td className="px-5 py-3.5 text-slate-600">{row.contas_bancarias?.nome || "—"}</td>
+                    <td className="whitespace-nowrap px-5 py-3.5 text-right text-[15px] font-semibold">
                       <FinancialAmount value={row.valor} kind={row.tipo} />
                     </td>
-                    <td className="px-6 py-5">
+                    <td className="px-5 py-3.5">
                       <Badge status={row.tipo.includes("estorno") ? "estornado" : "pago"} />
                     </td>
                   </tr>
@@ -347,65 +259,25 @@ export default function Cash() {
   );
 }
 
-function FlowShortcut({
-  title,
-  subtitle,
-  value,
-  href,
-  cta,
-  icon,
-  tone,
-}: {
-  title: string;
-  subtitle: string;
-  value: number;
-  href: string;
-  cta: string;
-  icon: ReactNode;
-  tone: "green" | "orange" | "blue" | "gold";
+function CashMetric({ title, value, hint, icon, tone, href }: {
+  title: string; value: ReactNode; hint: string; icon: ReactNode;
+  tone: "green" | "red" | "orange" | "gold"; href: string;
 }) {
   const styles = {
-    green: "from-emerald-500 to-emerald-400 text-white",
-    orange: "from-orange-400 to-amber-300 text-white",
-    blue: "from-cyan-500 to-blue-500 text-white",
-    gold: "from-[#e8ac35] to-[#f6cc68] text-[#061426]",
+    green: { icon: "bg-emerald-50 text-emerald-600", value: "text-emerald-700" },
+    red: { icon: "bg-rose-50 text-rose-600", value: "text-rose-700" },
+    orange: { icon: "bg-amber-50 text-amber-600", value: "text-[#061426]" },
+    gold: { icon: "bg-white/10 text-[#f5c75b]", value: "text-[#f5c75b]" },
   }[tone];
-
   return (
-    <Link
-      to={href}
-      className={`group relative flex min-h-[156px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br ${styles} p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-sm`}
-    >
-      <span className="pointer-events-none absolute -right-8 -top-8 size-28 rounded-full bg-white/18" />
-      <span className="pointer-events-none absolute -bottom-12 right-8 size-24 rounded-full bg-white/12" />
-      <div className="relative flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[19px] font-semibold">{title}</p>
-          <p className="mt-1 text-[13px] font-bold opacity-85">{subtitle}</p>
-        </div>
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/18">
-          {icon}
-        </span>
-      </div>
-      <div className="relative">
-        <strong className="block text-[31px] font-semibold tracking-[-0.03em]">
-          <FinancialAmount value={value} kind={tone === "orange" ? "saida" : "resultado"} className={tone === "gold" ? "text-[#061426]" : "text-white"} />
-        </strong>
-        <span className="mt-4 inline-flex items-center gap-2 text-[14px] font-semibold">
-          {cta}
-          <ArrowRight size={16} className="transition group-hover:translate-x-1" />
-        </span>
+    <Link to={href} className={`group flex min-w-0 items-start gap-4 rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${tone === "gold" ? "border-[#17375f] bg-[#061426] text-white" : "border-slate-200 bg-white text-[#061426]"}`}>
+      <span className={`grid size-12 shrink-0 place-items-center rounded-xl ${styles.icon}`}>{icon}</span>
+      <div className="min-w-0">
+        <p className={`text-sm font-semibold ${tone === "gold" ? "text-slate-100" : "text-slate-600"}`}>{title}</p>
+        <strong className={`mt-1 block text-[clamp(1.3rem,1.6vw,1.85rem)] font-semibold leading-tight tracking-tight ${styles.value}`}>{value}</strong>
+        <p className={`mt-2 text-xs leading-snug ${tone === "gold" ? "text-slate-300" : "text-slate-500"}`}>{hint}</p>
       </div>
     </Link>
-  );
-}
-
-function MiniMetric({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3">
-      <p className="text-[12px] font-bold uppercase tracking-[.16em] text-blue-100">{label}</p>
-      <b className="mt-1 block truncate text-[18px] font-semibold text-white">{value}</b>
-    </div>
   );
 }
 
@@ -448,21 +320,21 @@ function AccountSummary({
   return (
     <Link
       to={href}
-      className={`flex min-h-[86px] items-center justify-between gap-4 rounded-2xl border p-4 transition  ${
+      className={`flex min-h-[75px] items-center justify-between gap-4 rounded-xl border p-3.5 transition  ${
         featured
-          ? "border-[#17375f] bg-[#061426] text-white shadow-sm"
+          ? "border-amber-200 bg-amber-50 text-[#061426] shadow-sm"
           : "border-slate-200 bg-slate-50/70 hover:bg-white"
       }`}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${featured ? "bg-white/10 text-[#f5c75b]" : "bg-white text-[#061426]"}`}>
+        <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${featured ? "bg-amber-100 text-amber-700" : "bg-white text-[#061426]"}`}>
           {icon}
         </span>
         <div className="min-w-0">
-          <p className={`text-[13px] font-bold ${featured ? "text-blue-100" : "text-slate-500"}`}>
+          <p className={`text-[13px] font-bold ${featured ? "text-slate-600" : "text-slate-500"}`}>
             {title}
           </p>
-          <b className={`mt-1 block truncate text-[22px] font-semibold ${featured ? "text-[#f5c75b]" : "text-[#061426]"}`}>
+          <b className={`mt-1 block truncate text-[22px] font-semibold ${featured ? "text-amber-700" : "text-[#061426]"}`}>
             {money(value)}
           </b>
         </div>
@@ -477,7 +349,7 @@ function buildMonthlyChart(rows: Movement[]) {
   const base = new Date();
   return Array.from({ length: 6 }, (_, index) => {
     const date = new Date(base.getFullYear(), base.getMonth() - (5 - index), 1);
-    const key = date.toISOString().slice(0, 7);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const monthRows = rows.filter((row) => dateOnly(row.data).startsWith(key));
     return {
       mes: formatter.format(date).replace(".", ""),
