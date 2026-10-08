@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Building2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import {
   createCounterparty,
@@ -126,10 +127,10 @@ export default function CounterpartyDrawer({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[80] bg-slate-950/45" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <aside className="ml-auto flex h-full w-full max-w-[620px] flex-col bg-[#f7f9fc] shadow-2xl">
-        <header className="flex items-start justify-between border-b border-slate-200 bg-white px-7 py-6">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex justify-end bg-slate-950/45" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <aside role="dialog" aria-modal="true" aria-label="Cadastros financeiros" className="flex h-full min-w-0 max-w-full shrink-0 flex-col overflow-hidden bg-[#f7f9fc] shadow-2xl" style={{ width: "min(100vw, 620px)" }}>
+        <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 bg-white px-4 py-5 sm:px-7 sm:py-6">
           <div>
             <div className="flex items-center gap-3">
               <span className="grid size-11 place-items-center rounded-xl bg-blue-50 text-[#0b2b66]"><Building2 size={22} /></span>
@@ -142,7 +143,7 @@ export default function CounterpartyDrawer({
           <button type="button" onClick={onClose} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100" aria-label="Fechar"><X size={24} /></button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-6">
           <form onSubmit={save} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5 flex items-center justify-between gap-3">
               <div>
@@ -154,14 +155,14 @@ export default function CounterpartyDrawer({
               ) : null}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
               <label className="text-sm font-bold text-slate-700 sm:col-span-2">
                 Nome / Razão social
                 <input
                   value={form.nome}
                   onChange={(e) => setForm((current) => ({ ...current, nome: e.target.value }))}
                   required
-                  className="input"
+                  className="input min-w-0"
                   placeholder="Ex.: Prefeitura Municipal de ..."
                 />
               </label>
@@ -180,7 +181,7 @@ export default function CounterpartyDrawer({
               </label>
               <label className="text-sm font-bold text-slate-700 sm:col-span-2">
                 Observação
-                <textarea value={form.observacao} onChange={(e) => setForm((current) => ({ ...current, observacao: e.target.value }))} className="input min-h-20" placeholder="Opcional" />
+                <textarea value={form.observacao} onChange={(e) => setForm((current) => ({ ...current, observacao: e.target.value }))} className="input min-w-0 min-h-20" placeholder="Opcional" />
               </label>
             </div>
 
@@ -234,6 +235,7 @@ export default function CounterpartyDrawer({
           </section>
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
