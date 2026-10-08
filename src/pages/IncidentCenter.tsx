@@ -105,10 +105,10 @@ export default function IncidentCenter() {
     </div>
 
     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
-      {(["all","mw","rg","bg"] as const).map((id)=><button key={id} onClick={()=>setFilter(id)} className={`rounded-lg px-3 py-2 text-xs font-black ${filter===id?"bg-[#082743] text-white":"text-slate-600 hover:bg-slate-100"}`}>{id==="all"?"Todos":id==="mw"?"MW TECH":id.toUpperCase()}</button>)}
+      {(["all","mw","rg","bg"] as const).map((id)=><button key={id} onClick={()=>setFilter(id)} className={`rounded-lg px-3 py-2 text-xs font-semibold ${filter===id?"bg-[#082743] text-white":"text-slate-600 hover:bg-slate-100"}`}>{id==="all"?"Todos":id==="mw"?"MW TECH":id.toUpperCase()}</button>)}
       <div className="ml-auto flex rounded-lg bg-slate-100 p-1">
-        <button onClick={()=>setTab("active")} className={`rounded-md px-3 py-1.5 text-xs font-black ${tab==="active"?"bg-white shadow-sm":"text-slate-500"}`}>Ativos ({active.length})</button>
-        <button onClick={()=>setTab("history")} className={`rounded-md px-3 py-1.5 text-xs font-black ${tab==="history"?"bg-white shadow-sm":"text-slate-500"}`}>Histórico</button>
+        <button onClick={()=>setTab("active")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${tab==="active"?"bg-white shadow-sm":"text-slate-500"}`}>Ativos ({active.length})</button>
+        <button onClick={()=>setTab("history")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${tab==="history"?"bg-white shadow-sm":"text-slate-500"}`}>Histórico</button>
       </div>
     </div>
 
@@ -126,13 +126,13 @@ export default function IncidentCenter() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
             <span className={`grid size-11 shrink-0 place-items-center rounded-xl ${critical?"bg-rose-50 text-rose-700":"bg-amber-50 text-amber-700"}`}>{critical?<Siren size={19}/>:<AlertTriangle size={19}/>}</span>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2"><b className="text-sm text-[#07182d]">{item.title}</b><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-600">{item.systemLabel}</span><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">{item.source}</span></div>
+              <div className="flex flex-wrap items-center gap-2"><b className="text-sm text-[#07182d]">{item.title}</b><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">{item.systemLabel}</span><span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">{item.source}</span></div>
               <p className="mt-1 text-sm leading-5 text-slate-600">{item.message}</p>
               <p className="mt-2 text-[10px] font-semibold text-slate-400">{fmt(item.occurredAt)}{item.occurrences ? ` · ${item.occurrences} leitura(s)`:""}{item.resolvedAt ? ` · resolvido ${fmt(item.resolvedAt)}`:""}</p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
-              {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-black text-slate-600 hover:bg-slate-50">Abrir <ExternalLink size={12}/></a>}
-              {item.active && !acknowledged && <button onClick={()=>void acknowledgeIncident(item.id).then(()=>load())} className="rounded-lg bg-[#082743] px-3 py-2 text-[10px] font-black text-white">Reconhecer</button>}
+              {item.actionUrl && <a href={item.actionUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold text-slate-600 hover:bg-slate-50">Abrir <ExternalLink size={12}/></a>}
+              {item.active && !acknowledged && <button onClick={()=>void acknowledgeIncident(item.id).then(()=>load())} className="rounded-lg bg-[#082743] px-3 py-2 text-[10px] font-semibold text-white">Reconhecer</button>}
             </div>
           </div>
         </article>
@@ -143,24 +143,24 @@ export default function IncidentCenter() {
       <div className="flex flex-col gap-3 border-b border-slate-100 bg-[#07182d] px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="grid size-10 place-items-center rounded-xl bg-white/10"><BarChart3 size={19}/></span>
-          <div><h2 className="text-sm font-black">Relatório mensal de disponibilidade</h2><p className="mt-0.5 text-[10px] text-blue-100">Consolidado do histórico central de incidentes.</p></div>
+          <div><h2 className="text-sm font-semibold">Relatório mensal de disponibilidade</h2><p className="mt-0.5 text-[10px] text-blue-100">Consolidado do histórico central de incidentes.</p></div>
         </div>
         <div className="flex gap-2">
           <input type="month" value={reportMonth} onChange={(e)=>setReportMonth(e.target.value)} className="rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none"/>
-          <button onClick={()=>void loadMonthlyReport()} disabled={reportLoading} className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-black text-[#07182d] disabled:opacity-60"><CalendarDays size={14}/>{reportLoading?"Gerando...":"Gerar"}</button>
+          <button onClick={()=>void loadMonthlyReport()} disabled={reportLoading} className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#07182d] disabled:opacity-60"><CalendarDays size={14}/>{reportLoading?"Gerando...":"Gerar"}</button>
         </div>
       </div>
       <div className="grid gap-3 p-4 lg:grid-cols-3">
         {(reportRows.length ? reportRows : (["mw","rg","bg"] as const).map((system)=>({system,incidents:0,criticalIncidents:0,downtimeMinutes:0,availability:100}))).map((row)=>(
           <div key={row.system} className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
             <div className="flex items-start justify-between gap-3">
-              <div><span className="text-[10px] font-black uppercase tracking-wide text-slate-400">Sistema</span><b className="mt-1 block text-sm text-[#07182d]">{row.system==="mw"?"MW TECH Control":row.system==="rg"?"Gestão Licita RG":"Gestão Licita BG"}</b></div>
-              <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${row.availability>=99.9?"bg-emerald-50 text-emerald-700":row.availability>=99?"bg-amber-50 text-amber-700":"bg-rose-50 text-rose-700"}`}>{row.availability.toFixed(3)}%</span>
+              <div><span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Sistema</span><b className="mt-1 block text-sm text-[#07182d]">{row.system==="mw"?"MW TECH Control":row.system==="rg"?"Gestão Licita RG":"Gestão Licita BG"}</b></div>
+              <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${row.availability>=99.9?"bg-emerald-50 text-emerald-700":row.availability>=99?"bg-amber-50 text-amber-700":"bg-rose-50 text-rose-700"}`}>{row.availability.toFixed(3)}%</span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase text-slate-400">Incidentes</span><b className="mt-1 block text-lg text-[#07182d]">{row.incidents}</b></div>
-              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase text-slate-400">Críticos</span><b className="mt-1 block text-lg text-[#07182d]">{row.criticalIncidents}</b></div>
-              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-black uppercase text-slate-400">Indisponível</span><b className="mt-1 block text-sm text-[#07182d]">{row.downtimeMinutes.toFixed(1)} min</b></div>
+              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-semibold uppercase text-slate-400">Incidentes</span><b className="mt-1 block text-lg text-[#07182d]">{row.incidents}</b></div>
+              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-semibold uppercase text-slate-400">Críticos</span><b className="mt-1 block text-lg text-[#07182d]">{row.criticalIncidents}</b></div>
+              <div className="rounded-lg bg-white p-3 ring-1 ring-slate-200"><span className="text-[9px] font-semibold uppercase text-slate-400">Indisponível</span><b className="mt-1 block text-sm text-[#07182d]">{row.downtimeMinutes.toFixed(1)} min</b></div>
             </div>
           </div>
         ))}
@@ -173,12 +173,12 @@ export default function IncidentCenter() {
     <div className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:flex-row sm:items-center">
       <Wrench size={19} className="text-blue-700"/>
       <div className="flex-1"><b className="text-xs text-[#07182d]">Monitoramento contínuo</b><p className="mt-1 text-[11px] leading-5 text-slate-600">A central combina health check interno, domínio, Supabase, incidentes operacionais, Sentry e Vercel. Notificações do navegador funcionam enquanto este dispositivo permitir notificações para o MW TECH Control.</p></div>
-      <Link to="/monitoramento" className="text-xs font-black text-blue-700">Voltar ao monitoramento</Link>
+      <Link to="/monitoramento" className="text-xs font-semibold text-blue-700">Voltar ao monitoramento</Link>
     </div>
   </div>;
 }
 
 function Card({label,value,icon,tone}:{label:string;value:number;icon:React.ReactNode;tone:"rose"|"amber"|"blue"|"green"}){
   const cls=tone==="rose"?"bg-rose-50 text-rose-700":tone==="amber"?"bg-amber-50 text-amber-700":tone==="green"?"bg-emerald-50 text-emerald-700":"bg-blue-50 text-blue-700";
-  return <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-lg ${cls}`}>{icon}</span><div><span className="text-[11px] font-bold text-slate-500">{label}</span><b className="block text-2xl font-black text-[#07182d]">{value}</b></div></div>
+  return <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><span className={`grid size-10 place-items-center rounded-lg ${cls}`}>{icon}</span><div><span className="text-[11px] font-bold text-slate-500">{label}</span><b className="block text-2xl font-semibold text-[#07182d]">{value}</b></div></div>
 }
