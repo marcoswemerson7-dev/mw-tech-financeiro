@@ -129,12 +129,12 @@ function SummaryCard({
   }[tone];
 
   return (
-    <div className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(7,24,45,.05)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(7,24,45,.08)]">
+    <div className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition  hover:shadow-sm">
       <div className="flex items-center gap-3">
         <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ${styles}`}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[10px] font-black uppercase tracking-[.08em] text-slate-400">{label}</p>
-          <b className="mt-0.5 block text-[25px] font-black leading-none text-[#07182d]">{value}</b>
+          <p className="truncate text-[10px] font-semibold uppercase tracking-[.08em] text-slate-400">{label}</p>
+          <b className="mt-0.5 block text-[25px] font-semibold leading-none text-[#07182d]">{value}</b>
           <p className="mt-1.5 truncate text-[10px] text-slate-500">{hint}</p>
         </div>
       </div>
@@ -177,10 +177,10 @@ function MetricBox({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
-      <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wide text-slate-400">
+      <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-slate-400">
         <span className="text-slate-500">{icon}</span>{label}
       </div>
-      <b className="mt-1.5 block text-lg font-black text-[#07182d]">{value}</b>
+      <b className="mt-1.5 block text-lg font-semibold text-[#07182d]">{value}</b>
       {hint && <p className="mt-1 text-[8px] leading-3 text-slate-400">{hint}</p>}
     </div>
   );
@@ -202,7 +202,7 @@ function getSystemTheme(item: SystemHealthSnapshot) {
   const haystack = `${item.name} ${item.shortName}`.toLowerCase();
   if (item.tenantKey === "bg" || haystack.includes("baixa grande")) {
     return {
-      header: "bg-gradient-to-br from-[#061426] via-[#073523] to-[#0b5b38]",
+      header: "bg-[#163f35]",
       accent: "bg-emerald-500",
       soft: "bg-emerald-50 text-emerald-700 border-emerald-200",
       button: "bg-emerald-600 hover:bg-emerald-700",
@@ -211,7 +211,7 @@ function getSystemTheme(item: SystemHealthSnapshot) {
   }
   if (item.tenantKey === "rg" || haystack.includes("ribeiro gonçalves") || haystack.includes("ribeiro goncalves")) {
     return {
-      header: "bg-gradient-to-br from-[#061426] via-[#0b2d5b] to-[#174d8f]",
+      header: "bg-[#173b61]",
       accent: "bg-amber-400",
       soft: "bg-blue-50 text-blue-700 border-blue-200",
       button: "bg-blue-600 hover:bg-blue-700",
@@ -219,7 +219,7 @@ function getSystemTheme(item: SystemHealthSnapshot) {
     };
   }
   return {
-    header: "bg-gradient-to-br from-[#07182d] via-[#20364f] to-[#334155]",
+    header: "bg-[#25384c]",
     accent: "bg-slate-400",
     soft: "bg-slate-50 text-slate-700 border-slate-200",
     button: "bg-slate-700 hover:bg-slate-800",
@@ -244,30 +244,30 @@ function SystemCard({
   const displayName = systemChartLabel(item);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_34px_rgba(7,24,45,.08)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(7,24,45,.12)]">
+    <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition  hover:shadow-sm">
       <div className={`h-1.5 w-full ${theme.accent}`} />
       <div className={`relative overflow-hidden p-4 text-white ${theme.header}`}>
         <div className="pointer-events-none absolute -right-10 -top-14 size-36 rounded-full bg-white/[.07] blur-2xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white p-2 shadow-[0_8px_24px_rgba(0,0,0,.18)]">
+            <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white p-2 shadow-sm">
               {item.logoUrl ? (
                 <img src={item.logoUrl} alt={`Logomarca ${item.name}`} className="size-full object-contain" />
               ) : (
-                <span className={`grid size-full place-items-center rounded-xl text-xs font-black text-white ${theme.fallback}`}>{badge}</span>
+                <span className={`grid size-full place-items-center rounded-xl text-xs font-semibold text-white ${theme.fallback}`}>{badge}</span>
               )}
             </span>
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-black">{displayName}</h3>
+              <h3 className="truncate text-sm font-semibold">{displayName}</h3>
               <p className="mt-0.5 line-clamp-2 text-[10px] font-medium text-white/75">{item.name}</p>
               <p className="mt-1 truncate text-[9px] text-white/60">{item.accessUrl.replace(/^https?:\/\//, "") || "Domínio não informado"}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-white/15 bg-white/[.08] px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white/80">{item.ambiente || "Produção"}</span>
-                <span className="rounded-full border border-white/15 bg-white/[.08] px-2 py-0.5 text-[8px] font-black uppercase tracking-wide text-white/80">{item.infraestrutura || "Infraestrutura não informada"}</span>
+                <span className="rounded-full border border-white/15 bg-white/[.08] px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/80">{item.ambiente || "Produção"}</span>
+                <span className="rounded-full border border-white/15 bg-white/[.08] px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/80">{item.infraestrutura || "Infraestrutura não informada"}</span>
               </div>
             </div>
           </div>
-          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[9px] font-black text-white`}>
+          <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[9px] font-semibold text-white`}>
             <span className={`size-1.5 rounded-full ${displayState === "online" ? "bg-emerald-300" : displayState === "offline" ? "bg-rose-300" : "bg-amber-300"}`} />
             {stateLabel(displayState)}
           </span>
@@ -297,10 +297,10 @@ function SystemCard({
         {!isVpsTest && <div className="mt-4">
           <div className="mb-2 flex items-center justify-between gap-3">
             <div>
-              <h4 className="text-[11px] font-black text-[#07182d]">Dados do sistema</h4>
+              <h4 className="text-[11px] font-semibold text-[#07182d]">Dados do sistema</h4>
               <p className="text-[9px] text-slate-400">Cadastros no banco e uso físico do Supabase. O Google Drive é medido separadamente abaixo.</p>
             </div>
-            {!metricsAvailable && <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-black text-amber-700">Integração de métricas pendente</span>}
+            {!metricsAvailable && <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-semibold text-amber-700">Integração de métricas pendente</span>}
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             <MetricBox label="Processos" value={m?.processes ?? "—"} icon={<FileStack size={12} />} />
@@ -343,9 +343,9 @@ function SystemCard({
         {isVpsTest && <VpsServerPanel />}
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black text-white transition ${theme.button}`}>Abrir sistema <ExternalLink size={12} /></a>}
-          {item.tenantKey && !isVpsTest && <Link to={`/monitoramento/usuarios?tenant=${encodeURIComponent(item.tenantKey)}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-black transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
-          {item.tenantKey && !isVpsTest && <Link to={`/monitoramento/auditoria?system=${encodeURIComponent(item.tenantKey)}&name=${encodeURIComponent(item.name)}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-black text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"><ShieldCheck size={12} /> Auditoria</Link>}
+          {item.accessUrl && <a href={item.accessUrl} target="_blank" rel="noreferrer" className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-semibold text-white transition ${theme.button}`}>Abrir sistema <ExternalLink size={12} /></a>}
+          {item.tenantKey && !isVpsTest && <Link to={`/monitoramento/usuarios?tenant=${encodeURIComponent(item.tenantKey)}`} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-[10px] font-semibold transition ${theme.soft}`}><UsersRound size={12} /> Usuários</Link>}
+          {item.tenantKey && !isVpsTest && <Link to={`/monitoramento/auditoria?system=${encodeURIComponent(item.tenantKey)}&name=${encodeURIComponent(item.name)}`} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[10px] font-semibold text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"><ShieldCheck size={12} /> Auditoria</Link>}
         </div>
       </div>
     </article>
@@ -570,10 +570,10 @@ export default function Monitoring() {
         subtitle="Visão consolidada dos sistemas dos órgãos atendidos pela MW TECH."
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Link to="/sistemas" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-[#082743] shadow-sm transition hover:border-blue-200 hover:bg-blue-50">
+            <Link to="/sistemas" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#082743] shadow-sm transition hover:border-blue-200 hover:bg-blue-50">
               <FileStack size={17} /> Sistemas e órgãos
             </Link>
-            <Link to="/monitoramento/tecnico" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-[#082743] shadow-sm transition hover:border-blue-200 hover:bg-blue-50">
+            <Link to="/monitoramento/tecnico" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-[#082743] shadow-sm transition hover:border-blue-200 hover:bg-blue-50">
               <Wrench size={17} /> Observabilidade técnica
             </Link>
             <ActionButton onClick={() => void load(true)} disabled={refreshing}>
@@ -584,8 +584,8 @@ export default function Monitoring() {
         }
       />
 
-      <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(7,24,45,.04)]">
-        <div className="mr-2 flex items-center gap-2 text-sm font-black text-[#07182d]"><span className="grid size-8 place-items-center rounded-lg bg-blue-50 text-blue-700"><Filter size={16} /></span> Filtros do monitoramento</div>
+      <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+        <div className="mr-2 flex items-center gap-2 text-sm font-semibold text-[#07182d]"><span className="grid size-8 place-items-center rounded-lg bg-blue-50 text-blue-700"><Filter size={16} /></span> Filtros do monitoramento</div>
         <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="min-w-[175px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
           <option value="todos">Todos os órgãos</option>
           {items.map((item) => <option key={item.key} value={item.key}>{systemFilterLabel(item)}</option>)}
@@ -593,28 +593,28 @@ export default function Monitoring() {
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "todos" | HealthState)} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 outline-none focus:border-blue-400">
           <option value="todos">Todos os status</option><option value="online">Operacionais</option><option value="attention">Em atenção</option><option value="offline">Indisponíveis</option>
         </select>
-        {(orgFilter !== "todos" || statusFilter !== "todos") && <button type="button" onClick={() => { setOrgFilter("todos"); setStatusFilter("todos"); }} className="rounded-xl px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">Limpar filtros</button>}
+        {(orgFilter !== "todos" || statusFilter !== "todos") && <button type="button" onClick={() => { setOrgFilter("todos"); setStatusFilter("todos"); }} className="rounded-xl px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50">Limpar filtros</button>}
         <span className="ml-auto flex items-center gap-2 text-[10px] font-semibold text-slate-500"><span className="size-2 rounded-full bg-emerald-500" /> Atualização automática a cada 60 segundos</span>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_16px_42px_rgba(7,24,45,.07)]">
-        <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-r from-white via-blue-50/40 to-amber-50/30 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-slate-100 bg-white px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl bg-amber-50 text-amber-600"><Gauge size={21} /></span>
             <div>
-              <h2 className="text-lg font-black text-[#07182d]">Histórico de latência</h2>
+              <h2 className="text-lg font-semibold text-[#07182d]">Histórico de latência</h2>
               <p className="text-[11px] text-slate-500">
                 Histórico em tempo real · {historyReadingCount}/24 leituras
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className={`rounded-xl border px-3 py-2 text-[10px] font-black ${qualityToneClasses}`}>
+            <span className={`rounded-xl border px-3 py-2 text-[10px] font-semibold ${qualityToneClasses}`}>
               Atual estável: {summary.average === null ? "—" : `${summary.average} ms`} · {currentLatencyQuality.label}
             </span>
-            <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-black text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
-            <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-black text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
-            <span className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-700">Máx: {latencyStats.max === null ? "—" : `${latencyStats.max} ms`}</span>
+            <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-semibold text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
+            <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
+            <span className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-semibold text-rose-700">Máx: {latencyStats.max === null ? "—" : `${latencyStats.max} ms`}</span>
           </div>
         </div>
         <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
@@ -643,12 +643,12 @@ export default function Monitoring() {
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <span className="text-[9px] font-bold uppercase text-slate-400">Latência consolidada</span>
-                <b className="mt-1 block text-lg font-black text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b>
+                <b className="mt-1 block text-lg font-semibold text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b>
                 <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[8px] font-bold ${qualityToneClasses}`}>
                   {currentLatencyQuality.label}
                 </span>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Operacionais</span><b className="mt-1 block text-lg font-black text-emerald-700">{operationalPercent}%</b></div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Operacionais</span><b className="mt-1 block text-lg font-semibold text-emerald-700">{operationalPercent}%</b></div>
             </div>
             <p className="mt-4 text-[10px] text-slate-500">Última verificação: <b className="text-slate-700">{lastChecked(items)}</b></p>
           </div>
@@ -666,20 +666,20 @@ export default function Monitoring() {
         <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
       </div>
 
-      <section className="rounded-3xl border border-blue-100 bg-gradient-to-br from-white to-blue-50/40 p-5 shadow-[0_12px_34px_rgba(7,24,45,.05)]">
+      <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-white shadow-sm">
               <GoogleDriveLogo className="size-8" />
             </span>
             <div>
-              <h2 className="text-base font-black text-[#07182d]">Google Drive · armazenamento físico real</h2>
+              <h2 className="text-base font-semibold text-[#07182d]">Google Drive · armazenamento físico real</h2>
               <p className="text-[10px] text-slate-500">Medição direta da conta do Drive e de todo o conteúdo dentro das pastas de cada órgão.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-black ${driveError ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}><span className={`size-2 rounded-full ${driveError ? "bg-amber-500" : "bg-emerald-500"}`} />{driveError ? "Dados em cache" : "Conectado"}</span>
-            <Link to="/armazenamento" className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 py-2 text-[10px] font-black text-blue-700 hover:bg-blue-50">Ver detalhes <ArrowRight size={12}/></Link>
+            <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-semibold ${driveError ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}><span className={`size-2 rounded-full ${driveError ? "bg-amber-500" : "bg-emerald-500"}`} />{driveError ? "Dados em cache" : "Conectado"}</span>
+            <Link to="/armazenamento" className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-white px-3 py-2 text-[10px] font-semibold text-blue-700 hover:bg-blue-50">Ver detalhes <ArrowRight size={12}/></Link>
           </div>
         </div>
         <div className="mb-4 grid gap-2 md:grid-cols-3">
@@ -699,12 +699,12 @@ export default function Monitoring() {
         {driveData ? (
           <div className="grid gap-3 xl:grid-cols-[1.1fr_.7fr_.7fr_1.6fr]">
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase text-slate-400">Uso real da conta Drive</span><b className="text-sm text-blue-700">{driveData.percent.toFixed(1)}%</b></div>
+              <div className="flex items-center justify-between"><span className="text-[10px] font-semibold uppercase text-slate-400">Uso real da conta Drive</span><b className="text-sm text-blue-700">{driveData.percent.toFixed(1)}%</b></div>
               <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${Math.min(100, driveData.percent)}%` }} /></div>
-              <div className="mt-3 flex items-end justify-between"><div><b className="text-xl font-black text-[#07182d]">{driveData.usedGb.toFixed(2)} GB</b><p className="text-[9px] text-slate-500">de {driveData.totalGb.toFixed(0)} GB</p></div><span className="text-[9px] text-slate-400">Atualizado {new Date(driveData.updatedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></div>
+              <div className="mt-3 flex items-end justify-between"><div><b className="text-xl font-semibold text-[#07182d]">{driveData.usedGb.toFixed(2)} GB</b><p className="text-[9px] text-slate-500">de {driveData.totalGb.toFixed(0)} GB</p></div><span className="text-[9px] text-slate-400">Atualizado {new Date(driveData.updatedAt).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span></div>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><HardDrive size={17}/></span><p className="mt-3 text-[9px] font-black uppercase text-slate-400">Disponível</p><b className="mt-1 block text-lg font-black text-[#07182d]">{driveData.availableGb.toFixed(2)} GB</b></div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={17}/></span><p className="mt-3 text-[9px] font-black uppercase text-slate-400">Plano</p><b className="mt-1 block text-lg font-black text-[#07182d]">{driveData.totalGb.toFixed(0)} GB</b><p className="text-[9px] text-slate-500">{driveData.folders.length} pasta(s) raiz</p></div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><HardDrive size={17}/></span><p className="mt-3 text-[9px] font-semibold uppercase text-slate-400">Disponível</p><b className="mt-1 block text-lg font-semibold text-[#07182d]">{driveData.availableGb.toFixed(2)} GB</b></div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4"><span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={17}/></span><p className="mt-3 text-[9px] font-semibold uppercase text-slate-400">Plano</p><b className="mt-1 block text-lg font-semibold text-[#07182d]">{driveData.totalGb.toFixed(0)} GB</b><p className="text-[9px] text-slate-500">{driveData.folders.length} pasta(s) raiz</p></div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="mb-2 flex items-center justify-between"><b className="text-[11px] text-[#07182d]">Uso físico por órgão no Drive</b><span className="text-[9px] font-semibold text-slate-400">{driveData.folders.length} pasta(s) raiz</span></div>
               <div className="space-y-3">
@@ -726,19 +726,19 @@ export default function Monitoring() {
         )}
       </section>
 
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-blue-50/60 p-6 shadow-[0_14px_40px_rgba(7,24,45,.07)]">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-blue-200/20 blur-3xl" />
         <div className="relative mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white shadow-lg shadow-blue-200">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#264e70] text-white shadow-lg shadow-blue-200">
               <HardDrive size={21} />
             </span>
             <div>
-              <h2 className="text-lg font-black tracking-tight text-[#07182d]">Onde os dados estão armazenados</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-[#07182d]">Onde os dados estão armazenados</h2>
               <p className="mt-1 text-[11px] text-slate-500">Banco e Storage do Supabase são separados do Google Drive. Os números representam camadas diferentes e não devem ser comparados como se fossem o mesmo conjunto.</p>
             </div>
           </div>
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3 py-1.5 text-[10px] font-black text-blue-700 shadow-sm">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-blue-200 bg-white/80 px-3 py-1.5 text-[10px] font-semibold text-blue-700 shadow-sm">
             <ShieldCheck size={13} /> {visibleItems.length} órgão(s) monitorado(s)
           </span>
         </div>
@@ -746,37 +746,37 @@ export default function Monitoring() {
           <div className="rounded-2xl border border-violet-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-violet-50 text-violet-700"><Database size={18} /></span>
-              <span className="text-[9px] font-black uppercase tracking-wider text-violet-500">Dados</span>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-violet-500">Dados</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Banco de dados</p>
-            <b className="mt-1 block text-2xl font-black tracking-tight text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))}</b>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Banco de dados</p>
+            <b className="mt-1 block text-2xl font-semibold tracking-tight text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.databaseBytes || 0), 0))}</b>
             <p className="mt-1 text-[10px] text-slate-500">Supabase Database</p>
           </div>
           <div className="rounded-2xl border border-blue-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-blue-50 text-blue-700"><HardDrive size={18} /></span>
-              <span className="text-[9px] font-black uppercase tracking-wider text-blue-500">Arquivos</span>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-blue-500">Arquivos</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Supabase Storage físico</p>
-            <b className="mt-1 block text-xl font-black text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))}</b>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Supabase Storage físico</p>
+            <b className="mt-1 block text-xl font-semibold text-[#07182d]">{formatBytes(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageBytes || 0), 0))}</b>
             <p className="mt-1 text-[10px] text-slate-500">Somente objetos realmente hospedados no Supabase</p>
           </div>
           <div className="rounded-2xl border border-emerald-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><FileStack size={18} /></span>
-              <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600">Quantidade</span>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-600">Quantidade</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Objetos físicos no Supabase</p>
-            <b className="mt-1 block text-xl font-black text-[#07182d]">{String(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))}</b>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Objetos físicos no Supabase</p>
+            <b className="mt-1 block text-xl font-semibold text-[#07182d]">{String(visibleItems.reduce((sum, item) => sum + Number(item.metrics?.supabaseStorageFiles || 0), 0))}</b>
             <p className="mt-1 text-[10px] text-slate-500">Quantidade real no Storage, inclusive avatares</p>
           </div>
           <div className="rounded-2xl border border-amber-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center justify-between">
               <span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-700"><FolderOpen size={18} /></span>
-              <span className="text-[9px] font-black uppercase tracking-wider text-amber-600">Drive</span>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-amber-600">Drive</span>
             </div>
-            <p className="mt-4 text-[10px] font-black uppercase tracking-wider text-slate-400">Google Drive · uso físico</p>
-            <b className="mt-1 block text-xl font-black text-[#07182d]">{driveData ? `${driveData.usedGb.toFixed(2)} GB` : "—"}</b>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Google Drive · uso físico</p>
+            <b className="mt-1 block text-xl font-semibold text-[#07182d]">{driveData ? `${driveData.usedGb.toFixed(2)} GB` : "—"}</b>
             <p className="mt-1 text-[10px] text-slate-500">Uso real da conta Google Drive monitorada</p>
           </div>
         </div>
@@ -784,11 +784,11 @@ export default function Monitoring() {
 
       <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]">
-          <span className="flex items-center gap-2 font-black text-emerald-800"><span className="size-2 rounded-full bg-emerald-500" /> Monitoramento automático ativo</span>
+          <span className="flex items-center gap-2 font-semibold text-emerald-800"><span className="size-2 rounded-full bg-emerald-500" /> Monitoramento automático ativo</span>
           <span className="text-emerald-700">Última atualização: <b>{lastChecked(items)}</b></span>
           <span className="flex items-center gap-1.5 text-emerald-700"><Clock3 size={13} /> Próxima atualização em <b>{nextRefresh}s</b></span>
         </div>
-        <span className="flex items-center gap-2 text-[11px] font-black text-emerald-800"><CheckCircle2 size={15} /> {items.length} sistema(s) monitorado(s)</span>
+        <span className="flex items-center gap-2 text-[11px] font-semibold text-emerald-800"><CheckCircle2 size={15} /> {items.length} sistema(s) monitorado(s)</span>
       </div>
 
       {error && <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">{error}</div>}
@@ -797,10 +797,10 @@ export default function Monitoring() {
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><Activity size={18} className="text-blue-700" /> Saúde e dados dos sistemas</h2>
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#07182d]"><Activity size={18} className="text-blue-700" /> Saúde e dados dos sistemas</h2>
               <p className="mt-0.5 text-[11px] text-slate-500">Somente os órgãos cadastrados em “Sistemas e órgãos”. Novos clientes entram automaticamente neste painel.</p>
             </div>
-            <Link to="/sistemas" className="text-[10px] font-black text-blue-700">Gerenciar sistemas</Link>
+            <Link to="/sistemas" className="text-[10px] font-semibold text-blue-700">Gerenciar sistemas</Link>
           </div>
 
           {loading ? (
@@ -816,7 +816,7 @@ export default function Monitoring() {
                     <button key={item.key} type="button" onClick={() => setSelectedKey(item.key)} className={selected ? "text-left rounded-2xl border border-blue-500 bg-blue-50 p-3 shadow-md ring-2 ring-blue-100 transition" : "text-left rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-blue-300 hover:bg-blue-50/40"}>
                       <div className="flex items-center gap-3">
                         <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white p-1">
-                          {item.logoUrl ? <img src={item.logoUrl} alt="" className="size-full object-contain" /> : <span className="text-[10px] font-black text-blue-700">{item.tenantKey?.toUpperCase() || "ORG"}</span>}
+                          {item.logoUrl ? <img src={item.logoUrl} alt="" className="size-full object-contain" /> : <span className="text-[10px] font-semibold text-blue-700">{item.tenantKey?.toUpperCase() || "ORG"}</span>}
                         </span>
                         <span className="min-w-0">
                           <b className="block truncate text-xs text-[#07182d]">{item.name}</b>
@@ -852,10 +852,10 @@ export default function Monitoring() {
         <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
-              <h2 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><Bell size={17} className="text-rose-500" /> Alertas e pendências</h2>
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-[#07182d]"><Bell size={17} className="text-rose-500" /> Alertas e pendências</h2>
               <p className="mt-0.5 text-[10px] text-slate-500">Eventos que precisam de atenção.</p>
             </div>
-            <span className="text-[10px] font-black text-blue-700">Atual</span>
+            <span className="text-[10px] font-semibold text-blue-700">Atual</span>
           </div>
           <div className="divide-y divide-slate-100">
             {alerts.map((alert, index) => {
@@ -869,7 +869,7 @@ export default function Monitoring() {
                     <b className="block truncate text-[11px] text-[#07182d]">{alert.title}</b>
                     <p className="mt-0.5 truncate text-[10px] text-slate-500">{alert.detail}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-[9px] font-black ${palette}`}>{alert.level}</span>
+                  <span className={`rounded-full px-2 py-1 text-[9px] font-semibold ${palette}`}>{alert.level}</span>
                 </div>
               );
             })}
@@ -879,7 +879,7 @@ export default function Monitoring() {
 
       <div className="grid items-start gap-4 xl:grid-cols-2">
         <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-black text-[#07182d]">Distribuição operacional</h3>
+          <h3 className="text-sm font-semibold text-[#07182d]">Distribuição operacional</h3>
           <p className="mt-0.5 text-[10px] text-slate-500">Situação de todos os sistemas cadastrados.</p>
           <div className="mt-2 grid grid-cols-[170px_1fr] items-center gap-3">
             <div className="relative h-[180px]">
@@ -894,7 +894,7 @@ export default function Monitoring() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
-                <div><b className="block text-xl font-black text-[#07182d]">{operationalPercent}%</b><span className="text-[9px] text-slate-500">Operacionais</span></div>
+                <div><b className="block text-xl font-semibold text-[#07182d]">{operationalPercent}%</b><span className="text-[9px] text-slate-500">Operacionais</span></div>
               </div>
             </div>
             <div className="space-y-3 text-[10px]">
@@ -907,7 +907,7 @@ export default function Monitoring() {
 
         <section className="self-start rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div>
-            <h3 className="flex items-center gap-2 text-sm font-black text-[#07182d]"><Zap size={17} className="text-amber-500" /> Acesso rápido</h3>
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-[#07182d]"><Zap size={17} className="text-amber-500" /> Acesso rápido</h3>
             <p className="mt-0.5 text-[10px] text-slate-500">Atalhos administrativos.</p>
           </div>
           <div className="mt-4 space-y-2.5">
@@ -933,7 +933,7 @@ export default function Monitoring() {
       <section className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:flex-row sm:items-center">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm"><Info size={18} /></span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[12px] font-black text-[#07182d]">Como funciona este painel</h3>
+          <h3 className="text-[12px] font-semibold text-[#07182d]">Como funciona este painel</h3>
           <p className="mt-1 text-[10px] leading-5 text-slate-600">
             O painel lê automaticamente os órgãos cadastrados em “Sistemas e órgãos”. Para RG e BG, as métricas detalhadas de processos, contratos, notas, pagamentos, arquivos e usuários já são consultadas. Novos órgãos entram automaticamente no monitoramento de domínio e banco; as métricas detalhadas passam a aparecer assim que a integração de dados do novo cliente for configurada.
           </p>
