@@ -40,8 +40,7 @@ const FinancialDocuments = lazyWithRecovery(() => import("./pages/FinancialDocum
 const Settings = lazyWithRecovery(() => import("./pages/Settings"), "settings");
 const Accounts = lazyWithRecovery(() => import("./pages/Accounts"), "accounts");
 const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "support");
-const Systems = lazyWithRecovery(() => import("./pages/Systems"),
-        import("./pages/MunicipalCentral"), "systems");
+const Systems = lazyWithRecovery(() => import("./pages/Systems"), "systems");
 const MunicipalCentral = lazyWithRecovery(() => import("./pages/MunicipalCentral"), "municipal-central");
 const Monitoring = lazyWithRecovery(() => import("./pages/Monitoring"), "monitoring");
 const TechnicalMonitoring = lazyWithRecovery(() => import("./pages/TechnicalMonitoring"), "technical-monitoring");
