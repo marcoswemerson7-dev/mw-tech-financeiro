@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Building2, ExternalLink, FolderKanban, Search, ShieldCheck, Plus, Pencil, Trash2, X, Layers3, Activity, Link2, RefreshCw, Settings2 } from "lucide-react";
+import { Building2, ExternalLink, FolderKanban, Search, ShieldCheck, Plus, Pencil, Trash2, X, Layers3, Activity, RefreshCw, Settings2 } from "lucide-react";
 import { PageHeader } from "../components/UI";
 import { deleteManagedSystem, getManagedSystems, getManagedSystemsCached, saveManagedSystem, uploadSystemLogo, type ManagedSystem } from "../services/managedSystems";
 
