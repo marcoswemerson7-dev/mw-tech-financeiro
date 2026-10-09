@@ -18,6 +18,7 @@ import {
   Cloud,
   Headphones,
   Building2,
+  Network,
   Camera,
   UserRound,
   Phone,
@@ -47,6 +48,7 @@ const financeItems = [
 
 const managementItems = [
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
+  ["/central-municipal", "Central Municipal", Network],
   ["/monitoramento", "Monitoramento", Activity],
   ["/monitoramento/incidentes", "Central de Incidentes", Siren],  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
   ["/projetos-codigo", "Projetos / Código", Code2],
