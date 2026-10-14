@@ -116,3 +116,28 @@
     background:#fff!important;color:#101828!important;
   }
 }
+
+/* Dashboard: classes explícitas resolvem conflito com as regras legadas de layout. */
+@media screen {
+html.mw-dark .mw-finance-dashboard .mw-dark-card,
+html.mw-dark .mw-finance-dashboard a.mw-dark-card,
+html.mw-dark .mw-finance-dashboard section.mw-dark-card,
+html.mw-dark .mw-finance-dashboard div.mw-dark-card {
+ background-color:#111b25!important;background-image:none!important;
+ color:#eef5fa!important;border-color:#2b4050!important;
+}
+html.mw-dark .mw-finance-dashboard .mw-dark-inner,
+html.mw-dark .mw-finance-dashboard a.mw-dark-inner,
+html.mw-dark .mw-finance-dashboard div.mw-dark-inner {
+ background-color:#192936!important;background-image:none!important;
+ color:#eaf3f9!important;border-color:#304858!important;
+}
+html.mw-dark .mw-finance-dashboard .mw-dark-inner:hover:is(a,button){background-color:#243b4d!important}
+html.mw-dark .mw-finance-dashboard :is(h1,h2,h3,p,b,strong,small,span,a)[class*="text-[#0b2239"],
+html.mw-dark .mw-finance-dashboard :is(h1,h2,h3,p,b,strong,small,span,a)[class*="text-[#17324d"],
+html.mw-dark .mw-finance-dashboard :is(h1,h2,h3,p,b,strong,small,span,a)[class*="text-[#334155"] {color:#eff6fc!important}
+html.mw-dark .mw-finance-dashboard [class*="text-slate-500"],
+html.mw-dark .mw-finance-dashboard [class*="text-slate-400"]{color:#b6c8d5!important}
+html.mw-dark .mw-finance-dashboard [class*="text-[#245477"]{color:#9ed1ff!important}
+html.mw-dark .mw-finance-dashboard .mw-dark-card :is(a,button):focus-visible{outline:2px solid #d7a23a!important;outline-offset:2px}
+}
