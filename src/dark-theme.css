@@ -1,0 +1,70 @@
+/* MW TECH Control (Financeiro) - tema escuro. Escopo restrito à aplicação. */
+@media screen {
+html.mw-dark {
+ --mw-bg:#101923; --mw-card:#192935; --mw-border:#334653; --mw-text:#ecf3f8; --mw-muted:#a9bac9;
+ color-scheme:dark;
+}
+html.mw-dark body, html.mw-dark #root, html.mw-dark #root>div, html.mw-dark main.w-full, html.mw-dark header.sticky.top-0+main {
+ background:#101923!important;color:#ecf3f8!important;
+}
+html.mw-dark .app-content-shell{background:#101923!important}
+html.mw-dark main :is(section,div,article,aside,form,button,a)[class*="bg-white"],
+html.mw-dark main :is(section,div,article,aside,form,button,a)[class*="bg-slate-50"],
+html.mw-dark main :is(section,div,article,aside,form,button,a)[class*="bg-[#fff"],
+html.mw-dark .app-content-shell [class*="bg-white"]:not(header):not(.report-sheet),
+html.mw-dark .app-content-shell [class*="bg-slate-50"]:not(.report-sheet),
+html.mw-dark .app-content-shell [class*="bg-gray-50"]:not(.report-sheet){
+ background-color:#192935!important;border-color:#344a58!important;color:#ecf3f8!important;
+}
+html.mw-dark main [class*="bg-[#f"],
+html.mw-dark main [class*="bg-[#F"]{background-color:#192935!important}
+html.mw-dark main [class*="border-slate-"],
+html.mw-dark main [class*="border-gray-"],
+html.mw-dark .app-content-shell [class*="border-slate-"]{border-color:#344957!important}
+html.mw-dark main [class*="text-slate-900"],
+html.mw-dark main [class*="text-slate-800"],
+html.mw-dark main [class*="text-slate-700"],
+html.mw-dark main [class*="text-gray-900"],
+html.mw-dark main [class*="text-[#07182d]"],
+html.mw-dark main [class*="text-[#0b2239]"]{color:#ecf3f8!important}
+html.mw-dark main [class*="text-slate-600"],
+html.mw-dark main [class*="text-slate-500"],
+html.mw-dark main [class*="text-slate-400"],
+html.mw-dark main [class*="text-gray-500"],
+html.mw-dark main [class*="text-[#64748b]"]{color:#b4c4ce!important}
+html.mw-dark main :is(h1,h2,h3,h4){color:#eff6fa}
+html.mw-dark main :is(input,select,textarea),
+html.mw-dark .app-content-shell :is(input,select,textarea):not(header input),
+html.mw-dark .input{background-color:#14232e!important;color:#edf4f8!important;border-color:#486071!important}
+html.mw-dark main :is(input,textarea)::placeholder{color:#a7b8c5!important;opacity:1}
+html.mw-dark main :is(th),html.mw-dark main thead{background:#253945!important;color:#d4e3eb!important}
+html.mw-dark main :is(td){border-color:#344957!important;color:#e4eef4!important}
+html.mw-dark main tbody tr:hover{background:#243945!important}
+html.mw-dark main [class*="bg-blue-50"],
+html.mw-dark main [class*="bg-emerald-50"],
+html.mw-dark main [class*="bg-amber-50"],
+html.mw-dark main [class*="bg-green-50"]{background-color:#253c45!important}
+html.mw-dark main [class*="bg-rose-50"],
+html.mw-dark main [class*="bg-red-50"]{background-color:#442a35!important}
+html.mw-dark main [class*="text-blue-700"]{color:#a5caff!important}
+html.mw-dark main [class*="text-emerald-700"],html.mw-dark main [class*="text-green-700"]{color:#81dec0!important}
+html.mw-dark main [class*="text-amber-700"]{color:#f6d08b!important}
+html.mw-dark main [class*="text-red-700"],html.mw-dark main [class*="text-rose-700"]{color:#ffa6b2!important}
+html.mw-dark main [class*="bg-[#082743]"]{background:#164c6a!important;color:#fff!important}
+html.mw-dark .app-content-shell [class*="shadow"]{box-shadow:0 1px 4px #0002!important}
+html.mw-dark .app-content-shell [class*="bg-gradient-to-"]{background-image:none!important}
+html.mw-dark main .recharts-cartesian-grid line{stroke:#354955!important}
+html.mw-dark main .recharts-cartesian-axis-tick text,
+html.mw-dark main .recharts-legend-item-text{fill:#bcd0dd!important;color:#bcd0dd!important}
+html.mw-dark main .recharts-tooltip-wrapper{color:#142635!important}
+html.mw-dark main :is(button,input,select,textarea,a):focus-visible{outline:2px solid #e0aa38!important;outline-offset:2px}
+html.mw-dark .report-sheet{background:#192935!important;color:#e6f0f6!important}
+html.mw-dark .report-sheet .report-summary-card{background:#253945!important}
+html.mw-dark .report-sheet .report-table tbody tr:nth-child(even){background:#243540!important}
+html.mw-dark .report-sheet .report-header{border-color:#415767!important}
+}
+/* PDFs e relatórios impressos conservam o visual institucional claro. */
+@media print{
+html.mw-dark{color-scheme:light!important}
+html.mw-dark body,html.mw-dark #root,html.mw-dark main,html.mw-dark .report-sheet{background:#fff!important;color:#101828!important}
+}
