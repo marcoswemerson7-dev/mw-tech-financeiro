@@ -87,8 +87,8 @@ export default function Dashboard() {
   const dateLabel = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(now);
 
   return (
-    <div className="mx-auto w-full max-w-[1540px] space-y-4 pb-4">
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
+    <div className="mw-finance-dashboard mx-auto w-full max-w-[1540px] space-y-4 pb-4">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white mw-dark-card px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
         <div className="relative grid gap-4 xl:grid-cols-[1.3fr_.72fr_.65fr] xl:items-center">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Control</p>
@@ -96,9 +96,9 @@ export default function Dashboard() {
             <p className="mt-1 text-[13px] text-slate-500">Indicadores essenciais da operação, reunidos em um só lugar.</p>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 mw-dark-inner/70 px-4 py-3">
             <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-[#a77a28] border border-slate-200"><Sun size={20} /></span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white mw-dark-card text-[#a77a28] border border-slate-200"><Sun size={20} /></span>
               <div>
                 <p className="text-[14px] font-semibold text-[#0b2239]">Bom dia, {firstName}!</p>
                 <p className="mt-1 text-[12px] capitalize leading-5 text-slate-600">Hoje é {dateLabel}.</p>
@@ -106,7 +106,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 mw-dark-inner/70 px-4 py-3">
             <div className="flex items-start gap-3">
               <span className="mt-1 size-3 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-50" />
               <div>
@@ -202,7 +202,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
     purple: "bg-slate-100 text-[#274c6b]",
   }[tone];
   return (
-    <a href={href} className="group relative rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300">
+    <a href={href} className="group relative rounded-xl border border-slate-200 bg-white mw-dark-card px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300">
       <div className="flex items-start gap-3">
         <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${style}`}>{icon}</span>
         <div className="min-w-0 flex-1">
@@ -218,10 +218,10 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
 
 function Panel({ title, icon, subtitle, actionHref, rightLabel, children }: { title: string; icon: ReactNode; subtitle?: string; actionHref?: string; rightLabel?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
+    <section className="rounded-2xl border border-slate-200/90 bg-white mw-dark-card p-4 shadow-sm">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="grid size-9 place-items-center rounded-lg bg-slate-50 text-[#1f4f7b]">{icon}</span>
+          <span className="grid size-9 place-items-center rounded-lg bg-slate-50 mw-dark-inner text-[#1f4f7b]">{icon}</span>
           <div>
             <h2 className="text-[14px] font-semibold text-[#0b2239]">{title}</h2>
             {subtitle && <p className="text-[10px] text-slate-400">{subtitle}</p>}
@@ -238,10 +238,10 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
   const pct = Math.max(0, Math.min(100, data?.percent || 0));
   const folders = data?.folders || [];
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm">
+    <section className="rounded-2xl border border-slate-200/90 bg-white mw-dark-card p-4 shadow-sm">
       <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="relative grid size-10 place-items-center overflow-hidden rounded-lg bg-white shadow-sm">
+          <span className="relative grid size-10 place-items-center overflow-hidden rounded-lg bg-white mw-dark-card shadow-sm">
             <span className="absolute left-[8px] top-[4px] size-0 border-x-[9px] border-b-[17px] border-x-transparent border-b-[#1fa463]" />
             <span className="absolute bottom-[5px] left-[4px] h-[11px] w-[20px] skew-x-[-28deg] bg-[#1a73e8]" />
             <span className="absolute bottom-[5px] right-[4px] h-[11px] w-[20px] skew-x-[28deg] bg-[#fbbc04]" />
@@ -264,10 +264,10 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
             <p className="text-[30px] font-semibold tracking-[-.03em]">{pct.toFixed(1)}%</p>
             <p className="pb-1 text-[10px] text-slate-300">{Number(data?.usedGb || 0).toFixed(2)} GB de {Number(data?.totalGb || 0).toFixed(0)} GB</p>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-[#c5a063]" style={{ width: `${pct}%` }} /></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white mw-dark-card/15"><div className="h-full rounded-full bg-[#c5a063]" style={{ width: `${pct}%` }} /></div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <div className="rounded-lg bg-white/[.07] px-3 py-2.5"><p className="text-[10px] text-slate-300">Disponível</p><p className="mt-1 text-[13px] font-semibold">{Number(data?.availableGb || 0).toFixed(2)} GB</p></div>
-            <div className="rounded-lg bg-white/[.07] px-3 py-2.5"><p className="text-[10px] text-slate-300">Plano</p><p className="mt-1 text-[13px] font-semibold">{Number(data?.totalGb || 0).toFixed(0)} GB</p></div>
+            <div className="rounded-lg bg-white mw-dark-card/[.07] px-3 py-2.5"><p className="text-[10px] text-slate-300">Disponível</p><p className="mt-1 text-[13px] font-semibold">{Number(data?.availableGb || 0).toFixed(2)} GB</p></div>
+            <div className="rounded-lg bg-white mw-dark-card/[.07] px-3 py-2.5"><p className="text-[10px] text-slate-300">Plano</p><p className="mt-1 text-[13px] font-semibold">{Number(data?.totalGb || 0).toFixed(0)} GB</p></div>
           </div>
         </div>
 
@@ -275,7 +275,7 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
           <div className="mb-2 flex items-center justify-between"><p className="text-[11px] font-medium text-[#18324d]">Pastas monitoradas</p><span className="text-[10px] text-slate-400">{folders.length} pasta{folders.length === 1 ? "" : "s"}</span></div>
           <div className="space-y-2">
             {folders.length ? folders.slice(0, 3).map((folder) => (
-              <div key={folder.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+              <div key={folder.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 mw-dark-inner/80 px-3 py-2.5">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600"><Folder size={16} /></span>
                 <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-medium text-[#17324d]">{folder.name}</p><p className="mt-0.5 text-[10px] text-slate-400">{folder.files} arquivos • {folder.folders} pastas</p></div>
                 <span className="text-[11px] font-semibold text-[#17324d]">{folder.usedGb.toFixed(2)} GB</span>
@@ -291,11 +291,11 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
 }
 
 function InfoRow({ icon, label, subtitle, value, success = false }: { icon: ReactNode; label: string; subtitle: string; value: string; success?: boolean }) {
-  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-3"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-blue-600 shadow-sm">{icon}</span><div className="min-w-0 flex-1"><p className="text-[11px] font-medium text-[#17324d]">{label}</p><p className="text-[10px] text-slate-400">{subtitle}</p></div><span className={`text-[12px] font-semibold ${success ? "text-emerald-600" : "text-[#17324d]"}`}>{value}</span></div>;
+  return <div className="flex items-center gap-3 rounded-xl bg-slate-50 mw-dark-inner px-3 py-3"><span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white mw-dark-card text-blue-600 shadow-sm">{icon}</span><div className="min-w-0 flex-1"><p className="text-[11px] font-medium text-[#17324d]">{label}</p><p className="text-[10px] text-slate-400">{subtitle}</p></div><span className={`text-[12px] font-semibold ${success ? "text-emerald-600" : "text-[#17324d]"}`}>{value}</span></div>;
 }
 
 function Quick({ href, icon, label, external = false }: { href: string; icon: ReactNode; label: string; external?: boolean }) {
-  return <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 px-2 text-center text-[10px] font-medium text-[#17324d] transition  hover:bg-blue-50 hover:text-blue-700">{icon}<span>{label}</span></a>;
+  return <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} className="flex min-h-[76px] flex-col items-center justify-center gap-2 rounded-xl bg-slate-50 mw-dark-inner px-2 text-center text-[10px] font-medium text-[#17324d] transition  hover:bg-blue-50 hover:text-blue-700">{icon}<span>{label}</span></a>;
 }
 
 function buildChart(rows: Movement[]) {
