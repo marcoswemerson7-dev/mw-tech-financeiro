@@ -1,128 +1,118 @@
-/* MW TECH Control (Financeiro) - tema escuro. Escopo restrito à aplicação. */
+/* MW TECH Control - Dark profundo (somente interface; impressão preservada). */
 @media screen {
-html.mw-dark {
- --mw-bg:#101923; --mw-card:#192935; --mw-border:#334653; --mw-text:#ecf3f8; --mw-muted:#a9bac9;
- color-scheme:dark;
+  html.mw-dark {
+    color-scheme: dark;
+    --mw-bg:#080e15; --mw-card:#111c26; --mw-card-2:#172632;
+    --mw-border:#283a49; --mw-text:#f0f6fb; --mw-muted:#b2c4d2;
+  }
+  html.mw-dark,
+  html.mw-dark body,
+  html.mw-dark #root,
+  html.mw-dark #root>div,
+  html.mw-dark .app-content-shell,
+  html.mw-dark main.w-full,
+  html.mw-dark header.sticky.top-0+main {
+    background-color:var(--mw-bg)!important;
+    color:var(--mw-text)!important;
+  }
+  html.mw-dark aside.fixed.inset-y-0.left-0,
+  html.mw-dark header.sticky.top-0 {background-color:#0d263a!important}
+  /* Seletores de classes Tailwind: classes arbitrárias incluem colchetes no nome real.
+     Evitar regras para todos os buttons/spans, que destroem ícones de status. */
+  html.mw-dark main .bg-white,
+  html.mw-dark main .bg-slate-50,
+  html.mw-dark main .bg-slate-100,
+  html.mw-dark main .bg-gray-50,
+  html.mw-dark main .bg-gray-100,
+  html.mw-dark main [class*="bg-white/"],
+  html.mw-dark main [class*="bg-slate-50/"],
+  html.mw-dark main [class*="bg-slate-100/"],
+  html.mw-dark main [class*="bg-gray-50/"],
+  html.mw-dark main [class*="bg-[#fff"],
+  html.mw-dark main [class*="bg-[#FFF"],
+  html.mw-dark main [class*="bg-[#f"],
+  html.mw-dark main [class*="bg-[#F"] {
+    background-color:var(--mw-card)!important;
+    border-color:var(--mw-border)!important;
+  }
+  html.mw-dark main .bg-slate-50,
+  html.mw-dark main .bg-slate-100,
+  html.mw-dark main .bg-gray-50,
+  html.mw-dark main .bg-gray-100,
+  html.mw-dark main [class*="bg-slate-50/"],
+  html.mw-dark main [class*="bg-slate-100/"] {background-color:var(--mw-card-2)!important}
+  /* Componentes do dashboard (inclusive links e áreas internas). */
+  html.mw-dark main section[class*="bg-white"],
+  html.mw-dark main a[class*="bg-white"],
+  html.mw-dark main div[class*="bg-white"],
+  html.mw-dark main button[class*="bg-white"] {
+    background-color:var(--mw-card)!important;
+    color:var(--mw-text)!important;
+  }
+  html.mw-dark main a[class*="bg-slate-50"],
+  html.mw-dark main button[class*="bg-slate-50"] {
+    background-color:var(--mw-card-2)!important;
+    color:var(--mw-text)!important;
+  }
+  html.mw-dark main a[class*="bg-slate-50"]:hover,
+  html.mw-dark main button[class*="bg-slate-50"]:hover {background-color:#223747!important}
+  html.mw-dark main [class*="border-slate-"],
+  html.mw-dark main [class*="border-gray-"] {border-color:var(--mw-border)!important}
+  html.mw-dark main :is(h1,h2,h3,h4,th,strong,b) {color:var(--mw-text)!important}
+  html.mw-dark main [class*="text-[#0b2239"],
+  html.mw-dark main [class*="text-[#17324d"],
+  html.mw-dark main [class*="text-[#334155"],
+  html.mw-dark main [class*="text-[#1f4f7b"],
+  html.mw-dark main [class*="text-[#274c6b"],
+  html.mw-dark main [class*="text-[#245477"],
+  html.mw-dark main [class*="text-slate-950"],
+  html.mw-dark main [class*="text-slate-900"],
+  html.mw-dark main [class*="text-slate-800"],
+  html.mw-dark main [class*="text-slate-700"],
+  html.mw-dark main [class*="text-gray-900"],
+  html.mw-dark main [class*="text-gray-800"],
+  html.mw-dark main [class*="text-gray-700"] {color:var(--mw-text)!important}
+  html.mw-dark main [class*="text-slate-600"],
+  html.mw-dark main [class*="text-slate-500"],
+  html.mw-dark main [class*="text-slate-400"],
+  html.mw-dark main [class*="text-gray-500"],
+  html.mw-dark main [class*="text-gray-400"] {color:var(--mw-muted)!important}
+  html.mw-dark main [class*="text-blue-600"],
+  html.mw-dark main [class*="text-blue-700"] {color:#8fc9ff!important}
+  html.mw-dark main [class*="text-[#b98222"] {color:#edb85d!important}
+  html.mw-dark main [class*="text-emerald-600"],
+  html.mw-dark main [class*="text-green-600"] {color:#69e9b9!important}
+  html.mw-dark main [class*="text-rose-600"],
+  html.mw-dark main [class*="text-red-600"] {color:#ff92a5!important}
+  html.mw-dark main [class*="text-amber-700"] {color:#ffd18c!important}
+  /* Fundo e texto de controles não devem herdar branco de seus rótulos. */
+  html.mw-dark main :is(input,select,textarea),
+  html.mw-dark .app-content-shell .input {
+    background:#111f2b!important;color:var(--mw-text)!important;border-color:#3b5262!important;
+  }
+  html.mw-dark main :is(input,textarea)::placeholder {color:#a0b2c2!important;opacity:1}
+  html.mw-dark main :is(input,select,textarea):focus-visible,
+  html.mw-dark main :is(button,a):focus-visible {outline:2px solid #e0aa38!important;outline-offset:2px}
+  html.mw-dark main [class*="divide-slate-"]>:not([hidden])~:not([hidden]) {border-color:var(--mw-border)!important}
+  html.mw-dark main :is(table,thead,tbody,tr,td,th){border-color:var(--mw-border)!important}
+  html.mw-dark main th{background-color:#1a2b38!important;color:#e3edf5!important}
+  html.mw-dark main td{color:var(--mw-text)!important}
+  html.mw-dark main tbody tr:hover{background-color:#1b303f!important}
+  html.mw-dark main [class*="bg-emerald-50"]{background-color:#17382f!important}
+  html.mw-dark main [class*="bg-amber-50"]{background-color:#3a2c1a!important}
+  html.mw-dark main [class*="bg-rose-50"]{background-color:#38242d!important}
+  html.mw-dark main .recharts-cartesian-grid line{stroke:#293d4b!important}
+  html.mw-dark main .recharts-cartesian-axis-tick text,
+  html.mw-dark main .recharts-legend-item-text {fill:#bccedc!important;color:#bccedc!important}
+  html.mw-dark main .recharts-default-tooltip{background:#152633!important;border:1px solid #405a6b!important;color:#eef6fc!important}
+  html.mw-dark main .recharts-default-tooltip *{color:#eef6fc!important}
+  html.mw-dark main .report-sheet{background:var(--mw-card)!important;color:var(--mw-text)!important}
+  html.mw-dark main .report-summary-card{background:var(--mw-card-2)!important}
+  html.mw-dark main .report-table tbody tr:nth-child(even){background:#192834!important}
 }
-html.mw-dark body, html.mw-dark #root, html.mw-dark #root>div, html.mw-dark main.w-full, html.mw-dark header.sticky.top-0+main {
- background:#101923!important;color:#ecf3f8!important;
+@media print {
+  html.mw-dark{color-scheme:light!important}
+  html.mw-dark body,html.mw-dark #root,html.mw-dark main,html.mw-dark .report-sheet{
+    background:#fff!important;color:#101828!important;
+  }
 }
-html.mw-dark .app-content-shell{background:#101923!important}
-html.mw-dark main :is(section,div,article,aside,form,button,a)[class*="bg-white"],
-html.mw-dark main :is(section,div,article,aside,form,button,a)[class*="bg-slate-50"],
-html.mw-dark main :is(section,div,article,aside,form,button,a)[class*="bg-[#fff"],
-html.mw-dark .app-content-shell [class*="bg-white"]:not(header):not(.report-sheet),
-html.mw-dark .app-content-shell [class*="bg-slate-50"]:not(.report-sheet),
-html.mw-dark .app-content-shell [class*="bg-gray-50"]:not(.report-sheet){
- background-color:#192935!important;border-color:#344a58!important;color:#ecf3f8!important;
-}
-html.mw-dark main [class*="bg-[#f"],
-html.mw-dark main [class*="bg-[#F"]{background-color:#192935!important}
-html.mw-dark main [class*="border-slate-"],
-html.mw-dark main [class*="border-gray-"],
-html.mw-dark .app-content-shell [class*="border-slate-"]{border-color:#344957!important}
-html.mw-dark main [class*="text-slate-900"],
-html.mw-dark main [class*="text-slate-800"],
-html.mw-dark main [class*="text-slate-700"],
-html.mw-dark main [class*="text-gray-900"],
-html.mw-dark main [class*="text-[#07182d]"],
-html.mw-dark main [class*="text-[#0b2239]"]{color:#ecf3f8!important}
-html.mw-dark main [class*="text-slate-600"],
-html.mw-dark main [class*="text-slate-500"],
-html.mw-dark main [class*="text-slate-400"],
-html.mw-dark main [class*="text-gray-500"],
-html.mw-dark main [class*="text-[#64748b]"]{color:#b4c4ce!important}
-html.mw-dark main :is(h1,h2,h3,h4){color:#eff6fa}
-html.mw-dark main :is(input,select,textarea),
-html.mw-dark .app-content-shell :is(input,select,textarea):not(header input),
-html.mw-dark .input{background-color:#14232e!important;color:#edf4f8!important;border-color:#486071!important}
-html.mw-dark main :is(input,textarea)::placeholder{color:#a7b8c5!important;opacity:1}
-html.mw-dark main :is(th),html.mw-dark main thead{background:#253945!important;color:#d4e3eb!important}
-html.mw-dark main :is(td){border-color:#344957!important;color:#e4eef4!important}
-html.mw-dark main tbody tr:hover{background:#243945!important}
-html.mw-dark main [class*="bg-blue-50"],
-html.mw-dark main [class*="bg-emerald-50"],
-html.mw-dark main [class*="bg-amber-50"],
-html.mw-dark main [class*="bg-green-50"]{background-color:#253c45!important}
-html.mw-dark main [class*="bg-rose-50"],
-html.mw-dark main [class*="bg-red-50"]{background-color:#442a35!important}
-html.mw-dark main [class*="text-blue-700"]{color:#a5caff!important}
-html.mw-dark main [class*="text-emerald-700"],html.mw-dark main [class*="text-green-700"]{color:#81dec0!important}
-html.mw-dark main [class*="text-amber-700"]{color:#f6d08b!important}
-html.mw-dark main [class*="text-red-700"],html.mw-dark main [class*="text-rose-700"]{color:#ffa6b2!important}
-html.mw-dark main [class*="bg-[#082743]"]{background:#164c6a!important;color:#fff!important}
-html.mw-dark .app-content-shell [class*="shadow"]{box-shadow:0 1px 4px #0002!important}
-html.mw-dark .app-content-shell [class*="bg-gradient-to-"]{background-image:none!important}
-html.mw-dark main .recharts-cartesian-grid line{stroke:#354955!important}
-html.mw-dark main .recharts-cartesian-axis-tick text,
-html.mw-dark main .recharts-legend-item-text{fill:#bcd0dd!important;color:#bcd0dd!important}
-html.mw-dark main .recharts-tooltip-wrapper{color:#142635!important}
-html.mw-dark main :is(button,input,select,textarea,a):focus-visible{outline:2px solid #e0aa38!important;outline-offset:2px}
-html.mw-dark .report-sheet{background:#192935!important;color:#e6f0f6!important}
-html.mw-dark .report-sheet .report-summary-card{background:#253945!important}
-html.mw-dark .report-sheet .report-table tbody tr:nth-child(even){background:#243540!important}
-html.mw-dark .report-sheet .report-header{border-color:#415767!important}
-}
-/* PDFs e relatórios impressos conservam o visual institucional claro. */
-@media print{
-html.mw-dark{color-scheme:light!important}
-html.mw-dark body,html.mw-dark #root,html.mw-dark main,html.mw-dark .report-sheet{background:#fff!important;color:#101828!important}
-}
-
-
-/* Dark profundo v2: corrige componentes claros e contraste das telas reais. */
-@media screen {
-html.mw-dark{--mw-bg:#0a1017;--mw-card:#141f29;--mw-border:#293a47;--mw-text:#eff6fa;--mw-muted:#aabccb}
-html.mw-dark body,html.mw-dark #root,html.mw-dark #root>div,html.mw-dark .app-content-shell,
-html.mw-dark main.w-full,html.mw-dark header.sticky.top-0+main{background-color:#0a1017!important;color:#eff6fa!important}
-html.mw-dark aside.fixed.inset-y-0.left-0,html.mw-dark header.sticky.top-0{background:#0e263b!important}
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-white"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-slate-50"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-slate-100"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-gray-50"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-gray-100"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#fff"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#FFF"]{background-color:#141f29!important;color:#eff6fa!important;border-color:#293a47!important}
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-slate-50/"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-white/"]{background-color:#192a36!important}
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#f"],
-html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#F"]{background-color:#192a36!important}
-html.mw-dark main [class*="text-[#0b2239]"],
-html.mw-dark main [class*="text-[#17324d]"],
-html.mw-dark main [class*="text-[#334155]"],
-html.mw-dark main [class*="text-[#1f4f7b]"],
-html.mw-dark main [class*="text-[#274c6b]"],
-html.mw-dark main [class*="text-[#245477]"],
-html.mw-dark main [class*="text-slate-950"],
-html.mw-dark main [class*="text-slate-900"],
-html.mw-dark main [class*="text-slate-800"],
-html.mw-dark main [class*="text-slate-700"],
-html.mw-dark main [class*="text-slate-600"],
-html.mw-dark main [class*="text-gray-900"],
-html.mw-dark main [class*="text-gray-800"],
-html.mw-dark main [class*="text-gray-700"]{color:#edf5fa!important}
-html.mw-dark main [class*="text-slate-500"],html.mw-dark main [class*="text-slate-400"],
-html.mw-dark main [class*="text-gray-500"],html.mw-dark main [class*="text-gray-400"]{color:#b3c4d0!important}
-html.mw-dark main [class*="text-blue-600"],html.mw-dark main [class*="text-blue-700"]{color:#8dc4ff!important}
-html.mw-dark main :is(a,button)[class*="bg-slate-50"]:hover,
-html.mw-dark main :is(a,button)[class*="bg-white"]:hover{background-color:#233749!important;border-color:#486177!important}
-html.mw-dark main :is(button,a)[class*="text-[#17324d]"]{color:#dcecf9!important}
-html.mw-dark main :is(button,a)[class*="bg-white"][class*="text-white"],
-html.mw-dark main :is(button,a)[class*="bg-[#082743]"]{background-color:#164566!important;color:#fff!important}
-html.mw-dark main :is(input,select,textarea){background-color:#111e29!important;color:#f0f7fb!important;border-color:#3d5363!important}
-html.mw-dark main :is(input,select,textarea):focus{border-color:#d7a23a!important;box-shadow:0 0 0 2px #d7a23a33!important}
-html.mw-dark main :is(p,small,span)[class*="text-[#"]{text-shadow:none}
-html.mw-dark main [class*="divide-slate-"]>:not([hidden])~:not([hidden]){border-color:#30424e!important}
-html.mw-dark main .recharts-cartesian-grid line{stroke:#283b4a!important}
-html.mw-dark main .recharts-cartesian-axis-tick text,html.mw-dark main .recharts-legend-item-text{fill:#bdd0df!important;color:#bdd0df!important}
-html.mw-dark main .recharts-default-tooltip{background-color:#152735!important;border:1px solid #405665!important;color:#f0f6fa!important}
-html.mw-dark main .recharts-tooltip-label,html.mw-dark main .recharts-tooltip-item{color:#f0f6fa!important}
-html.mw-dark main [class*="bg-emerald-50"]{background-color:#16352f!important}
-html.mw-dark main [class*="bg-amber-50"]{background-color:#3c301d!important}
-html.mw-dark main [class*="bg-rose-50"]{background-color:#38222c!important}
-html.mw-dark main [class*="text-emerald-600"]{color:#5de0b1!important}
-html.mw-dark main [class*="text-rose-600"]{color:#ff899e!important}
-html.mw-dark main [class*="text-[#b98222]"]{color:#f3be65!important}
-html.mw-dark main .report-sheet{background:#141f29!important}
-}
-/* Nenhuma alteração na impressão em A4: o tema se restringe à tela. */
