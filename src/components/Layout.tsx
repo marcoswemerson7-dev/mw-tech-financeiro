@@ -27,6 +27,8 @@ import {
   Activity,
   Siren,
   Code2,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -85,6 +87,15 @@ function playNotificationTone() {
 }
 
 export default function Layout() {
+  const [darkMode, setDarkMode] = useState(() => {
+    try { return localStorage.getItem("mw-control-theme") === "dark"; } catch { return false; }
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle("mw-dark", darkMode);
+    document.documentElement.style.colorScheme = darkMode ? "dark" : "light";
+    try { localStorage.setItem("mw-control-theme", darkMode ? "dark" : "light"); } catch { /* storage indisponível */ }
+    return () => { document.documentElement.classList.remove("mw-dark"); document.documentElement.style.colorScheme = ""; };
+  }, [darkMode]);
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileModal, setProfileModal] = useState(false);
@@ -274,6 +285,10 @@ export default function Layout() {
           </div>
 
           <div className="relative flex items-center gap-3">
+            <button type="button" onClick={() => setDarkMode((value) => !value)} aria-label={darkMode ? "Ativar modo claro" : "Ativar modo escuro"} aria-pressed={darkMode} title={darkMode ? "Ativar modo claro" : "Ativar modo escuro"} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/15 px-3 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">
+              {darkMode ? <Sun size={19} /> : <Moon size={19} />}
+              <span className="hidden md:inline">{darkMode ? "Claro" : "Escuro"}</span>
+            </button>
             <div className="relative">
               <button onClick={() => { setNotificationOpen((value) => !value); setProfileOpen(false); }} className="relative grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10" aria-label="Notificações">
                 <Bell size={20} />
