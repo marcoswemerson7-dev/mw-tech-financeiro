@@ -68,3 +68,61 @@ html.mw-dark .report-sheet .report-header{border-color:#415767!important}
 html.mw-dark{color-scheme:light!important}
 html.mw-dark body,html.mw-dark #root,html.mw-dark main,html.mw-dark .report-sheet{background:#fff!important;color:#101828!important}
 }
+
+
+/* Dark profundo v2: corrige componentes claros e contraste das telas reais. */
+@media screen {
+html.mw-dark{--mw-bg:#0a1017;--mw-card:#141f29;--mw-border:#293a47;--mw-text:#eff6fa;--mw-muted:#aabccb}
+html.mw-dark body,html.mw-dark #root,html.mw-dark #root>div,html.mw-dark .app-content-shell,
+html.mw-dark main.w-full,html.mw-dark header.sticky.top-0+main{background-color:#0a1017!important;color:#eff6fa!important}
+html.mw-dark aside.fixed.inset-y-0.left-0,html.mw-dark header.sticky.top-0{background:#0e263b!important}
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-white"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-slate-50"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-slate-100"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-gray-50"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-gray-100"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#fff"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#FFF"]{background-color:#141f29!important;color:#eff6fa!important;border-color:#293a47!important}
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-slate-50/"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-white/"]{background-color:#192a36!important}
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#f"],
+html.mw-dark main :is(section,article,div,a,button,span)[class*="bg-[#F"]{background-color:#192a36!important}
+html.mw-dark main [class*="text-[#0b2239]"],
+html.mw-dark main [class*="text-[#17324d]"],
+html.mw-dark main [class*="text-[#334155]"],
+html.mw-dark main [class*="text-[#1f4f7b]"],
+html.mw-dark main [class*="text-[#274c6b]"],
+html.mw-dark main [class*="text-[#245477]"],
+html.mw-dark main [class*="text-slate-950"],
+html.mw-dark main [class*="text-slate-900"],
+html.mw-dark main [class*="text-slate-800"],
+html.mw-dark main [class*="text-slate-700"],
+html.mw-dark main [class*="text-slate-600"],
+html.mw-dark main [class*="text-gray-900"],
+html.mw-dark main [class*="text-gray-800"],
+html.mw-dark main [class*="text-gray-700"]{color:#edf5fa!important}
+html.mw-dark main [class*="text-slate-500"],html.mw-dark main [class*="text-slate-400"],
+html.mw-dark main [class*="text-gray-500"],html.mw-dark main [class*="text-gray-400"]{color:#b3c4d0!important}
+html.mw-dark main [class*="text-blue-600"],html.mw-dark main [class*="text-blue-700"]{color:#8dc4ff!important}
+html.mw-dark main :is(a,button)[class*="bg-slate-50"]:hover,
+html.mw-dark main :is(a,button)[class*="bg-white"]:hover{background-color:#233749!important;border-color:#486177!important}
+html.mw-dark main :is(button,a)[class*="text-[#17324d]"]{color:#dcecf9!important}
+html.mw-dark main :is(button,a)[class*="bg-white"][class*="text-white"],
+html.mw-dark main :is(button,a)[class*="bg-[#082743]"]{background-color:#164566!important;color:#fff!important}
+html.mw-dark main :is(input,select,textarea){background-color:#111e29!important;color:#f0f7fb!important;border-color:#3d5363!important}
+html.mw-dark main :is(input,select,textarea):focus{border-color:#d7a23a!important;box-shadow:0 0 0 2px #d7a23a33!important}
+html.mw-dark main :is(p,small,span)[class*="text-[#"]{text-shadow:none}
+html.mw-dark main [class*="divide-slate-"]>:not([hidden])~:not([hidden]){border-color:#30424e!important}
+html.mw-dark main .recharts-cartesian-grid line{stroke:#283b4a!important}
+html.mw-dark main .recharts-cartesian-axis-tick text,html.mw-dark main .recharts-legend-item-text{fill:#bdd0df!important;color:#bdd0df!important}
+html.mw-dark main .recharts-default-tooltip{background-color:#152735!important;border:1px solid #405665!important;color:#f0f6fa!important}
+html.mw-dark main .recharts-tooltip-label,html.mw-dark main .recharts-tooltip-item{color:#f0f6fa!important}
+html.mw-dark main [class*="bg-emerald-50"]{background-color:#16352f!important}
+html.mw-dark main [class*="bg-amber-50"]{background-color:#3c301d!important}
+html.mw-dark main [class*="bg-rose-50"]{background-color:#38222c!important}
+html.mw-dark main [class*="text-emerald-600"]{color:#5de0b1!important}
+html.mw-dark main [class*="text-rose-600"]{color:#ff899e!important}
+html.mw-dark main [class*="text-[#b98222]"]{color:#f3be65!important}
+html.mw-dark main .report-sheet{background:#141f29!important}
+}
+/* Nenhuma alteração na impressão em A4: o tema se restringe à tela. */
