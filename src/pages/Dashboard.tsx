@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -88,15 +88,15 @@ export default function Dashboard() {
 
   return (
     <div className="mw-finance-dashboard mx-auto w-full max-w-[1540px] space-y-4 pb-4">
-      <section className="mw-dashboard-hero relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white mw-dark-card px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white mw-dark-card px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
         <div className="relative grid gap-4 xl:grid-cols-[1.3fr_.72fr_.65fr] xl:items-center">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Financeiro</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Control</p>
             <h1 className="mt-1 text-[28px] font-semibold tracking-[-.025em] text-[#0b2239] sm:text-[32px]">Painel executivo</h1>
             <p className="mt-1 text-[13px] text-slate-500">Indicadores essenciais da operação, reunidos em um só lugar.</p>
           </div>
 
-          <div className="mw-dashboard-mini rounded-xl border border-slate-200 bg-slate-50 mw-dark-inner/70 px-4 py-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 mw-dark-inner/70 px-4 py-3">
             <div className="flex items-start gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white mw-dark-card text-[#a77a28] border border-slate-200"><Sun size={20} /></span>
               <div>
@@ -139,25 +139,15 @@ export default function Dashboard() {
 
       <section className="grid gap-3 xl:grid-cols-[1.18fr_.94fr_.88fr]">
         <Panel title="Fluxo financeiro" icon={<BarChart3 size={18} />} subtitle="Entradas e saídas dos últimos 6 meses" rightLabel="Últimos 6 meses">
-          <ResponsiveContainer width="100%" height={230}>
-            <AreaChart data={chart} margin={{ top: 12, right: 10, left: 0, bottom: 2 }}>
-              <defs>
-                <linearGradient id="mwEntradasGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1686ff" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#1686ff" stopOpacity={0.015} />
-                </linearGradient>
-                <linearGradient id="mwSaidasGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#efad48" stopOpacity={0.14} />
-                  <stop offset="95%" stopColor="#efad48" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke="#34465b" strokeOpacity={0.26} vertical />
-              <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#91a5bd" }} />
-              <YAxis axisLine={false} tickLine={false} width={56} tick={{ fontSize: 10, fill: "#91a5bd" }} tickFormatter={(v) => `R$ ${Math.round(v / 1000)} mil`} />
-              <Tooltip formatter={(v) => brl(Number(v))} contentStyle={{ background: "#0c1b30", color: "#f3f8ff", border: "1px solid #23446c", borderRadius: 10 }} labelStyle={{ color: "#cddcf0" }} />
-              <Area type="monotone" dataKey="entradas" name="Entradas" stroke="#1686ff" strokeWidth={3} fill="url(#mwEntradasGradient)" dot={{ r: 3, fill: "#e9f5ff", stroke: "#1686ff", strokeWidth: 2 }} activeDot={{ r: 5 }} />
-              <Area type="monotone" dataKey="saidas" name="Saídas" stroke="#efad48" strokeWidth={2} fill="url(#mwSaidasGradient)" dot={{ r: 2, fill: "#efad48" }} activeDot={{ r: 5 }} />
-            </AreaChart>
+          <ResponsiveContainer width="100%" height={210}>
+            <BarChart data={chart} barGap={5}>
+              <CartesianGrid stroke="#e9eef5" vertical />
+              <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748b" }} />
+              <YAxis axisLine={false} tickLine={false} width={55} tick={{ fontSize: 9, fill: "#94a3b8" }} tickFormatter={(v) => `R$ ${Math.round(v / 1000)} mil`} />
+              <Tooltip formatter={(v) => brl(Number(v))} />
+              <Bar dataKey="entradas" name="Entradas" fill="#39ad86" radius={[4, 4, 0, 0]} maxBarSize={22} />
+              <Bar dataKey="saidas" name="Saídas" fill="#dca93b" radius={[4, 4, 0, 0]} maxBarSize={22} />
+            </BarChart>
           </ResponsiveContainer>
           <div className="mt-1 flex justify-center gap-5 text-[10px] text-slate-500">
             <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-emerald-500" />Entradas</span>
@@ -197,7 +187,7 @@ export default function Dashboard() {
       </section>
 
       <footer className="flex flex-col gap-2 px-2 pt-1 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-        <span>MW TECH Financeiro &nbsp;•&nbsp; Sistemas e Soluções Digitais &nbsp;•&nbsp; Gestão mais simples. Resultados maiores.</span>
+        <span>MW TECH Control &nbsp;•&nbsp; Sistemas e Soluções Digitais &nbsp;•&nbsp; Gestão mais simples. Resultados maiores.</span>
         <span className="flex items-center gap-3"><span>Privacidade</span><span>Termos de uso</span><span>Suporte</span><span className="flex items-center gap-1.5 text-emerald-600"><i className="size-2 rounded-full bg-emerald-500" />Todos os sistemas operacionais</span></span>
       </footer>
     </div>
@@ -212,7 +202,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
     purple: "bg-slate-100 text-[#274c6b]",
   }[tone];
   return (
-    <a href={href} className={`mw-metric mw-metric-${tone} group relative rounded-xl border border-slate-200 bg-white mw-dark-card px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300`}>
+    <a href={href} className="group relative rounded-xl border border-slate-200 bg-white mw-dark-card px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300">
       <div className="flex items-start gap-3">
         <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${style}`}>{icon}</span>
         <div className="min-w-0 flex-1">
@@ -228,7 +218,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
 
 function Panel({ title, icon, subtitle, actionHref, rightLabel, children }: { title: string; icon: ReactNode; subtitle?: string; actionHref?: string; rightLabel?: string; children: ReactNode }) {
   return (
-    <section className="mw-dashboard-panel rounded-2xl border border-slate-200/90 bg-white mw-dark-card p-4 shadow-sm">
+    <section className="rounded-2xl border border-slate-200/90 bg-white mw-dark-card p-4 shadow-sm">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg bg-slate-50 mw-dark-inner text-[#1f4f7b]">{icon}</span>
