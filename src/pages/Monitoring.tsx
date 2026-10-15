@@ -618,16 +618,22 @@ export default function Monitoring() {
           </div>
         </div>
         <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="h-[285px] p-4">
+          <div className="mw-monitor-chart h-[285px] p-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="4 5" vertical={false} stroke="#e8edf3" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10 }} width={45} axisLine={false} tickLine={false} unit=" ms" />
-                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 26px rgba(7,24,45,.08)", fontSize: 11 }} />
-                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
+              <LineChart data={history} margin={{ top: 10, right: 18, left: 0, bottom: 4 }}>
+                <defs>
+                  <filter id="mw-monitor-line-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                  </filter>
+                </defs>
+                <CartesianGrid strokeDasharray="3 5" vertical stroke="#466183" strokeOpacity={0.28} />
+                <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#9eb5d1" }} axisLine={false} tickLine={false} minTickGap={18} />
+                <YAxis tick={{ fontSize: 10, fill: "#9eb5d1" }} width={50} axisLine={false} tickLine={false} unit=" ms" />
+                <Tooltip contentStyle={{ borderRadius: 12, backgroundColor: "#0c1b31", color: "#f1f7ff", border: "1px solid #2766a0", boxShadow: "0 10px 26px rgba(0,0,0,.24)", fontSize: 11 }} labelStyle={{ color: "#e8f2ff" }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10, color: "#c7d9ed" }} />
                 {visibleItems.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
+                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={3} dot={history.length <= 30 ? { r: 2.2, strokeWidth: 0, fill: chartColors[index % chartColors.length] } : false} activeDot={{ r: 5, stroke: "#eff7ff", strokeWidth: 2 }} connectNulls style={{ filter: "url(#mw-monitor-line-glow)" }} />
                 ))}
               </LineChart>
             </ResponsiveContainer>
