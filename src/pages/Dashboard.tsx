@@ -88,15 +88,15 @@ export default function Dashboard() {
 
   return (
     <div className="mw-finance-dashboard mx-auto w-full max-w-[1540px] space-y-4 pb-4">
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white mw-dark-card px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
+      <section className="mw-dashboard-hero relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white mw-dark-card px-5 py-4 shadow-[0_8px_26px_rgba(15,23,42,.045)] sm:px-7">
         <div className="relative grid gap-4 xl:grid-cols-[1.3fr_.72fr_.65fr] xl:items-center">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Control</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-[#b98222]">MW TECH Financeiro</p>
             <h1 className="mt-1 text-[28px] font-semibold tracking-[-.025em] text-[#0b2239] sm:text-[32px]">Painel executivo</h1>
             <p className="mt-1 text-[13px] text-slate-500">Indicadores essenciais da operação, reunidos em um só lugar.</p>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 mw-dark-inner/70 px-4 py-3">
+          <div className="mw-dashboard-mini rounded-xl border border-slate-200 bg-slate-50 mw-dark-inner/70 px-4 py-3">
             <div className="flex items-start gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white mw-dark-card text-[#a77a28] border border-slate-200"><Sun size={20} /></span>
               <div>
@@ -197,7 +197,7 @@ export default function Dashboard() {
       </section>
 
       <footer className="flex flex-col gap-2 px-2 pt-1 text-[10px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-        <span>MW TECH Control &nbsp;•&nbsp; Sistemas e Soluções Digitais &nbsp;•&nbsp; Gestão mais simples. Resultados maiores.</span>
+        <span>MW TECH Financeiro &nbsp;•&nbsp; Sistemas e Soluções Digitais &nbsp;•&nbsp; Gestão mais simples. Resultados maiores.</span>
         <span className="flex items-center gap-3"><span>Privacidade</span><span>Termos de uso</span><span>Suporte</span><span className="flex items-center gap-1.5 text-emerald-600"><i className="size-2 rounded-full bg-emerald-500" />Todos os sistemas operacionais</span></span>
       </footer>
     </div>
@@ -212,7 +212,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
     purple: "bg-slate-100 text-[#274c6b]",
   }[tone];
   return (
-    <a href={href} className="group relative rounded-xl border border-slate-200 bg-white mw-dark-card px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300">
+    <a href={href} className={`mw-metric mw-metric-${tone} group relative rounded-xl border border-slate-200 bg-white mw-dark-card px-4 py-3.5 shadow-sm transition-colors hover:border-slate-300`}>
       <div className="flex items-start gap-3">
         <span className={`grid size-10 shrink-0 place-items-center rounded-lg ${style}`}>{icon}</span>
         <div className="min-w-0 flex-1">
@@ -228,7 +228,7 @@ function MetricCard({ icon, title, value, hint, href, tone }: { icon: ReactNode;
 
 function Panel({ title, icon, subtitle, actionHref, rightLabel, children }: { title: string; icon: ReactNode; subtitle?: string; actionHref?: string; rightLabel?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-slate-200/90 bg-white mw-dark-card p-4 shadow-sm">
+    <section className="mw-dashboard-panel rounded-2xl border border-slate-200/90 bg-white mw-dark-card p-4 shadow-sm">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg bg-slate-50 mw-dark-inner text-[#1f4f7b]">{icon}</span>
