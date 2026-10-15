@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -139,15 +139,25 @@ export default function Dashboard() {
 
       <section className="grid gap-3 xl:grid-cols-[1.18fr_.94fr_.88fr]">
         <Panel title="Fluxo financeiro" icon={<BarChart3 size={18} />} subtitle="Entradas e saídas dos últimos 6 meses" rightLabel="Últimos 6 meses">
-          <ResponsiveContainer width="100%" height={210}>
-            <BarChart data={chart} barGap={5}>
-              <CartesianGrid stroke="#e9eef5" vertical />
-              <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#64748b" }} />
-              <YAxis axisLine={false} tickLine={false} width={55} tick={{ fontSize: 9, fill: "#94a3b8" }} tickFormatter={(v) => `R$ ${Math.round(v / 1000)} mil`} />
-              <Tooltip formatter={(v) => brl(Number(v))} />
-              <Bar dataKey="entradas" name="Entradas" fill="#39ad86" radius={[4, 4, 0, 0]} maxBarSize={22} />
-              <Bar dataKey="saidas" name="Saídas" fill="#dca93b" radius={[4, 4, 0, 0]} maxBarSize={22} />
-            </BarChart>
+          <ResponsiveContainer width="100%" height={230}>
+            <AreaChart data={chart} margin={{ top: 12, right: 10, left: 0, bottom: 2 }}>
+              <defs>
+                <linearGradient id="mwEntradasGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1686ff" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#1686ff" stopOpacity={0.015} />
+                </linearGradient>
+                <linearGradient id="mwSaidasGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#efad48" stopOpacity={0.14} />
+                  <stop offset="95%" stopColor="#efad48" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#34465b" strokeOpacity={0.26} vertical />
+              <XAxis dataKey="mes" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#91a5bd" }} />
+              <YAxis axisLine={false} tickLine={false} width={56} tick={{ fontSize: 10, fill: "#91a5bd" }} tickFormatter={(v) => `R$ ${Math.round(v / 1000)} mil`} />
+              <Tooltip formatter={(v) => brl(Number(v))} contentStyle={{ background: "#0c1b30", color: "#f3f8ff", border: "1px solid #23446c", borderRadius: 10 }} labelStyle={{ color: "#cddcf0" }} />
+              <Area type="monotone" dataKey="entradas" name="Entradas" stroke="#1686ff" strokeWidth={3} fill="url(#mwEntradasGradient)" dot={{ r: 3, fill: "#e9f5ff", stroke: "#1686ff", strokeWidth: 2 }} activeDot={{ r: 5 }} />
+              <Area type="monotone" dataKey="saidas" name="Saídas" stroke="#efad48" strokeWidth={2} fill="url(#mwSaidasGradient)" dot={{ r: 2, fill: "#efad48" }} activeDot={{ r: 5 }} />
+            </AreaChart>
           </ResponsiveContainer>
           <div className="mt-1 flex justify-center gap-5 text-[10px] text-slate-500">
             <span className="flex items-center gap-1.5"><i className="size-2 rounded-full bg-emerald-500" />Entradas</span>
