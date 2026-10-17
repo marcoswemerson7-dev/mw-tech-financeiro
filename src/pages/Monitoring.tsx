@@ -451,7 +451,7 @@ export default function Monitoring() {
       });
       setHistory((current) => {
         const next = [...current, point].slice(-24);
-        localStorage.setItem(historyKey, JSON.stringify(next));
+        try { localStorage.setItem(historyKey, JSON.stringify(next)); } catch { /* Armazenamento indisponível no atalho instalado */ }
         return next;
       });
     } catch (e) {
@@ -553,6 +553,10 @@ export default function Monitoring() {
     };
   }, [history, visibleItems, summary.average]);
 
+  const chartHistory = useMemo(() => {
+    if (history.length !== 1) return history;
+    return [{ ...history[0], timestamp: history[0].timestamp - refreshEveryMs, time: "Anterior" }, history[0]];
+  }, [history]);
   const historyReadingCount = Math.min(history.length, 24);
   const currentLatencyQuality = latencyQuality(summary.average);
   const qualityToneClasses = {
@@ -618,16 +622,16 @@ export default function Monitoring() {
           </div>
         </div>
         <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="h-[285px] p-4">
+          <div className="h-[285px] min-w-0 p-4">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <LineChart data={chartHistory} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="4 5" vertical={false} stroke="#e8edf3" />
                 <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10 }} width={45} axisLine={false} tickLine={false} unit=" ms" />
                 <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 26px rgba(7,24,45,.08)", fontSize: 11 }} />
                 <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
                 {visibleItems.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={false} activeDot={{ r: 5 }} connectNulls />
+                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={history.length <= 2 ? { r: 4 } : false} activeDot={{ r: 6 }} connectNulls isAnimationActive animationDuration={1100} animationEasing="ease-in-out" />
                 ))}
               </LineChart>
             </ResponsiveContainer>
