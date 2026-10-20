@@ -10,10 +10,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthValue["session"]>(null);
   const [loading, setLoading] = useState(true);
   const refresh = async () => {
-    if (localStorage.getItem("mw-demo") === "1") { setSession({ $id: "demo", email: "demo@mwtech.local", name: "Demonstração" }); setLoading(false); return; }
-    if (!isAppwriteConfigured) { setSession(null); setLoading(false); return; }
-    try { setSession(await authService.current()); } catch { setSession(null); }
-    setLoading(false);
+    try {
+      if (localStorage.getItem("mw-demo") === "1") {
+        setSession({ $id: "demo", email: "demo@mwtech.local", name: "Demonstração" });
+        return;
+      }
+      if (!isAppwriteConfigured) {
+        setSession(null);
+        return;
+      }
+      // An unresponsive authentication endpoint must not block the entire app forever.
+      const user = await Promise.race([
+        authService.current(),
+        new Promise<never>((_, reject) =>
+          window.setTimeout(() => reject(new Error("Authentication request timed out")), 12000)
+        ),
+      ]);
+      setSession(user);
+    } catch (error) {
+      console.error("MW TECH: failed to restore session", error);
+      setSession(null);
+    } finally {
+      setLoading(false);
+    }
   };
   useEffect(() => { void refresh(); }, []);
   const enterDemo = () => { localStorage.setItem("mw-demo", "1"); void refresh(); };
