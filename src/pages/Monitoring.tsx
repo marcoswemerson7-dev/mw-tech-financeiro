@@ -638,6 +638,7 @@ export default function Monitoring() {
                   <YAxis tick={{ fontSize: 10 }} width={49} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} />
                   <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
                   {chartStats.map(({ item, color }) => (
+                    <>
                     <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)}
                       stroke={color} strokeWidth={2.2} dot={false} activeDot={{ r: 5 }} connectNulls={false}
                       isAnimationActive animationDuration={2800} animationEasing="ease-in-out" />
@@ -645,6 +646,7 @@ export default function Monitoring() {
                       stroke={color} strokeWidth={3} strokeOpacity={0.38} strokeDasharray="1 18"
                       dot={false} activeDot={false} legendType="none" tooltipType="none" connectNulls={false}
                       isAnimationActive={false} />
+                    </>
                   ))}
                 </LineChart>
               </ResponsiveContainer>
