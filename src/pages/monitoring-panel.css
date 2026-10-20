@@ -16,13 +16,3 @@ html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#26
 .mw-monitor-panel .mp-tooltip{border:1px solid var(--mp-border)!important;background:var(--mp-tooltip)!important;color:var(--mp-text)!important;border-radius:12px}
 @media (prefers-reduced-motion:reduce){.mw-monitor-panel *{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
 
-/* Subtle perpetual flow over the true measured line, without generating fictitious samples. */
-.mw-monitor-panel .mp-flow-line .recharts-line-curve,
-.mw-monitor-panel .mp-flow-line.recharts-line-curve{
-  animation:mw-latency-flow 3s linear infinite;
-}
-@keyframes mw-latency-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-38}}
-@media(prefers-reduced-motion:reduce){
-  .mw-monitor-panel .mp-flow-line .recharts-line-curve,
-  .mw-monitor-panel .mp-flow-line.recharts-line-curve{animation:none}
-}
