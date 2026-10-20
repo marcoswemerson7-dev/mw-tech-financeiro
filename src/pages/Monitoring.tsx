@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
@@ -40,6 +40,7 @@ import {
 } from "recharts";
 import { ActionButton, PageHeader } from "../components/UI";
 import VpsServerPanel from "../components/VpsServerPanel";
+import "./monitoring-panel.css";
 import {
   getSystemHealth,
   type HealthState,
@@ -417,6 +418,7 @@ export default function Monitoring() {
   const [error, setError] = useState("");
   const [nextRefresh, setNextRefresh] = useState(refreshEveryMs / 1000);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [chartRange, setChartRange] = useState(30);
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [orgFilter, setOrgFilter] = useState("todos");
   const [statusFilter, setStatusFilter] = useState<"todos" | HealthState>("todos");
@@ -450,7 +452,7 @@ export default function Monitoring() {
         point[item.key] = item.app.latencyMs;
       });
       setHistory((current) => {
-        const next = [...current, point].slice(-24);
+        const next = [...current, point].slice(-1440);
         try { localStorage.setItem(historyKey, JSON.stringify(next)); } catch { /* Armazenamento indisponível no atalho instalado */ }
         return next;
       });
@@ -465,7 +467,7 @@ export default function Monitoring() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(historyKey) || "[]") as HistoryPoint[];
-      if (Array.isArray(saved)) setHistory(saved.slice(-24));
+      if (Array.isArray(saved)) setHistory(saved.slice(-1440));
     } catch {
       setHistory([]);
     }
@@ -553,20 +555,25 @@ export default function Monitoring() {
     };
   }, [history, visibleItems, summary.average]);
 
-  const chartHistory = useMemo(() => {
-    if (history.length !== 1) return history;
-    return [{ ...history[0], timestamp: history[0].timestamp - refreshEveryMs, time: "Anterior" }, history[0]];
-  }, [history]);
-  const historyReadingCount = Math.min(history.length, 24);
-  const currentLatencyQuality = latencyQuality(summary.average);
-  const qualityToneClasses = {
-    emerald: "border-emerald-100 bg-emerald-50 text-emerald-700",
-    blue: "border-blue-100 bg-blue-50 text-blue-700",
-    amber: "border-amber-100 bg-amber-50 text-amber-700",
-    rose: "border-rose-100 bg-rose-50 text-rose-700",
-    slate: "border-slate-200 bg-slate-50 text-slate-600",
-  }[currentLatencyQuality.tone];
 
+  const chartHistory = useMemo(() => {
+    const cutoff = Date.now() - chartRange * 60_000;
+    return history.filter((point) => point.timestamp >= cutoff);
+  }, [history, chartRange]);
+  const currentLatencyQuality = latencyQuality(summary.average);
+  const summaryLatency = latencyStats.average;
+  const chartStats = useMemo(() => visibleItems.map((item, index) => {
+    const samples = chartHistory.map((point) => point[item.key]).filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+    return {
+      item,
+      color: chartColors[index % chartColors.length],
+      current: stableLatency(history, item),
+      min: samples.length ? Math.min(...samples) : null,
+      max: samples.length ? Math.max(...samples) : null,
+      avg: samples.length ? Math.round(samples.reduce((a, b) => a + b, 0) / samples.length) : null,
+    };
+  }), [visibleItems, history, chartHistory]);
+  const formatMs = (value: number | null) => value === null ? "—" : `${value} ms`;
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5">
       <PageHeader
@@ -601,60 +608,90 @@ export default function Monitoring() {
         <span className="ml-auto flex items-center gap-2 text-[10px] font-semibold text-slate-500"><span className="size-2 rounded-full bg-emerald-500" /> Atualização automática a cada 60 segundos</span>
       </section>
 
-      <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-slate-100 bg-white px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+
+      <section className="mw-monitor-panel overflow-hidden rounded-3xl shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b mp-divider px-5 py-5">
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl bg-amber-50 text-amber-600"><Gauge size={21} /></span>
+            <span className="grid size-11 place-items-center rounded-2xl mp-card text-amber-500"><Gauge size={22} /></span>
             <div>
-              <h2 className="text-lg font-semibold text-[#07182d]">Histórico de latência</h2>
-              <p className="text-[11px] text-slate-500">
-                Histórico em tempo real · {historyReadingCount}/24 leituras
-              </p>
+              <h2 className="mp-title text-lg font-semibold">Ping / Latência em tempo real</h2>
+              <p className="mp-muted text-xs">Medições reais a cada 60 segundos · {chartHistory.length} leituras na janela selecionada</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className={`rounded-xl border px-3 py-2 text-[10px] font-semibold ${qualityToneClasses}`}>
-              Atual estável: {summary.average === null ? "—" : `${summary.average} ms`} · {currentLatencyQuality.label}
-            </span>
-            <span className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-semibold text-blue-700">Mín: {latencyStats.min === null ? "—" : `${latencyStats.min} ms`}</span>
-            <span className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-700">Média: {latencyStats.average === null ? "—" : `${latencyStats.average} ms`}</span>
-            <span className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-semibold text-rose-700">Máx: {latencyStats.max === null ? "—" : `${latencyStats.max} ms`}</span>
+          <div className="flex flex-wrap gap-1" aria-label="Período do gráfico">
+            {[5, 30, 60, 360, 1440].map((range) => (
+              <button key={range} type="button" aria-pressed={chartRange === range} onClick={() => setChartRange(range)}
+                className="mp-range rounded-lg px-3 py-2 text-xs font-medium transition-colors">
+                {range === 5 ? "5 min" : range === 30 ? "30 min" : range === 60 ? "1 hora" : range === 360 ? "6 horas" : "24 horas"}
+              </button>
+            ))}
           </div>
         </div>
-        <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_260px]">
-          <div className="h-[285px] min-w-0 p-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartHistory} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="4 5" vertical={false} stroke="#e8edf3" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10 }} width={45} axisLine={false} tickLine={false} unit=" ms" />
-                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 26px rgba(7,24,45,.08)", fontSize: 11 }} />
-                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 8 }} />
-                {visibleItems.map((item, index) => (
-                  <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)} stroke={chartColors[index % chartColors.length]} strokeWidth={2.8} dot={history.length <= 2 ? { r: 4 } : false} activeDot={{ r: 6 }} connectNulls isAnimationActive animationDuration={1100} animationEasing="ease-in-out" />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
+        <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_350px]">
+          <div className="mp-card min-w-0 rounded-2xl p-3">
+            <div className="h-[290px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 5" />
+                  <XAxis dataKey="timestamp" type="number" domain={[() => Date.now() - chartRange * 60000, () => Date.now()]} scale="time"
+                    tickFormatter={(value) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={26} />
+                  <YAxis tick={{ fontSize: 10 }} width={49} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} />
+                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
+                  {chartStats.map(({ item, color }) => (
+                    <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)}
+                      stroke={color} strokeWidth={2.2} dot={false} activeDot={{ r: 5 }} connectNulls={false}
+                      isAnimationActive animationDuration={950} animationEasing="ease-in-out" />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
+              {chartStats.map(({ item, color }) => (
+                <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
+              ))}
+            </div>
           </div>
-          <div className="border-t border-slate-100 bg-slate-50/60 p-5 xl:border-l xl:border-t-0">
-            <div className="flex items-center gap-3">
-              <span className={`grid size-11 place-items-center rounded-full ${summary.offline ? "bg-rose-100 text-rose-700" : summary.attention ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}><CheckCircle2 size={22} /></span>
-              <div>
-                <b className="text-sm text-[#07182d]">{summary.offline ? "Há sistema indisponível" : summary.attention ? "Sistema requer atenção" : "Sistemas estáveis"}</b>
-                <p className="mt-1 text-[10px] leading-4 text-slate-500">Atualização automática a cada 60 segundos.</p>
-              </div>
+          <div className="flex min-w-0 flex-col gap-3">
+            <div className="mp-card overflow-x-auto rounded-2xl p-3">
+              <table className="w-full text-left text-[11px]">
+                <thead><tr className="mp-muted border-b mp-divider"><th className="pb-3 font-semibold">Sistema</th><th className="pb-3 font-semibold">Atual</th><th className="pb-3 font-semibold">Mín</th><th className="pb-3 font-semibold">Máx</th><th className="pb-3 font-semibold">Média</th></tr></thead>
+                <tbody>{chartStats.map(({ item, color, current, min, max, avg }) => (
+                  <tr key={item.key} className="border-b mp-divider last:border-b-0">
+                    <td className="py-3 pr-2"><span className="flex items-center gap-2"><i className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} /><span className="mp-title font-medium">{systemChartLabel(item)}</span></span></td>
+                    <td className="py-3 font-semibold" style={{ color }}>{formatMs(current)}</td>
+                    <td className="mp-muted py-3">{formatMs(min)}</td><td className="mp-muted py-3">{formatMs(max)}</td><td className="mp-muted py-3">{formatMs(avg)}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+              {!chartStats.length && <p className="mp-muted py-3 text-sm">Nenhum sistema corresponde aos filtros.</p>}
             </div>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-white p-3">
-                <span className="text-[9px] font-bold uppercase text-slate-400">Latência consolidada</span>
-                <b className="mt-1 block text-lg font-semibold text-[#07182d]">{summary.average === null ? "—" : `${summary.average} ms`}</b>
-                <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-[8px] font-bold ${qualityToneClasses}`}>
-                  {currentLatencyQuality.label}
-                </span>
+            <div className="mp-card flex-1 rounded-2xl p-4">
+              <div className="flex items-start gap-3"><CheckCircle2 className={summary.offline ? "text-rose-500" : summary.attention ? "text-amber-500" : "text-emerald-500"} size={24} />
+                <div><h3 className="mp-title text-sm font-semibold">{summary.offline ? "Há sistema indisponível" : summary.attention ? "Sistema requer atenção" : "Sistemas estáveis"}</h3>
+                <p className="mp-muted mt-1 text-xs">Atualização automática a cada 60 segundos.</p></div>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-3"><span className="text-[9px] font-bold uppercase text-slate-400">Operacionais</span><b className="mt-1 block text-lg font-semibold text-emerald-700">{operationalPercent}%</b></div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mp-card rounded-xl p-3"><p className="mp-muted text-[10px] uppercase">Latência consolidada</p><b className="mp-title mt-1 block text-lg">{formatMs(summaryLatency)}</b><span className="mp-muted text-xs">{currentLatencyQuality.label}</span></div>
+                <div className="mp-card rounded-xl p-3"><p className="mp-muted text-[10px] uppercase">Operacionais</p><b className="mt-1 block text-lg text-emerald-500">{operationalPercent}%</b><span className="mp-muted text-xs">{operationalSystems} de {totalSystems} sistemas</span></div>
+              </div>
+              <p className="mp-muted mt-4 text-xs">Última verificação: {lastChecked(items)}</p>
             </div>
-            <p className="mt-4 text-[10px] text-slate-500">Última verificação: <b className="text-slate-700">{lastChecked(items)}</b></p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:col-span-2 xl:grid-cols-3">
+            {chartStats.map(({ item, color, current }) => {
+              const value = current === null ? 0 : Math.max(0, Math.min(current, 200));
+              return (
+                <div key={item.key} className="mp-card rounded-2xl p-4">
+                  <p className="mp-title flex items-center gap-2 text-xs font-semibold"><i className="size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</p>
+                  <div className="mp-gauge" role="img" aria-label={`Latência de ${systemChartLabel(item)}: ${formatMs(current)}`}>
+                    <div className="mp-gauge-ring" style={{ "--gauge-color": color, "--gauge-angle": `${value * 1.8}deg` } as CSSProperties} />
+                    <div className="mp-gauge-value">{formatMs(current)}</div>
+                  </div>
+                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Latência atual</span><span>200 ms</span></div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
