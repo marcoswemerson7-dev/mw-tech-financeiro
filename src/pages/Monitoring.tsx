@@ -632,7 +632,7 @@ export default function Monitoring() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 5" />
-                  <XAxis dataKey="timestamp" type="number" domain={[() => Date.now() - chartRange * 60000, () => Date.now()]} scale="time"
+                  <XAxis dataKey="timestamp" type="number" domain={["dataMin", "dataMax"]} scale="time"
                     tickFormatter={(value) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={26} />
                   <YAxis tick={{ fontSize: 10 }} width={49} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} />
