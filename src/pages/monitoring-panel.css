@@ -16,3 +16,17 @@ html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#26
 .mw-monitor-panel .mp-tooltip{border:1px solid var(--mp-border)!important;background:var(--mp-tooltip)!important;color:var(--mp-text)!important;border-radius:12px}
 @media (prefers-reduced-motion:reduce){.mw-monitor-panel *{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
 
+
+/* A single moving highlight follows each REAL line. The base line remains solid. */
+.mw-monitor-panel .mp-live-pulse .recharts-line-curve {
+  animation: mw-live-pulse 5.5s linear infinite;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+@keyframes mw-live-pulse {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: -2424; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-monitor-panel .mp-live-pulse .recharts-line-curve { animation: none; opacity: 0; }
+}
