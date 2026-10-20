@@ -21,7 +21,8 @@ function lazyWithRecovery<T extends ComponentType<any>>(
       if (!alreadyRetried) {
         sessionStorage.setItem(retryKey, "1");
         window.location.reload();
-        return new Promise<{ default: T }>(() => undefined);
+        // Never leave Suspense waiting on a promise that can never settle.
+        throw error;
       }
       sessionStorage.removeItem(retryKey);
       throw error;
