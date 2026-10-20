@@ -1,0 +1,17 @@
+
+.mw-monitor-panel{--mp-bg:#ffffff;--mp-card:#f8fafc;--mp-border:#dce5ee;--mp-text:#12243a;--mp-muted:#64748b;--mp-grid:#e6edf4;--mp-tooltip:#fff;background:var(--mp-bg);color:var(--mp-text);border:1px solid var(--mp-border)}
+html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#263a4b;--mp-text:#e8f2fc;--mp-muted:#a4b9cb;--mp-grid:#263747;--mp-tooltip:#132434}
+.mw-monitor-panel .mp-muted{color:var(--mp-muted)}
+.mw-monitor-panel .mp-card{background:var(--mp-card);border:1px solid var(--mp-border)}
+.mw-monitor-panel .mp-divider{border-color:var(--mp-border)}
+.mw-monitor-panel .mp-title{color:var(--mp-text)!important}
+.mw-monitor-panel .mp-range{border:1px solid var(--mp-border);color:var(--mp-muted);background:var(--mp-card)}
+.mw-monitor-panel .mp-range[aria-pressed="true"]{color:#fff;background:#1558ab;border-color:#3989ff}
+.mw-monitor-panel .recharts-cartesian-grid line{stroke:var(--mp-grid)}
+.mw-monitor-panel .recharts-cartesian-axis-tick text{fill:var(--mp-muted)}
+.mw-monitor-panel .mp-gauge{height:88px;width:176px;max-width:100%;overflow:hidden;position:relative;margin:auto}
+.mw-monitor-panel .mp-gauge-ring{width:152px;height:152px;position:absolute;left:50%;top:5px;transform:translateX(-50%) rotate(-90deg);border-radius:50%;background:conic-gradient(var(--gauge-color) 0deg var(--gauge-angle),var(--mp-border) var(--gauge-angle) 360deg)}
+.mw-monitor-panel .mp-gauge-ring:after{content:"";position:absolute;inset:17px;border-radius:50%;background:var(--mp-card)}
+.mw-monitor-panel .mp-gauge-value{position:absolute;bottom:0;left:0;right:0;text-align:center;font-weight:750;font-size:21px;color:var(--mp-text)}
+.mw-monitor-panel .mp-tooltip{border:1px solid var(--mp-border)!important;background:var(--mp-tooltip)!important;color:var(--mp-text)!important;border-radius:12px}
+@media (prefers-reduced-motion:reduce){.mw-monitor-panel *{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
