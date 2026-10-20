@@ -632,21 +632,15 @@ export default function Monitoring() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 5" />
-                  <XAxis dataKey="timestamp" type="number" domain={["dataMin", "dataMax"]} scale="time"
+                  <XAxis dataKey="timestamp" type="category" scale="point" interval="preserveStartEnd"
                     tickFormatter={(value) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={26} />
                   <YAxis tick={{ fontSize: 10 }} width={49} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} />
                   <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
                   {chartStats.map(({ item, color }) => (
-                    <>
                     <Line key={item.key} type="monotone" dataKey={item.key} name={systemChartLabel(item)}
-                      stroke={color} strokeWidth={2.2} dot={false} activeDot={{ r: 5 }} connectNulls={false}
-                      isAnimationActive animationDuration={2800} animationEasing="ease-in-out" />
-                    <Line key={`${item.key}-flow`} className="mp-flow-line" type="monotone" dataKey={item.key}
-                      stroke={color} strokeWidth={3} strokeOpacity={0.38} strokeDasharray="1 18"
-                      dot={false} activeDot={false} legendType="none" tooltipType="none" connectNulls={false}
-                      isAnimationActive={false} />
-                    </>
+                      stroke={color} strokeWidth={2.3} dot={false} activeDot={{ r: 5 }} connectNulls={false}
+                      isAnimationActive animationDuration={650} animationEasing="ease-out" />
                   ))}
                 </LineChart>
               </ResponsiveContainer>
