@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import {
   CartesianGrid,
+  Area,
+  AreaChart,
   Cell,
   Line,
   LineChart,
@@ -630,7 +632,15 @@ export default function Monitoring() {
           <div className="mp-card min-w-0 rounded-2xl p-3">
             <div className="h-[290px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
+                <AreaChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
+                  <defs>
+                    {chartStats.map(({ item, color }) => (
+                      <linearGradient key={item.key} id={`mw-latency-fill-${item.key.replace(/[^a-zA-Z0-9_-]/g, "-")}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={color} stopOpacity={0.18} />
+                        <stop offset="95%" stopColor={color} stopOpacity={0} />
+                      </linearGradient>
+                    ))}
+                  </defs>
                   <CartesianGrid strokeDasharray="3 5" />
                   <XAxis dataKey="timestamp" type="category" scale="point" interval="preserveStartEnd"
                     tickFormatter={(value) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -639,21 +649,22 @@ export default function Monitoring() {
                   <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
                   {chartStats.map(({ item, color }) => (
                     <Fragment key={item.key}>
-                      <Line type="monotone" dataKey={item.key} name={systemChartLabel(item)}
-                        stroke={color} strokeWidth={2.3} dot={false} activeDot={{ r: 5 }} connectNulls={false}
-                        isAnimationActive={false} />
-                      <Line className="mp-live-pulse" type="monotone" dataKey={item.key}
-                        stroke={color} strokeWidth={4} strokeOpacity={0.55} strokeDasharray="10 12"
-                        dot={false} activeDot={false} legendType="none" tooltipType="none" connectNulls={false}
-                        isAnimationActive={false} />
+                      <Area type="monotone" dataKey={item.key} name={systemChartLabel(item)}
+                        stroke={color} fill={`url(#mw-latency-fill-${item.key.replace(/[^a-zA-Z0-9_-]/g, "-")})`}
+                        strokeWidth={2.7} dot={false} activeDot={{ r: 5, strokeWidth: 2 }}
+                        connectNulls={false} isAnimationActive={false} />
+                      <Area className="mp-live-pulse" type="monotone" dataKey={item.key}
+                        stroke={color} strokeWidth={3.8} strokeOpacity={0.9} strokeDasharray="8 26"
+                        fill="none" dot={false} activeDot={false} legendType="none" tooltipType="none"
+                        connectNulls={false} isAnimationActive={false} />
                     </Fragment>
                   ))}
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
-                <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
+                <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
               ))}
             </div>
           </div>
@@ -663,7 +674,7 @@ export default function Monitoring() {
                 <thead><tr className="mp-muted border-b mp-divider"><th className="pb-3 font-semibold">Sistema</th><th className="pb-3 font-semibold">Atual</th><th className="pb-3 font-semibold">Mín</th><th className="pb-3 font-semibold">Máx</th><th className="pb-3 font-semibold">Média</th></tr></thead>
                 <tbody>{chartStats.map(({ item, color, current, min, max, avg }) => (
                   <tr key={item.key} className="border-b mp-divider last:border-b-0">
-                    <td className="py-3 pr-2"><span className="flex items-center gap-2"><i className="mp-latency-dot size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} /><span className="mp-title font-medium">{systemChartLabel(item)}</span></span></td>
+                    <td className="py-3 pr-2"><span className="flex items-center gap-2"><i className="mp-latency-dot relative size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} /><span className="mp-title font-medium">{systemChartLabel(item)}</span></span></td>
                     <td className="py-3 font-semibold" style={{ color }}>{formatMs(current)}</td>
                     <td className="mp-muted py-3">{formatMs(min)}</td><td className="mp-muted py-3">{formatMs(max)}</td><td className="mp-muted py-3">{formatMs(avg)}</td>
                   </tr>
