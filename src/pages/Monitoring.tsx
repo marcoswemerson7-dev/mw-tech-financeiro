@@ -30,8 +30,6 @@ import {
   Area,
   AreaChart,
   Cell,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
