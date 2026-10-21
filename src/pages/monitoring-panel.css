@@ -18,31 +18,49 @@ html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#26
 
 
 
-/* Continuous, lightweight dash movement on desktop and Android.
-   The solid real-data line is rendered separately underneath. */
-.mw-monitor-panel .mp-live-pulse .recharts-line-curve {
-  animation: mw-live-pulse 1.8s linear infinite !important;
+
+/* Stock-market style, animated chart stroke.
+   Recharts 3 renders paths in both area and curve wrappers. */
+.mw-monitor-panel .mp-live-pulse .recharts-area-curve,
+.mw-monitor-panel .mp-live-pulse.recharts-area-curve,
+.mw-monitor-panel .mp-live-pulse path.recharts-area-curve {
+  animation: mw-chart-flow 1.6s linear infinite !important;
   stroke-linecap: round;
   pointer-events: none;
-  will-change: stroke-dashoffset;
 }
-@keyframes mw-live-pulse {
+@keyframes mw-chart-flow {
   from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -22; }
+  to { stroke-dashoffset: -34; }
 }
-
-/* Latency indicators gently breathe without changing actual measured values. */
 .mw-monitor-panel .mp-latency-dot {
   display: inline-block;
-  flex: none;
-  animation: mw-latency-breathe 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+  transform-origin: center;
+  animation: mw-indicator-beat 1.8s ease-in-out infinite !important;
 }
-.mw-monitor-panel .mp-latency-dot:nth-child(2n) { animation-delay: -.8s; }
-@keyframes mw-latency-breathe {
-  0%, 100% { transform: scale(1); opacity: .8; box-shadow: 0 0 0 0 currentColor; }
-  50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 0 3px transparent; }
+.mw-monitor-panel .mp-latency-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1.5px solid currentColor;
+  border-color: inherit;
+  background: inherit;
+  border-radius: 9999px;
+  opacity: .25;
+  animation: mw-indicator-ring 1.8s ease-out infinite !important;
+}
+@keyframes mw-indicator-beat {
+  0%, 100% { transform: scale(.92); opacity: .8; }
+  50% { transform: scale(1.18); opacity: 1; }
+}
+@keyframes mw-indicator-ring {
+  from { transform: scale(.6); opacity: .35; }
+  to { transform: scale(1.6); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mw-monitor-panel .mp-live-pulse .recharts-line-curve { animation: none !important; opacity: 0; }
-  .mw-monitor-panel .mp-latency-dot { animation: none !important; }
+  .mw-monitor-panel .mp-live-pulse .recharts-area-curve,
+  .mw-monitor-panel .mp-live-pulse.recharts-area-curve,
+  .mw-monitor-panel .mp-latency-dot,
+  .mw-monitor-panel .mp-latency-dot::after { animation: none !important; }
+  .mw-monitor-panel .mp-live-pulse { opacity: 0; }
 }
