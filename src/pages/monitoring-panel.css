@@ -17,16 +17,32 @@ html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#26
 @media (prefers-reduced-motion:reduce){.mw-monitor-panel *{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
 
 
-/* Mobile-friendly repeating pulse: bounded dash travel keeps the highlight visible on short Android charts. The base line remains solid. */
+
+/* Continuous, lightweight dash movement on desktop and Android.
+   The solid real-data line is rendered separately underneath. */
 .mw-monitor-panel .mp-live-pulse .recharts-line-curve {
-  animation: mw-live-pulse 5.5s linear infinite;
+  animation: mw-live-pulse 1.8s linear infinite !important;
   stroke-linecap: round;
   pointer-events: none;
+  will-change: stroke-dashoffset;
 }
 @keyframes mw-live-pulse {
   from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -198; }
+  to { stroke-dashoffset: -22; }
+}
+
+/* Latency indicators gently breathe without changing actual measured values. */
+.mw-monitor-panel .mp-latency-dot {
+  display: inline-block;
+  flex: none;
+  animation: mw-latency-breathe 2.4s ease-in-out infinite;
+}
+.mw-monitor-panel .mp-latency-dot:nth-child(2n) { animation-delay: -.8s; }
+@keyframes mw-latency-breathe {
+  0%, 100% { transform: scale(1); opacity: .8; box-shadow: 0 0 0 0 currentColor; }
+  50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 0 3px transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mw-monitor-panel .mp-live-pulse .recharts-line-curve { animation: none; opacity: 0; }
+  .mw-monitor-panel .mp-live-pulse .recharts-line-curve { animation: none !important; opacity: 0; }
+  .mw-monitor-panel .mp-latency-dot { animation: none !important; }
 }
