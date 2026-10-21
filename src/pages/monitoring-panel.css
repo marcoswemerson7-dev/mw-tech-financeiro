@@ -119,3 +119,38 @@ html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#26
 @media (prefers-reduced-motion: reduce) {
  .mw-monitor-panel .mp-chart-scan { animation: none; opacity: 0; }
 }
+
+/* Monitoramento: chart cursor returns smoothly instead of disappearing at the edge. */
+.mw-monitor-panel .mp-chart-scan {
+  animation: mw-chart-scan-pingpong 5s ease-in-out infinite alternate !important;
+}
+@keyframes mw-chart-scan-pingpong {
+  from { left: 2%; }
+  to { left: 97%; }
+}
+/* Real latency dial remains accurate, while its colored segment glows subtly. */
+.mw-monitor-panel .mp-gauge-animated {
+  animation: mw-gauge-alive 2.8s ease-in-out infinite !important;
+  transition: background 700ms ease;
+}
+.mw-monitor-panel .mp-gauge-animated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 12px rgba(59,130,246,.11);
+  animation: mw-gauge-halo 2.8s ease-in-out infinite;
+}
+@keyframes mw-gauge-alive {
+  0%, 100% { filter: brightness(1); opacity: 1; }
+  50% { filter: brightness(1.23) saturate(1.25); opacity: .87; }
+}
+@keyframes mw-gauge-halo {
+  0%,100% { opacity: .12; }
+  50% { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .mw-monitor-panel .mp-chart-scan,
+ .mw-monitor-panel .mp-gauge-animated,
+ .mw-monitor-panel .mp-gauge-animated::before { animation: none !important; }
+}
