@@ -643,7 +643,7 @@ export default function Monitoring() {
                         stroke={color} strokeWidth={2.3} dot={false} activeDot={{ r: 5 }} connectNulls={false}
                         isAnimationActive={false} />
                       <Line className="mp-live-pulse" type="monotone" dataKey={item.key}
-                        stroke={color} strokeWidth={4} strokeOpacity={0.55} strokeDasharray="24 2400"
+                        stroke={color} strokeWidth={4} strokeOpacity={0.55} strokeDasharray="18 180"
                         dot={false} activeDot={false} legendType="none" tooltipType="none" connectNulls={false}
                         isAnimationActive={false} />
                     </Fragment>
