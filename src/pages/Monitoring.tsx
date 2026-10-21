@@ -700,7 +700,7 @@ export default function Monitoring() {
                 <div key={item.key} className="mp-card rounded-2xl p-4">
                   <p className="mp-title flex items-center gap-2 text-xs font-semibold"><i className="size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</p>
                   <div className="mp-gauge" role="img" aria-label={`Latência de ${systemChartLabel(item)}: ${formatMs(current)}`}>
-                    <div className="mp-gauge-ring" style={{ "--gauge-color": color, "--gauge-angle": `${value * 1.8}deg` } as CSSProperties} />
+                    <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 1.8}deg` } as CSSProperties} />
                     <div className="mp-gauge-value">{formatMs(current)}</div>
                   </div>
                   <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Latência atual</span><span>200 ms</span></div>
