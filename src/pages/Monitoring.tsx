@@ -628,7 +628,8 @@ export default function Monitoring() {
         </div>
         <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_350px]">
           <div className="mp-card min-w-0 rounded-2xl p-3">
-            <div className="h-[290px] w-full">
+            <div className="mp-market-chart relative h-[290px] w-full overflow-hidden">
+              <div className="mp-chart-scan" aria-hidden="true"><span className="mp-chart-scan-dot" /></div>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
                   <defs>
@@ -662,7 +663,7 @@ export default function Monitoring() {
             </div>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
-                <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
+                <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
               ))}
             </div>
           </div>
@@ -672,7 +673,7 @@ export default function Monitoring() {
                 <thead><tr className="mp-muted border-b mp-divider"><th className="pb-3 font-semibold">Sistema</th><th className="pb-3 font-semibold">Atual</th><th className="pb-3 font-semibold">Mín</th><th className="pb-3 font-semibold">Máx</th><th className="pb-3 font-semibold">Média</th></tr></thead>
                 <tbody>{chartStats.map(({ item, color, current, min, max, avg }) => (
                   <tr key={item.key} className="border-b mp-divider last:border-b-0">
-                    <td className="py-3 pr-2"><span className="flex items-center gap-2"><i className="mp-latency-dot relative size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} /><span className="mp-title font-medium">{systemChartLabel(item)}</span></span></td>
+                    <td className="py-3 pr-2"><span className="flex items-center gap-2"><i className="mp-latency-dot relative size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} /><span className="mp-title font-medium">{systemChartLabel(item)}</span></span></td>
                     <td className="py-3 font-semibold" style={{ color }}>{formatMs(current)}</td>
                     <td className="mp-muted py-3">{formatMs(min)}</td><td className="mp-muted py-3">{formatMs(max)}</td><td className="mp-muted py-3">{formatMs(avg)}</td>
                   </tr>
