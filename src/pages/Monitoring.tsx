@@ -416,7 +416,14 @@ export default function Monitoring() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [nextRefresh, setNextRefresh] = useState(refreshEveryMs / 1000);
-  const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [history, setHistory] = useState<HistoryPoint[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(historyKey) || "[]") as HistoryPoint[];
+      return Array.isArray(saved) ? saved.slice(-1440) : [];
+    } catch {
+      return [];
+    }
+  });
   const [chartRange, setChartRange] = useState(30);
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [orgFilter, setOrgFilter] = useState("todos");
@@ -464,13 +471,6 @@ export default function Monitoring() {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(historyKey) || "[]") as HistoryPoint[];
-      if (Array.isArray(saved)) setHistory(saved.slice(-1440));
-    } catch {
-      setHistory([]);
-    }
-
     void load();
     const refreshId = window.setInterval(() => void load(), refreshEveryMs);
     const timerId = window.setInterval(() => setNextRefresh((current) => current <= 1 ? refreshEveryMs / 1000 : current - 1), 1000);
@@ -557,7 +557,11 @@ export default function Monitoring() {
 
   const chartHistory = useMemo(() => {
     const cutoff = Date.now() - chartRange * 60_000;
-    return history.filter((point) => point.timestamp >= cutoff);
+    const inRange = history.filter((point) => point.timestamp >= cutoff);
+    // Historical samples only: when a freshly opened PWA has fewer than two
+    // points in the window, keep a short existing tail visible while new
+    // real readings arrive. No synthetic latency samples are generated.
+    return inRange.length >= 2 ? inRange : history.slice(-Math.min(history.length, 30));
   }, [history, chartRange]);
   const currentLatencyQuality = latencyQuality(summary.average);
   const summaryLatency = latencyStats.average;
@@ -650,7 +654,7 @@ export default function Monitoring() {
                     <Fragment key={item.key}>
                       <Area type="monotone" dataKey={item.key} name={systemChartLabel(item)}
                         stroke={color} fill={`url(#mw-latency-fill-${item.key.replace(/[^a-zA-Z0-9_-]/g, "-")})`}
-                        strokeWidth={2.7} dot={false} activeDot={{ r: 5, strokeWidth: 2 }}
+                        strokeWidth={2.7} dot={chartHistory.length < 3 ? { r: 3 } : false} activeDot={{ r: 5, strokeWidth: 2 }}
                         connectNulls={false} isAnimationActive={false} />
                       <Area className="mp-live-pulse" type="monotone" dataKey={item.key}
                         stroke={color} strokeWidth={3.8} strokeOpacity={0.9} strokeDasharray="8 26"
