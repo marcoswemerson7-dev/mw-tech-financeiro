@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, FileSpreadsheet, Filter, Printer, ReceiptText } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getReportData } from "../services/reports";
 import "./reports.css";
 import { money, Badge, dateOnly, formatDate, PageHeader, FinancialAmount } from "../components/UI";
@@ -64,6 +65,19 @@ export default function Reports() {
         .sort((a, b) => dateOnly(b.data).localeCompare(dateOnly(a.data))),
     [mov, from, to, typeFilter, statusFilter],
   );
+  const sums = {
+    r: filtered
+      .filter((x) => x.tipo === "Receita" && x.status === "pago")
+      .reduce((a, x) => a + x.valor, 0),
+    d: filtered
+      .filter((x) => x.tipo === "Despesa" && x.status === "pago")
+      .reduce((a, x) => a + x.valor, 0),
+    t: filtered
+      .filter((x) => x.tipo === "Retirada")
+      .reduce((a, x) => a + x.valor, 0),
+  };
+  const chartData = [{ nome: "Entradas", valor: sums.r }, { nome: "Saídas", valor: sums.d }];
+  const hasChartData = chartData.some((x) => x.valor > 0);
   const invalidPeriod = !from || !to || from > to;
   const canExport = !loading && !loadError && !invalidPeriod;
   async function print(r?: Mov) {
@@ -78,12 +92,11 @@ export default function Reports() {
   function exportExcel() {
     if (!canExport) return;
     const lines = [
-      ["Data", "Descrição", "Categoria", "Conta", "Tipo", "Valor", "Status"],
+      ["Data", "Descrição", "Categoria", "Tipo", "Valor", "Status"],
       ...filtered.map((x) => [
         formatDate(x.data),
         x.descricao,
         x.categoria || "",
-        x.conta || "",
         x.tipo,
         String(x.valor),
         x.status,
@@ -172,6 +185,44 @@ export default function Reports() {
       >
         <PrintHeader company={company} issuedAt={issuedAt} title="Relatório financeiro" subtitle={`${format(from)} a ${format(to)}`} />
         <div className="report-scope"><span><b>Tipo:</b> {typeFilter || "Todas as movimentações"}</span><span><b>Situação:</b> {statusFilter ? "Liquidado" : "Movimentações realizadas"}</span><span><b>Registros:</b> {filtered.length}</span><span><b>Moeda:</b> Real (BRL)</span></div>
+        <h3 className="report-section-title">01. Resumo financeiro</h3>
+        <div className="report-summary grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            ["Receitas recebidas", sums.r, "positive", "receita"],
+            ["Despesas pagas", sums.d, "expense", "despesa"],
+            ["Retiradas", sums.t, "expense", "retirada"],
+          ].map(([n, v, tone, kind]) => (
+            <div
+              key={String(n)}
+              className={`report-summary-card report-summary-card--${tone} border-b border-r border-slate-200 bg-slate-50/60 px-4 py-3`}
+            >
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                {n}
+              </span>
+              <strong className="mt-1 block text-lg font-semibold tracking-tight">
+                <FinancialAmount value={v} kind={String(kind)} />
+              </strong>
+            </div>
+          ))}
+        </div>
+        {hasChartData && <div className="report-charts no-print no-break mt-4 grid gap-3 lg:grid-cols-2">
+          {hasChartData && <div className="rounded-xl border border-slate-200 p-3 sm:p-4">
+            <h4 className="text-xs font-semibold uppercase text-slate-500">Entradas x Saídas</h4>
+            <ResponsiveContainer width="100%" height={138}>
+              <BarChart data={chartData}>
+                <CartesianGrid stroke="#edf0f4" vertical={false} />
+                <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 10 }} width={62} />
+                <Tooltip formatter={(v) => money(v)} />
+                <Bar dataKey="valor" radius={[6, 6, 0, 0]} isAnimationActive={false}>
+                  <Cell fill="#16a34a" />
+                  <Cell fill="#dc2626" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>}
+        </div>}
+        <h3 className="report-section-title">02. Movimentações detalhadas</h3>
         <div className="report-table-wrapper mt-4 overflow-x-auto rounded-lg border border-slate-200">
           {filtered.length ? (
             <table className="report-table w-full border-collapse text-left text-xs">
@@ -180,7 +231,6 @@ export default function Reports() {
                   {[
                     "Data",
                     "Descrição / Categoria",
-                    "Conta bancária",
                     "Tipo",
                     "Valor",
                     "Status",
@@ -197,7 +247,6 @@ export default function Reports() {
                   <tr key={x.tipo + x.id} className="border-b">
                     <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{formatDate(x.data)}</td>
                     <td className="max-w-[260px] whitespace-normal break-words px-3 py-2.5 font-semibold text-slate-800">{x.descricao}{x.categoria && <span className="report-category">{x.categoria}</span>}</td>
-                    <td className="max-w-[250px] whitespace-normal break-words px-3 py-2.5 text-slate-500">{x.conta_resumo || x.conta}</td>
                     <td className="whitespace-nowrap px-3 py-2.5">{x.tipo}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
@@ -213,7 +262,6 @@ export default function Reports() {
                   </tr>
                 ))}
               </tbody>
-
             </table>
           ) : <div className="report-empty-state rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#0b2b66]">Sem movimentações no período</p>
