@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, FileSpreadsheet, Filter, Printer, ReceiptText } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getReportData } from "../services/reports";
-import { getExpenses } from "../services/expenses";
+import "./reports.css";
 import { money, Badge, dateOnly, formatDate, PageHeader, FinancialAmount } from "../components/UI";
 type Mov = {
   id: string;
@@ -12,6 +12,7 @@ type Mov = {
   tipo: "Receita" | "Despesa" | "Retirada";
   status: string;
   conta?: string;
+  conta_resumo?: string;
   cliente?: string;
   categoria?: string;
 };
@@ -33,20 +34,23 @@ export default function Reports() {
   const [from, setFrom] = useState(today.slice(0, 8) + "01"),
     [to, setTo] = useState(today),
     [mov, setMov] = useState<Mov[]>([]),
-    [expenses, setExpenses] = useState<any[]>([]),
+    [loading, setLoading] = useState(true),
+    [loadError, setLoadError] = useState(""),
+    [issuedAt, setIssuedAt] = useState(() => new Date().toLocaleString("pt-BR")),
     [company, setCompany] = useState<Company>({}),
     [receipt, setReceipt] = useState<Mov | null>(null),
     [typeFilter, setTypeFilter] = useState(""),
     [statusFilter, setStatusFilter] = useState("");
   useEffect(() => {
-    Promise.all([getReportData(), getExpenses().catch(() => [])]).then(([{ movements, accounts, company }, expenses]) => {
+    getReportData().then(({ movements, accounts, company }) => {
       const names = new Map(accounts.map((x) => [x.id, `${x.nome} · ${x.banco || "Conta"} · Ag. ${x.agencia || "—"} · Conta ${x.conta || "—"}`]));
-      setMov(movements.map((x: any) => ({ id: x.id, data: x.data, descricao: x.descricao,
+      const shortNames = new Map(accounts.map((x) => [x.id, `${x.banco || x.nome || "Conta"} · Ag. ${x.agencia || "—"} · Conta ${x.conta || "—"}`]));
+      setMov(movements.filter((x) => x.tipo !== "transferencia").map((x: any) => ({ id: x.id, data: x.data, descricao: x.descricao,
         valor: Number(x.valor), tipo: x.tipo === "entrada" ? "Receita" : x.tipo === "retirada" ? "Retirada" : "Despesa",
-        status: "pago", conta: names.get(x.conta_id) || "Conta não informada", categoria: x.categorias_financeiras?.nome })) as Mov[]);
+        status: "pago", conta_resumo: shortNames.get(x.conta_id || ""), conta: names.get(x.conta_id) || "Conta não informada", categoria: x.categorias_financeiras?.nome })) as Mov[]);
       setCompany(company);
-      setExpenses(expenses);
-    }).catch(() => { setMov([]); setCompany({}); });
+
+    }).catch(() => { setLoadError("Não foi possível carregar os dados do relatório. Atualize a página para tentar novamente."); }).finally(() => setLoading(false));
   }, []);
   const filtered = useMemo(
     () =>
@@ -71,19 +75,32 @@ export default function Reports() {
     t: filtered
       .filter((x) => x.tipo === "Retirada")
       .reduce((a, x) => a + x.valor, 0),
-    a: filtered
-      .filter((x) => x.status === "pendente")
-      .reduce((a, x) => a + Number(x.valor), 0),
   };
   const chartData = [{ nome: "Entradas", valor: sums.r }, { nome: "Saídas", valor: sums.d }];
-  const expenseByStatus = ["pendente", "pago", "cancelado"].map((status) => ({ status, valor: expenses.filter((x) => x.status === status).reduce((a, x) => a + Number(x.valor), 0) })).filter((x) => x.valor > 0);
   const hasChartData = chartData.some((x) => x.valor > 0);
-  const hasExpenseStatusData = expenseByStatus.length > 0;
-  function print(r?: Mov) {
+  const invalidPeriod = !from || !to || from > to;
+  const canExport = !loading && !loadError && !invalidPeriod;
+  const byAccount = Array.from(filtered.reduce((groups, x) => {
+    const key = x.conta || "Conta não informada";
+    const item = groups.get(key) || { conta: key, count: 0, entradas: 0, saidas: 0, retiradas: 0 };
+    item.count += 1;
+    if (x.tipo === "Receita") item.entradas += x.valor;
+    else if (x.tipo === "Retirada") item.retiradas += x.valor;
+    else item.saidas += x.valor;
+    groups.set(key, item);
+    return groups;
+  }, new Map<string, { conta: string; count: number; entradas: number; saidas: number; retiradas: number }>()).values());
+  async function print(r?: Mov) {
+    if (!canExport) return;
     setReceipt(r || null);
-    setTimeout(() => window.print(), 100);
+    setIssuedAt(new Date().toLocaleString("pt-BR"));
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    await document.fonts.ready;
+    await Promise.all(Array.from(document.querySelectorAll<HTMLImageElement>(".report-screen-logo")).map((img) => img.decode().catch(() => undefined)));
+    window.print();
   }
   function exportExcel() {
+    if (!canExport) return;
     const lines = [
       ["Data", "Descrição", "Categoria", "Conta", "Tipo", "Valor", "Status"],
       ...filtered.map((x) => [
@@ -118,11 +135,12 @@ export default function Reports() {
       <div className="no-print">
         <PageHeader
           title="Relatórios e recibos"
-          subtitle="Emita relatórios financeiros, acompanhe períodos e gere recibos com visual profissional."
+          subtitle="Consulte as movimentações realizadas e emita o demonstrativo financeiro do período."
         />
       </div>
       <div className="no-print rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm lg:px-5"><div className="flex flex-wrap items-end gap-3">
           <select
+            aria-label="Tipo de movimentação"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             className="h-11 min-w-[170px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
@@ -133,14 +151,13 @@ export default function Reports() {
             <option value="Retirada">Retiradas</option>
           </select>
           <select
+            aria-label="Situação da movimentação"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="h-11 min-w-[170px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           >
-            <option value="">Todos os status</option>
-            <option value="pago">Pago</option>
-            <option value="pendente">Pendente</option>
-            <option value="atrasado">Atrasado</option>
+            <option value="">Movimentações realizadas</option>
+            <option value="pago">Liquidado</option>
           </select>
           <label className="min-w-[165px] flex-1 rounded-lg border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
             <span className="flex items-center gap-2"><CalendarDays size={15} /> Data inicial</span>
@@ -151,6 +168,7 @@ export default function Reports() {
             <input aria-label="Data final" type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 w-full bg-transparent text-sm font-semibold text-slate-800 outline-none" />
           </label>
           <button
+            disabled={!canExport}
             onClick={() => print()}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#0b2b66] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#143e82]"
           >
@@ -158,6 +176,7 @@ export default function Reports() {
             Imprimir relatório
           </button>
           <button
+            disabled={!canExport}
             onClick={exportExcel}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-white px-4 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
           >
@@ -169,18 +188,23 @@ export default function Reports() {
             {filtered.length} registro{filtered.length === 1 ? "" : "s"}
           </span>
         </div></div>
-      <section
+      {loading && <p role="status" className="no-print">Carregando dados do relatório...</p>}
+      {loadError && <p role="alert" className="no-print text-red-700">{loadError}</p>}
+      {invalidPeriod && <p role="alert" className="no-print text-red-700">Informe um período válido: a data inicial deve ser anterior ou igual à data final.</p>}
+      {canExport && <section
         className={`report-sheet mx-auto max-w-[1400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 ${receipt ? "print:hidden" : ""}`}
       >
-        <PrintHeader company={company} title="Relatório Financeiro" subtitle={`Período selecionado: ${format(from)} a ${format(to)}`} />
+        <PrintHeader company={company} issuedAt={issuedAt} title="Relatório financeiro" subtitle={`${format(from)} a ${format(to)}`} />
+        <div className="report-scope"><span><b>Tipo:</b> {typeFilter || "Todas as movimentações"}</span><span><b>Situação:</b> {statusFilter ? "Liquidado" : "Movimentações realizadas"}</span><span><b>Registros:</b> {filtered.length}</span><span><b>Moeda:</b> Real (BRL)</span></div>
+        <h3 className="report-section-title">01. Resumo financeiro</h3>
         <div className="report-summary grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2 lg:grid-cols-3">
           {[
             ["Receitas recebidas", sums.r, "positive", "receita"],
             ["Despesas pagas", sums.d, "expense", "despesa"],
-            ["Resultado operacional", sums.r - sums.d, "result", "resultado"],
+            ["Resultado antes das retiradas", sums.r - sums.d, "result", "resultado"],
             ["Retiradas", sums.t, "expense", "retirada"],
-            ["Saldo do período", sums.r - sums.d - sums.t, "result", "saldo"],
-            ["Total pendente", sums.a, "pending", "pendente"],
+            ["Resultado líquido do período", sums.r - sums.d - sums.t, "result", "saldo"],
+            ["Total de saídas", sums.d + sums.t, "expense", "despesa"],
           ].map(([n, v, tone, kind]) => (
             <div
               key={String(n)}
@@ -195,7 +219,7 @@ export default function Reports() {
             </div>
           ))}
         </div>
-        {(hasChartData || hasExpenseStatusData) && <div className="report-charts no-break mt-4 grid gap-3 lg:grid-cols-2">
+        {hasChartData && <div className="report-charts no-print no-break mt-4 grid gap-3 lg:grid-cols-2">
           {hasChartData && <div className="rounded-xl border border-slate-200 p-3 sm:p-4">
             <h4 className="text-xs font-semibold uppercase text-slate-500">Entradas x Saídas</h4>
             <ResponsiveContainer width="100%" height={138}>
@@ -211,18 +235,8 @@ export default function Reports() {
               </BarChart>
             </ResponsiveContainer>
           </div>}
-          {hasExpenseStatusData && <div className="rounded-xl border border-slate-200 p-3 sm:p-4">
-            <h4 className="text-xs font-semibold uppercase text-slate-500">Despesas por status</h4>
-            <ResponsiveContainer width="100%" height={138}>
-              <PieChart>
-                <Pie data={expenseByStatus} dataKey="valor" nameKey="status" innerRadius={36} outerRadius={58} isAnimationActive={false}>
-                  {expenseByStatus.map((x) => <Cell key={x.status} fill={x.status === "pago" ? "#16a34a" : x.status === "pendente" ? "#f59e0b" : "#dc2626"} />)}
-                </Pie>
-                <Tooltip formatter={(v) => money(v)} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>}
         </div>}
+        <h3 className="report-section-title">02. Movimentações detalhadas</h3>
         <div className="report-table-wrapper mt-4 overflow-x-auto rounded-lg border border-slate-200">
           {filtered.length ? (
             <table className="report-table w-full border-collapse text-left text-xs">
@@ -230,14 +244,14 @@ export default function Reports() {
                 <tr>
                   {[
                     "Data",
-                    "Descrição",
-                    "Conta",
+                    "Descrição / Categoria",
+                    "Conta bancária",
                     "Tipo",
                     "Valor",
                     "Status",
                     "Recibo",
                   ].map((x) => (
-                    <th key={x} className="px-3 py-2.5">
+                    <th key={x} className={`px-3 py-2.5 ${x === "Recibo" ? "no-print" : ""}`}>
                       {x}
                     </th>
                   ))}
@@ -247,8 +261,8 @@ export default function Reports() {
                 {filtered.map((x) => (
                   <tr key={x.tipo + x.id} className="border-b">
                     <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{formatDate(x.data)}</td>
-                    <td className="max-w-[260px] whitespace-normal break-words px-3 py-2.5 font-semibold text-slate-800">{x.descricao}</td>
-                    <td className="max-w-[250px] whitespace-normal break-words px-3 py-2.5 text-slate-500">{x.conta}</td>
+                    <td className="max-w-[260px] whitespace-normal break-words px-3 py-2.5 font-semibold text-slate-800">{x.descricao}<span className="report-category">{x.categoria || "Sem categoria informada"}</span></td>
+                    <td className="max-w-[250px] whitespace-normal break-words px-3 py-2.5 text-slate-500">{x.conta_resumo || x.conta}</td>
                     <td className="whitespace-nowrap px-3 py-2.5">{x.tipo}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
@@ -257,25 +271,35 @@ export default function Reports() {
                       <Badge status={x.status} />
                     </td>
                     <td className="no-print px-3 py-2.5">
-                      <button onClick={() => print(x)} title="Imprimir recibo">
+                      <button disabled={!canExport} onClick={() => print(x)} title="Imprimir recibo">
                         <ReceiptText size={17} />
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
+              <tfoot><tr><td colSpan={4}>Resultado líquido dos {filtered.length} registros</td><td className="report-number">{money(sums.r - sums.d - sums.t)}</td><td></td><td className="no-print"></td></tr></tfoot>
             </table>
           ) : <div className="report-empty-state rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#0b2b66]">Sem movimentações no período</p>
             <p className="mt-2 text-sm text-slate-500">Não foram encontrados lançamentos entre {format(from)} e {format(to)} para os filtros selecionados.</p>
           </div>}
         </div>
-        <ReportFooter company={company} />
-      </section>
+        {byAccount.length > 0 && <>
+          <h3 className="report-section-title">03. Consolidação por conta bancária</h3>
+          <div className="report-account-wrapper"><table className="report-account-table">
+            <thead><tr><th>Conta bancária</th><th>Registros</th><th>Receitas</th><th>Despesas</th><th>Retiradas</th><th>Resultado</th></tr></thead>
+            <tbody>{byAccount.map((x) => <tr key={x.conta}><td>{x.conta}</td><td>{x.count}</td><td>{money(x.entradas)}</td><td>{money(x.saidas)}</td><td>{money(x.retiradas)}</td><td>{money(x.entradas - x.saidas - x.retiradas)}</td></tr>)}</tbody>
+          </table></div>
+        </>}
+        <div className="report-notes"><b>Critérios do demonstrativo</b><p>Valores apurados pelas movimentações realizadas nas datas e nos filtros indicados. Resultado líquido = receitas - despesas - retiradas. Transferências entre contas não compõem receitas ou despesas. O resultado do período não representa o saldo bancário acumulado. Obrigações pendentes não integram este demonstrativo.</p></div>
+        <ReportFooter company={company} issuedAt={issuedAt} />
+      </section>}
       {receipt && (
         <section className="receipt-sheet hidden bg-white p-10 print:block">
           <PrintHeader
             company={company}
+            issuedAt={issuedAt}
             title="RECIBO"
             subtitle={`Nº ${receipt.id.slice(0, 8).toUpperCase()}`}
           />
@@ -308,7 +332,9 @@ function PrintHeader({
   company,
   title,
   subtitle,
+  issuedAt,
 }: {
+  issuedAt: string;
   company: Company;
   title: string;
   subtitle: string;
@@ -329,19 +355,19 @@ function PrintHeader({
         </div>
       </div>
       <div className="report-meta rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-right">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b7791f]">Documento</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b7791f]">MW TECH Control</p>
         <h2 className="mt-1 text-xl font-semibold text-[#0b1d3a]">{title}</h2>
         <p className="mt-1 text-xs font-semibold text-slate-600">{subtitle}</p>
-        <p className="mt-0.5 text-[11px] text-slate-500">Emitido em {new Date().toLocaleString("pt-BR")}</p>
+        <p className="mt-0.5 text-[11px] text-slate-500">Emitido em {issuedAt}</p>
       </div>
     </div>
   );
 }
-function ReportFooter({ company }: { company: Company }) {
+function ReportFooter({ company, issuedAt }: { company: Company; issuedAt: string }) {
   return <footer className="report-footer mt-7 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-slate-200 pt-3 text-[10px] text-slate-500">
-    <span>Documento gerado pelo sistema <strong className="text-[#0b2b66]">MW TECH Financeiro</strong></span>
+    <span>Documento gerado pelo sistema <strong className="text-[#0b2b66]">MW TECH Control</strong></span>
     <span>{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"} · CNPJ: {company.cnpj || "62.308.511/0001-12"}</span>
-    <span>Emissão: {new Date().toLocaleString("pt-BR")}</span>
+    <span>Emissão: {issuedAt}</span>
     <span className="report-page-number" aria-label="Número da página">Página </span>
   </footer>;
 }
