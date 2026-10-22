@@ -80,6 +80,16 @@ export default function Reports() {
   const hasChartData = chartData.some((x) => x.valor > 0);
   const invalidPeriod = !from || !to || from > to;
   const canExport = !loading && !loadError && !invalidPeriod;
+  const byAccount = Array.from(filtered.reduce((groups, x) => {
+    const key = x.conta || "Conta não informada";
+    const item = groups.get(key) || { conta: key, count: 0, entradas: 0, saidas: 0, retiradas: 0 };
+    item.count += 1;
+    if (x.tipo === "Receita") item.entradas += x.valor;
+    else if (x.tipo === "Retirada") item.retiradas += x.valor;
+    else item.saidas += x.valor;
+    groups.set(key, item);
+    return groups;
+  }, new Map<string, { conta: string; count: number; entradas: number; saidas: number; retiradas: number }>()).values());
   async function print(r?: Mov) {
     if (!canExport) return;
     setReceipt(r || null);
@@ -92,11 +102,12 @@ export default function Reports() {
   function exportExcel() {
     if (!canExport) return;
     const lines = [
-      ["Data", "Descrição", "Categoria", "Tipo", "Valor", "Status"],
+      ["Data", "Descrição", "Categoria", "Conta", "Tipo", "Valor", "Status"],
       ...filtered.map((x) => [
         formatDate(x.data),
         x.descricao,
         x.categoria || "",
+        x.conta || "",
         x.tipo,
         String(x.valor),
         x.status,
@@ -190,7 +201,10 @@ export default function Reports() {
           {[
             ["Receitas recebidas", sums.r, "positive", "receita"],
             ["Despesas pagas", sums.d, "expense", "despesa"],
+            ["Resultado antes das retiradas", sums.r - sums.d, "result", "resultado"],
             ["Retiradas", sums.t, "expense", "retirada"],
+            ["Resultado líquido do período", sums.r - sums.d - sums.t, "result", "saldo"],
+            ["Total de saídas", sums.d + sums.t, "expense", "despesa"],
           ].map(([n, v, tone, kind]) => (
             <div
               key={String(n)}
@@ -231,6 +245,7 @@ export default function Reports() {
                   {[
                     "Data",
                     "Descrição / Categoria",
+                    "Conta bancária",
                     "Tipo",
                     "Valor",
                     "Status",
@@ -246,7 +261,8 @@ export default function Reports() {
                 {filtered.map((x) => (
                   <tr key={x.tipo + x.id} className="border-b">
                     <td className="whitespace-nowrap px-3 py-2.5 text-slate-600">{formatDate(x.data)}</td>
-                    <td className="max-w-[260px] whitespace-normal break-words px-3 py-2.5 font-semibold text-slate-800">{x.descricao}{x.categoria && <span className="report-category">{x.categoria}</span>}</td>
+                    <td className="max-w-[260px] whitespace-normal break-words px-3 py-2.5 font-semibold text-slate-800">{x.descricao}<span className="report-category">{x.categoria || "Sem categoria informada"}</span></td>
+                    <td className="max-w-[250px] whitespace-normal break-words px-3 py-2.5 text-slate-500">{x.conta_resumo || x.conta}</td>
                     <td className="whitespace-nowrap px-3 py-2.5">{x.tipo}</td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right font-semibold">
                       <FinancialAmount value={x.valor} kind={x.tipo} />
@@ -262,12 +278,21 @@ export default function Reports() {
                   </tr>
                 ))}
               </tbody>
+              <tfoot><tr><td colSpan={4}>Resultado líquido dos {filtered.length} registros</td><td className="report-number">{money(sums.r - sums.d - sums.t)}</td><td></td><td className="no-print"></td></tr></tfoot>
             </table>
           ) : <div className="report-empty-state rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#0b2b66]">Sem movimentações no período</p>
             <p className="mt-2 text-sm text-slate-500">Não foram encontrados lançamentos entre {format(from)} e {format(to)} para os filtros selecionados.</p>
           </div>}
         </div>
+        {byAccount.length > 0 && <>
+          <h3 className="report-section-title">03. Consolidação por conta bancária</h3>
+          <div className="report-account-wrapper"><table className="report-account-table">
+            <thead><tr><th>Conta bancária</th><th>Registros</th><th>Receitas</th><th>Despesas</th><th>Retiradas</th><th>Resultado</th></tr></thead>
+            <tbody>{byAccount.map((x) => <tr key={x.conta}><td>{x.conta}</td><td>{x.count}</td><td>{money(x.entradas)}</td><td>{money(x.saidas)}</td><td>{money(x.retiradas)}</td><td>{money(x.entradas - x.saidas - x.retiradas)}</td></tr>)}</tbody>
+          </table></div>
+        </>}
+        <div className="report-notes"><b>Critérios do demonstrativo</b><p>Valores apurados pelas movimentações realizadas nas datas e nos filtros indicados. Resultado líquido = receitas - despesas - retiradas. Transferências entre contas não compõem receitas ou despesas. O resultado do período não representa o saldo bancário acumulado. Obrigações pendentes não integram este demonstrativo.</p></div>
         <ReportFooter company={company} issuedAt={issuedAt} />
       </section>}
       {receipt && (
