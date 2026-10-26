@@ -3,7 +3,7 @@ import { account, appwriteConfig, tables } from "../lib/appwrite";
 
 const TABLE="agenda_dados";
 const CHUNK_SIZE=11000;
-export type AgendaSnapshot={version:3;items:unknown[];pages:Record<string,string>;ink:Record<string,unknown[]>};
+export type AgendaSnapshot={version:3;items:unknown[];pages:Record<string,string>;ink:Record<string,unknown[]>;tasks?:unknown[]};
 const encode=(s:string)=>btoa(Array.from(new TextEncoder().encode(s),c=>String.fromCharCode(c)).join(""));
 const decode=(s:string)=>new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));
 const ownerId=async()=>(await account.get()).$id;
