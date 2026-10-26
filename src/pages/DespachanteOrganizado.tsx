@@ -157,6 +157,31 @@ useEffect(()=>{
  },1700);
  return ()=>window.clearTimeout(handle);
 },[data,autoSync]);
+useEffect(()=>{
+ if(!autoSync)return;
+ let live=true;
+ const refresh=async()=>{
+  if(!live||busyAuto.current||baseline.current===null)return;
+  if((localStorage.getItem(KEY)||"")!==baseline.current)return;
+  busyAuto.current=true;
+  try{
+   const nextRevision=await cloudRevision();
+   if(!nextRevision||nextRevision===revision.current)return;
+   const remote=await downloadDespachante();
+   if(!live||!remote)return;
+   const valid=remote as Store;const builtinIds=new Set(predefined.map(m=>m.id));
+   const next={...valid,models:[...predefined,...valid.models.filter(m=>!builtinIds.has(m.id))]};
+   baseline.current=JSON.stringify(next);
+   revision.current=nextRevision;
+   setData(next);setSyncStatus("Atualizado com as mudanças da nuvem");
+  }catch(e){if(live)setSyncStatus("Falha ao buscar alterações: "+(e instanceof Error?e.message:String(e)));}
+  finally{busyAuto.current=false;}
+ };
+ const timer=window.setInterval(()=>void refresh(),15000);
+ const onVisible=()=>{if(document.visibilityState==="visible")void refresh();};
+ document.addEventListener("visibilitychange",onVisible);
+ return()=>{live=false;window.clearInterval(timer);document.removeEventListener("visibilitychange",onVisible);};
+},[autoSync]);
 async function enableAutoSync(){
  setSyncBusy(true);
  try{
