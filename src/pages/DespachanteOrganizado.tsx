@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { ClipboardCheck, Printer, Plus, Trash2, Users, FolderOpen, FileText, Pencil, X } from "lucide-react";
 
 type Client = {id:string; name:string; phone:string};
@@ -84,7 +85,7 @@ return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wr
 <div className="grid gap-3 md:grid-cols-2">{peopleFields("sellers",current.sellers||[],sellerDraft,setSellerDraft,current.id)}{peopleFields("buyers",current.buyers||[],buyerDraft,setBuyerDraft,current.id)}</div>
 {Array.from(new Set(current.docs.map(d=>d.group))).map(group=><div key={group}><h3 className="mb-2 rounded-lg bg-[#f1ede6] px-3 py-2 text-sm font-bold text-[#625035]">{group}</h3><div className="space-y-2">{current.docs.map((d,i)=>d.group!==group?null:<label key={i} className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm"><input aria-label={"Marcar "+d.name} className="size-4 shrink-0 accent-[#9b7951]" type="checkbox" checked={d.checked} onChange={e=>changeJob(current.id,j=>({...j,docs:j.docs.map((x,n)=>n===i?{...x,checked:e.target.checked}:x)}))}/><span className="min-w-[200px] flex-1 font-medium">{d.name}</span><input aria-label={"Informação complementar: "+d.name} className="w-full min-w-[170px] flex-[1.4] rounded-lg border border-[#e0c6a6] bg-amber-50/50 px-3 py-2 text-sm font-semibold text-[#98602b] placeholder:font-normal placeholder:text-[#a18d7a] focus:outline-none focus:ring-2 focus:ring-[#d2a46f]" placeholder="Digite aqui (ex.: profissão, data, número...)" value={d.detail||""} onChange={e=>changeJob(current.id,j=>({...j,docs:j.docs.map((x,n)=>n===i?{...x,detail:e.target.value}:x)}))}/></label>)}</div></div>)}
 <label className="block text-sm">Observações<textarea rows={3} className={input} value={current.notes} onChange={e=>changeJob(current.id,j=>({...j,notes:e.target.value}))}/></label><button onClick={()=>printJob(current)} className="inline-flex items-center gap-2 rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white"><Printer size={16}/> Imprimir relatório / salvar PDF</button></section>}</>}
-{current&&<div className="mw-despachante-paper hidden">
+{current&&createPortal(<div className="mw-despachante-paper hidden">
 <div className="letterhead"><div className="letterhead-logo"><svg viewBox="0 0 94 100" width="76" height="82" fill="none" stroke="#e8ae8c" strokeWidth="5" strokeLinejoin="round"><path d="M47 4 69 20v30l19-13v55L47 64 7 92V37l19 13V20Z"/><path d="M47 4v60M26 20v52M69 20v52M7 37l40 27 41-27M7 92l40-28 41 28"/></svg><small>DESPACHANTE IMOBILIÁRIO</small></div><span className="letterhead-wave"/></div>
 <div className="print-body"><div className="print-watermark"><svg viewBox="0 0 94 100" fill="none" stroke="#f3d9cc" strokeWidth="5" strokeLinejoin="round"><path d="M47 4 69 20v30l19-13v55L47 64 7 92V37l19 13V20Z"/><path d="M47 4v60M26 20v52M69 20v52M7 37l40 27 41-27M7 92l40-28 41 28"/></svg></div>
 <div className="print-heading"><p className="print-brand">MW DESPACHANTE · CONTROLE DOCUMENTAL</p><h1>RELATÓRIO DE CHECKLIST</h1><p>Conferência de documentos do atendimento</p></div>
@@ -95,10 +96,10 @@ return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wr
 <div className="print-footer"><span>(89) 9 9930-8209</span><span>despachantemarcoswemerson@gmail.com<br/>marcoswemerson7@gmail.com</span><span>Ribeiro Gonçalves–PI<br/>Baixa Grande do Ribeiro–PI</span></div></div>}
 <style>{`@media print {
 @page{size:A4 portrait;margin:0}
-html,body,#root{margin:0!important;padding:0!important;background:white!important;height:auto!important}
-body *{visibility:hidden!important}body{overflow:visible!important}
+html,body{margin:0!important;padding:0!important;background:white!important;height:auto!important}#root{display:none!important}
+body{overflow:visible!important}
 .mw-despachante-paper,.mw-despachante-paper *{visibility:visible!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
-.mw-despachante-paper{display:block!important;position:relative;left:0;top:0;width:210mm;min-height:297mm;color:#182640;background:white;font:10pt Arial,sans-serif;box-sizing:border-box;padding:39mm 14mm 27mm}
+.mw-despachante-paper{display:block!important;position:relative;left:0;top:0;width:210mm;min-height:297mm;color:#182640;background:white;font:10pt Arial,sans-serif;box-sizing:border-box;padding:39mm 14mm 27mm;break-after:auto}
 .letterhead{position:absolute;top:0;left:0;width:210mm;height:32mm;background:#122452;display:flex;align-items:center;padding-left:17mm;box-sizing:border-box;overflow:hidden}
 .letterhead-logo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;position:relative;z-index:1}
 .letterhead-logo svg{width:19mm;height:23mm}.letterhead-logo small{font-size:5pt;color:#fff;letter-spacing:1px}
@@ -114,5 +115,5 @@ body *{visibility:hidden!important}body{overflow:visible!important}
 .print-notes{border-top:1px solid #cdd3dd;padding-top:3mm;margin-top:7mm;break-inside:avoid}.print-notes p{white-space:pre-wrap;overflow-wrap:anywhere}
 .print-signature{text-align:center;margin-top:15mm;line-height:1.8;break-inside:avoid}
 .print-footer{position:absolute;left:0;bottom:0;width:210mm;height:22mm;background:#806c49;color:white;display:flex;justify-content:space-around;align-items:center;padding:2mm 9mm;box-sizing:border-box;font-size:7.2pt;line-height:1.6}.print-footer span+span{border-left:1px solid white;padding-left:4mm}
-}`}</style></div>;
+}`}</style></div>, document.body)};
 }
