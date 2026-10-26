@@ -25,7 +25,57 @@ const predefined:Model[]=[
 {title:"Proprietários",docs:["RG e CPF, inclusive dos cônjuges","Certidão de nascimento ou casamento","Pacto antenupcial, se houver","Comprovante de endereço"]},
 {title:"Confrontantes",docs:["RG e CPF, inclusive dos cônjuges","Certidão de nascimento ou casamento","Pacto antenupcial, se houver","Comprovante de endereço"]},
 {title:"Imóvel rural",docs:["Título aquisitivo","Certidão de inteiro teor atualizada","Certidão de ações reais e pessoais reipersecutórias","Certidão de ônus reais","CCIR","Certidão do ITR quitado","CAR","Memorial descritivo assinado","Mapa da área assinado","ART","Declaração individual de respeito de limites","Laudo de avaliação"]}]},
-{id:"retificacao",name:"Retificação de Área Rural",groups:[{title:"Documentos e peças técnicas",docs:["Requerimento dos proprietários com firma reconhecida","Matrícula atualizada e cadeia dominial, quando aplicável","Planta da situação atual do imóvel","Memorial descritivo","Laudo técnico, caso necessário","Anuências dos confrontantes ou declarações de reconhecimento de limites","Documento de responsabilidade técnica (RT) quitado","CCIR vigente e quitado","DIAT / ITR vigente","Certidão negativa de débitos do imóvel rural ou comprovantes de ITR dos últimos cinco exercícios"]}]},
+{id:"retificacao",name:"Retificação de Área Rural",groups:[
+{title:"1. Requerimento e qualificação",docs:[
+"Requerimento dirigido à serventia, assinado por todos os proprietários, com firmas reconhecidas",
+"Qualificação completa dos requerentes: nomes sem abreviações, RG/CPF ou CNPJ, nacionalidade, estado civil, união estável, filiação, profissão, endereço e e-mail",
+"Representação: instrumento original ou cópia autenticada que comprove os poderes, quando houver",
+"Procuração pública com poderes específicos para retificação/apuração de remanescente, quando aplicável",
+"Justificativa do pedido e declaração de inexistência de alteração de divisas e respeito aos direitos dos confrontantes",
+"Fundamentação do pedido nos arts. 212 e 213 da Lei 6.015/1973",
+"Valor atribuído ao imóvel",
+"Assinaturas de todos os proprietários e respectivos cônjuges, quando casados, com firmas reconhecidas"]},
+{title:"2. Certidões e situação registral",docs:[
+"Certidão de matrícula atualizada do imóvel (30 dias, conforme checklist de referência)",
+"Cadeia dominial até a disposição do Poder Público ao particular, quando originário/derivado de outra circunscrição"]},
+{title:"3. Planta da situação atual",docs:[
+"Planta elaborada por responsável técnico, com identificação/localização e caracterização dos imóveis confrontantes",
+"Planta com dimensões, endereço, informações fiscais, titulares e matrículas/transcrições dos confrontantes",
+"Assinatura dos proprietários, confrontantes e responsável técnico na planta",
+"Todos os vértices e dados do perímetro representados em escala legível",
+"Indicação de área registrada, área atual, diferença apurada e percentual da diferença",
+"Apresentação da planta em duas vias, conforme checklist da serventia"]},
+{title:"4. Memorial descritivo e laudo",docs:[
+"Memorial descritivo da área, elaborado e assinado pelo responsável técnico",
+"Memorial SIGEF assinado digitalmente pelo técnico, quando o imóvel for certificado pelo INCRA",
+"Laudo técnico autoexplicativo com informações suficientes, quando necessário"]},
+{title:"5. Confrontantes e reconhecimento de limites",docs:[
+"Declaração de reconhecimento de limites ou anuência individual dos confrontantes, vinculada à planta e ao memorial",
+"Declarações com identificação e perímetro da confrontação, assinaturas e reconhecimento de firmas exigidos",
+"Assinaturas de ambos os cônjuges dos confrontantes casados, conforme orientação do checklist",
+"Declaração com várias páginas: frente e verso ou rubricas nas folhas e reconhecimento na página do perímetro",
+"Anuência de órgãos competentes em confrontações com rodovias, ferrovias e ruas, quando aplicável",
+"Verificação de assinaturas sem formato híbrido (físico e digital), conforme orientação do PDF",
+"Confrontação com rio não navegável ou serra: reconhecimento pelos proprietários do outro lado, quando aplicável",
+"Confrontante possuidor: anuência do posseiro e cônjuge, tempo de posse, cadeia de aquisição e prova da posse",
+"Se o titular tabular do imóvel confrontante for identificável: obter também sua anuência, quando aplicável",
+"Confrontante pessoa jurídica: documentação de representação e poderes para reconhecer limites",
+"Pessoa jurídica: contrato social/consolidação e última alteração autenticados, quando aplicável",
+"Pessoa jurídica: cartão CNPJ, certidão simplificada da Junta Comercial e RG/CPF dos representantes, quando aplicável",
+"Representantes/procuradores dos confrontantes: instrumentos de poderes específicos, quando aplicável",
+"Imóvel confrontante em outra comarca: matrícula atualizada e certidão de filiação até a origem, quando aplicável",
+"Confrontante falecido: assinatura pelo inventariante ou legitimados indicados no checklist, conforme o caso"]},
+{title:"6. Responsabilidade técnica",docs:[
+"Documento de Responsabilidade Técnica (RT/ART pertinente) quitado",
+"RT devidamente assinada por responsável técnico e contratante, com serviço e área levantada corretamente especificados"]},
+{title:"7. Cadastro e tributos rurais",docs:[
+"CCIR vigente, quitado, em nome do proprietário e com dados atualizados",
+"DIAT / documento vigente de informação e apuração do ITR, com valor e dados atualizados",
+"Certidão negativa de débitos federais e dívida ativa relativa ao imóvel rural",
+"Alternativamente à certidão: comprovantes de ITR dos cinco últimos exercícios e DARFs quitados, conforme checklist"]},
+{title:"8. Documentos eletrônicos e observações",docs:[
+"Materialização de documentos eletrônicos ou assinados digitalmente, conforme orientação do checklist da serventia"]}
+]},
 {id:"usucapiao",name:"Ata Notarial de Usucapião Extrajudicial",groups:[
 {title:"Requerentes",docs:["Requerimento de ata notarial e diligência","RG e CPF, inclusive dos cônjuges","Certidão de nascimento ou casamento atualizada","Pacto antenupcial, se houver","Comprovante de endereço completo","Informar profissão","E-mail e telefone"]},
 {title:"Comprovação da posse",docs:["Justo título ou documentos de origem, continuidade, natureza e tempo da posse"]},
@@ -36,7 +86,7 @@ function load():Store {
 let data:Store={clients:[],models:predefined,jobs:[]};
 try {
  const raw=localStorage.getItem(KEY);
- if(raw){const value=JSON.parse(raw);if(Array.isArray(value.clients)&&Array.isArray(value.models)&&Array.isArray(value.jobs))return value;}
+ if(raw){const value=JSON.parse(raw);if(Array.isArray(value.clients)&&Array.isArray(value.models)&&Array.isArray(value.jobs)){const builtins=new Set(predefined.map(m=>m.id));return {...value,models:[...predefined,...value.models.filter((m:Model)=>!builtins.has(m.id))]};}}
  const legacy=localStorage.getItem("mw-despachante-local-v1");
  if(legacy){const old=JSON.parse(legacy);if(Array.isArray(old.templates)) {
  const names=new Set(predefined.map(m=>m.name));
@@ -58,6 +108,15 @@ const changeJob=(jobId:string,fn:(j:Job)=>Job)=>setData(d=>({...d,jobs:d.jobs.ma
 function addClient(e:React.FormEvent){e.preventDefault();if(!clientName.trim())return;const c={id:id(),name:clientName.trim(),phone:phone.trim()};setData(d=>({...d,clients:[...d.clients,c]}));setJobClient(c.id);setClientName("");setPhone("");}
 function addJob(e:React.FormEvent){e.preventDefault();const m=data.models.find(m=>m.id===jobModel);if(!m||!jobClient||!jobTitle.trim())return;const j:Job={id:id(),clientId:jobClient,title:jobTitle.trim(),modelId:m.id,sellers:[...sellers],buyers:[...buyers],docs:m.groups.flatMap(g=>g.docs.map(name=>({name,group:g.title,checked:false}))),notes:"",created:new Date().toISOString()};setData(d=>({...d,jobs:[j,...d.jobs]}));setSelected(j.id);setJobTitle("");setSellers([]);setBuyers([]);setSellerDraft("");setBuyerDraft("");}
 function addModel(e:React.FormEvent){e.preventDefault();const docs=modelDocs.split("\n").map(s=>s.trim()).filter(Boolean);if(!modelName.trim()||!docs.length)return;const m={id:id(),name:modelName.trim(),groups:[{title:"Documentação",docs}]};setData(d=>({...d,models:[...d.models,m]}));setModelName("");setModelDocs("");}
+function completeExistingChecklist(job:Job){
+ const model=data.models.find(m=>m.id===job.modelId);
+ if(!model)return;
+ const existing=new Set(job.docs.map(d=>d.group+"::"+d.name));
+ const additions=model.groups.flatMap(g=>g.docs.filter(name=>!existing.has(g.title+"::"+name)).map(name=>({name,group:g.title,checked:false,status:"pendente" as const})));
+ if(!additions.length){alert("O atendimento já possui todos os itens deste modelo atualizado.");return;}
+ if(!confirm("Adicionar "+additions.length+" exigências do modelo revisado a este atendimento? Os documentos já marcados permanecerão inalterados."))return;
+ changeJob(job.id,j=>({...j,docs:[...j.docs,...additions]}));
+}
 function removeClient(c:Client){if(data.jobs.some(j=>j.clientId===c.id)){alert("Exclua primeiro os atendimentos vinculados a este cliente.");return;}if(confirm("Excluir cliente "+c.name+"?"))setData(d=>({...d,clients:d.clients.filter(x=>x.id!==c.id)}));}
 function removeJob(j:Job){if(confirm("Excluir este atendimento e seu checklist?")){setData(d=>({...d,jobs:d.jobs.filter(x=>x.id!==j.id)}));if(selected===j.id)setSelected("");}}
 function printJob(j:Job){
@@ -119,7 +178,7 @@ return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wr
 {current&&<section className={panel+" space-y-4"}><div className="flex justify-between gap-3"><div><p className="text-xs text-[#9b7951]">Checklist do atendimento</p><h2 className="text-xl font-bold">{currentClient?.name}</h2><p className="text-sm text-slate-500">{current.title}</p></div><button aria-label="Fechar" onClick={()=>setSelected("")}><X size={20}/></button></div>
 <div className="grid gap-3 md:grid-cols-2">{peopleFields("sellers",current.sellers||[],sellerDraft,setSellerDraft,current.id)}{peopleFields("buyers",current.buyers||[],buyerDraft,setBuyerDraft,current.id)}</div>
 {Array.from(new Set(current.docs.map(d=>d.group))).map(group=><div key={group}><h3 className="mb-2 rounded-lg bg-[#f1ede6] px-3 py-2 text-sm font-bold text-[#625035]">{group}</h3><div className="space-y-2">{current.docs.map((d,i)=>d.group!==group?null:<label key={i} className="flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm"><label className="flex shrink-0 items-center gap-1.5 text-xs"><input type="checkbox" className="size-4 accent-emerald-700" checked={d.status==="recebido"||(d.checked&&d.status!=="dispensado")} onChange={e=>changeJob(current.id,j=>({...j,docs:j.docs.map((x,n)=>n===i?{...x,status:e.target.checked?"recebido":"pendente",checked:e.target.checked}:x)}))}/>Recebido</label><button type="button" className={"shrink-0 rounded-lg border px-2 py-2 text-xs "+(d.status==="dispensado"?"border-slate-400 bg-slate-200 text-slate-700":"border-slate-200 text-slate-500")} onClick={()=>changeJob(current.id,j=>({...j,docs:j.docs.map((x,n)=>n===i?{...x,status:d.status==="dispensado"?"pendente":"dispensado",checked:false}:x)}))}>{d.status==="dispensado"?"Reativar":"Dispensar"}</button><span className={"min-w-[170px] flex-1 font-medium "+(d.status==="dispensado"?"text-slate-400 line-through":"")}>{d.name}</span><input aria-label={"Informação complementar: "+d.name} className="w-full min-w-[170px] flex-[1.4] rounded-lg border border-[#e0c6a6] bg-amber-50/50 px-3 py-2 text-sm font-semibold text-[#98602b] placeholder:font-normal placeholder:text-[#a18d7a] focus:outline-none focus:ring-2 focus:ring-[#d2a46f]" placeholder="Digite aqui (ex.: profissão, data, número...)" value={d.detail||""} onChange={e=>changeJob(current.id,j=>({...j,docs:j.docs.map((x,n)=>n===i?{...x,detail:e.target.value}:x)}))}/></label>)}</div></div>)}
-<label className="block text-sm">Observações<textarea rows={3} className={input} value={current.notes} onChange={e=>changeJob(current.id,j=>({...j,notes:e.target.value}))}/></label><button onClick={()=>printJob(current)} className="inline-flex items-center gap-2 rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white"><Printer size={16}/> Imprimir relatório / salvar PDF</button></section>}</>}
+<label className="block text-sm">Observações<textarea rows={3} className={input} value={current.notes} onChange={e=>changeJob(current.id,j=>({...j,notes:e.target.value}))}/></label><button type="button" onClick={()=>completeExistingChecklist(current)} className="rounded-lg border border-[#967852] px-4 py-2.5 text-sm font-bold text-[#715735]">Adicionar itens do modelo revisado</button> <button onClick={()=>printJob(current)} className="inline-flex items-center gap-2 rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white"><Printer size={16}/> Imprimir relatório / salvar PDF</button></section>}</>}
 </div>
 {current&&createPortal(<div className="mw-despachante-paper hidden">
 <div className="letterhead"><div className="letterhead-logo"><svg viewBox="0 0 94 100" width="76" height="82" fill="none" stroke="#e8ae8c" strokeWidth="5" strokeLinejoin="round"><path d="M47 4 69 20v30l19-13v55L47 64 7 92V37l19 13V20Z"/><path d="M47 4v60M26 20v52M69 20v52M7 37l40 27 41-27M7 92l40-28 41 28"/></svg><small>DESPACHANTE IMOBILIÁRIO</small></div><span className="letterhead-wave"/></div>
