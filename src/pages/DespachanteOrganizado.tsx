@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { downloadDespachante, uploadDespachante } from "../services/despachanteSync";
+import { downloadDespachante, uploadDespachante, cloudRevision } from "../services/despachanteSync";
 import { ClipboardCheck, Printer, Plus, Trash2, Users, FolderOpen, FileText, Pencil, X } from "lucide-react";
 
 type Client = {id:string; name:string; phone:string};
@@ -102,7 +102,83 @@ const input="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-
 const panel="rounded-xl border border-slate-200 bg-white p-5 shadow-sm";
 export default function DespachanteOrganizado(){
 const [syncBusy,setSyncBusy]=useState(false),[syncInfo,setSyncInfo]=useState(""),[data,setData]=useState<Store>(load),[sellerDraft,setSellerDraft]=useState(""),[buyerDraft,setBuyerDraft]=useState(""),[sellers,setSellers]=useState<string[]>([]),[buyers,setBuyers]=useState<string[]>([]),[tab,setTab]=useState<Tab>("atendimentos"),[selected,setSelected]=useState(""),[search,setSearch]=useState(""),[clientName,setClientName]=useState(""),[phone,setPhone]=useState(""),[jobClient,setJobClient]=useState(""),[jobModel,setJobModel]=useState("rural"),[jobTitle,setJobTitle]=useState(""),[modelName,setModelName]=useState(""),[modelDocs,setModelDocs]=useState(""),[error,setError]=useState("");
+const [autoSync,setAutoSync]=useState(()=>localStorage.getItem("mw-despachante-auto-v1")==="on");
+const [syncStatus,setSyncStatus]=useState("Sincronização manual");
+const baseline=useRef<string|null>(null);
+const revision=useRef<string>("");
+const busyAuto=useRef(false);
 useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(data));setError("");}catch{setError("Não foi possível salvar os dados neste navegador.");}},[data]);
+useEffect(()=>{
+ if(!autoSync)return;
+ let alive=true;
+ const initialize=async()=>{
+  if(busyAuto.current)return;
+  busyAuto.current=true;
+  try{
+   const remote=await downloadDespachante();
+   const currentRevision=await cloudRevision();
+   if(!alive)return;
+   if(remote){
+    const content=JSON.stringify(remote);
+    const local=localStorage.getItem(KEY);
+    if(local&&local!==content&&baseline.current===null){
+     // No silent overwrite on a device with unknown local changes.
+     setSyncStatus("Dados locais e da nuvem diferem. Use Baixar da nuvem para escolher a versão.");
+     setAutoSync(false);localStorage.removeItem("mw-despachante-auto-v1");return;
+    }
+    baseline.current=content;revision.current=currentRevision;
+   }else{
+    baseline.current=localStorage.getItem(KEY)||JSON.stringify(data);
+    revision.current="";
+   }
+   setSyncStatus("Sincronização automática ativa");
+  }catch(e){if(alive)setSyncStatus("Falha ao conectar: "+(e instanceof Error?e.message:String(e)));}
+  finally{busyAuto.current=false;}
+ };
+ void initialize();
+ return ()=>{alive=false;};
+},[autoSync]);
+useEffect(()=>{
+ if(!autoSync||baseline.current===null||busyAuto.current)return;
+ const serialized=JSON.stringify(data);
+ if(serialized===baseline.current)return;
+ const handle=window.setTimeout(async()=>{
+  if(busyAuto.current)return;
+  busyAuto.current=true;setSyncStatus("Salvando na nuvem...");
+  try{
+   await uploadDespachante(data,revision.current);
+   revision.current=await cloudRevision();
+   baseline.current=serialized;
+   setSyncStatus("Alterações salvas na nuvem");
+  }catch(e){
+   setSyncStatus("Sincronização interrompida: "+(e instanceof Error?e.message:String(e)));
+   setAutoSync(false);localStorage.removeItem("mw-despachante-auto-v1");
+  }finally{busyAuto.current=false;}
+ },1700);
+ return ()=>window.clearTimeout(handle);
+},[data,autoSync]);
+async function enableAutoSync(){
+ setSyncBusy(true);
+ try{
+  const remote=await downloadDespachante();
+  if(remote){
+   if(!window.confirm("Para ativar a sincronização automática, os dados deste dispositivo serão substituídos pela cópia da nuvem. Confirme somente se os dados mais recentes já foram enviados."))return;
+   const valid=remote as Store; const builtins=new Set(predefined.map(m=>m.id));
+   const dataNext={...valid,models:[...predefined,...valid.models.filter(m=>!builtins.has(m.id))]};
+   baseline.current=JSON.stringify(dataNext);
+   revision.current=await cloudRevision();setData(dataNext);
+  }else{
+   if(!window.confirm("Não existe cópia na nuvem. Ativar salvamento automático dos dados deste dispositivo?"))return;
+   baseline.current=JSON.stringify(data);revision.current="";
+   await uploadDespachante(data,"");
+   revision.current=await cloudRevision();
+  }
+  localStorage.setItem("mw-despachante-auto-v1","on");
+  setAutoSync(true);setSyncStatus("Sincronização automática ativa");
+ }catch(e){setSyncStatus("Erro: "+(e instanceof Error?e.message:String(e)));}
+ finally{setSyncBusy(false);}
+}
+
 const current=data.jobs.find(j=>j.id===selected);const currentClient=data.clients.find(c=>c.id===current?.clientId);
 const jobs=useMemo(()=>data.jobs.filter(j=>{const c=data.clients.find(c=>c.id===j.clientId);return (c?.name+" "+j.title).toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"));}),[data,search]);
 const changeJob=(jobId:string,fn:(j:Job)=>Job)=>setData(d=>({...d,jobs:d.jobs.map(j=>j.id===jobId?fn(j):j)}));
@@ -194,7 +270,7 @@ function peopleFields(kind:"sellers"|"buyers",names:string[],draft:string,setDra
  {names.length>0&&<div className="mt-2 space-y-1">{names.map((name,i)=><div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs"><span>{i+1}. {name}</span><button type="button" aria-label={"Remover "+name} onClick={()=>jobId?changeJob(jobId,j=>({...j,[kind]:(j[kind]||[]).filter((_,n)=>n!==i)})):kind==="sellers"?setSellers(x=>x.filter((_,n)=>n!==i)):setBuyers(x=>x.filter((_,n)=>n!==i))} className="text-red-600"><Trash2 size={15}/></button></div>)}</div>}</div>;
 }
 return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#967852]">MW TECH CONTROL</p><h1 className="text-2xl font-extrabold text-[#10234d]">MW Despachante</h1><p className="text-sm text-slate-500">Organização de clientes, atendimentos e documentação imobiliária</p></div><ClipboardCheck size={35} color="#967852"/></div>
-<div className="rounded-lg border border-[#b6a07a] bg-[#faf8f3] p-4 space-y-2"><div className="font-bold text-sm text-[#122452]">Sincronização entre computador e tablet</div><p className="text-xs text-slate-600">Primeiro, no computador que contém seus atendimentos, clique em Enviar para a nuvem. Depois, no tablet, clique em Baixar da nuvem. Esta primeira etapa é manual, para evitar substituir dados sem querer.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Enviar dados deste dispositivo</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Baixar dados da nuvem</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">A sincronização automática ainda não está ativada. Sempre envie suas alterações antes de baixar em outro dispositivo. O armazenamento local permanece como cópia de segurança.</p></div>{error&&<p role="alert" className="text-red-600">{error}</p>}
+<div className="rounded-lg border border-[#b6a07a] bg-[#faf8f3] p-4 space-y-2"><div className="font-bold text-sm text-[#122452]">Sincronização entre computador e tablet</div><p className="text-xs font-semibold text-[#715735]">{syncStatus}</p><button type="button" disabled={syncBusy} onClick={()=>autoSync?(setAutoSync(false),localStorage.removeItem("mw-despachante-auto-v1"),setSyncStatus("Sincronização automática desativada")):void enableAutoSync()} className="rounded-lg border border-[#806d4e] px-3 py-2 text-xs font-bold">{autoSync?"Desativar sincronização automática":"Ativar sincronização automática"}</button><p className="text-xs text-slate-600">Primeiro, no computador que contém seus atendimentos, clique em Enviar para a nuvem. Depois, no tablet, clique em Baixar da nuvem. Esta primeira etapa é manual, para evitar substituir dados sem querer.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Enviar dados deste dispositivo</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Baixar dados da nuvem</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">A sincronização automática ainda não está ativada. Sempre envie suas alterações antes de baixar em outro dispositivo. O armazenamento local permanece como cópia de segurança.</p></div>{error&&<p role="alert" className="text-red-600">{error}</p>}
 <div className="grid grid-cols-3 gap-3">{[{name:"Clientes",n:data.clients.length},{name:"Atendimentos",n:data.jobs.length},{name:"Concluídos",n:data.jobs.filter(j=>j.docs.length>0&&j.docs.every(d=>d.checked)).length}].map(item=><div key={item.name} className={panel}><p className="text-xs text-slate-500">{item.name}</p><p className="mt-1 text-2xl font-bold text-[#10234d]">{item.n}</p></div>)}</div>
 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">{([{k:"atendimentos",label:"Atendimentos",Icon:FolderOpen},{k:"clientes",label:"Clientes",Icon:Users},{k:"modelos",label:"Modelos de checklist",Icon:FileText}] as const).map(x=><button key={x.k} onClick={()=>{setTab(x.k);setSelected("");}} className={"flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold "+(tab===x.k?"bg-[#10234d] text-white":"border border-slate-200 bg-white text-slate-700")}><x.Icon size={16}/>{x.label}</button>)}</div>
 {tab==="clientes"&&<div className="grid gap-5 lg:grid-cols-3"><form onSubmit={addClient} className={panel+" space-y-3"}><h2 className="font-bold">Novo cliente</h2><label className="block text-sm">Nome completo<input className={input} required value={clientName} onChange={e=>setClientName(e.target.value)}/></label><label className="block text-sm">Telefone<input className={input} value={phone} onChange={e=>setPhone(e.target.value)}/></label><button className="rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white">Cadastrar cliente</button></form><section className={panel+" lg:col-span-2"}><h2 className="mb-3 font-bold">Clientes cadastrados</h2>{!data.clients.length?<p className="text-sm text-slate-500">Nenhum cliente cadastrado.</p>:<div className="space-y-2">{data.clients.map(c=><div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"><span><b className="block text-sm">{c.name}</b><small className="text-slate-500">{c.phone||"Sem telefone"} · {data.jobs.filter(j=>j.clientId===c.id).length} atendimento(s)</small></span><div className="flex gap-2"><button title="Novo atendimento" onClick={()=>{setJobClient(c.id);setTab("atendimentos");}} className="rounded-lg border px-3 py-2 text-xs"><Plus size={15}/></button><button title="Editar" onClick={()=>{const name=prompt("Nome do cliente",c.name);if(name===null||!name.trim())return;const tel=prompt("Telefone",c.phone);if(tel===null)return;setData(d=>({...d,clients:d.clients.map(x=>x.id===c.id?{...x,name:name.trim(),phone:tel}:x)}));}} className="rounded-lg border px-3 py-2"><Pencil size={15}/></button><button title="Excluir" onClick={()=>removeClient(c)} className="rounded-lg border border-red-200 px-3 py-2 text-red-700"><Trash2 size={15}/></button></div></div>)}</div>}</section></div>}
