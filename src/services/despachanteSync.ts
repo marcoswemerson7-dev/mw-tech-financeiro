@@ -42,7 +42,11 @@ export async function downloadDespachante():Promise<Snapshot|null>{
  if(!valid(snapshot))throw Error("Dados recebidos da nuvem inválidos");
  return snapshot;
 }
-export async function cloudRevision(){\n const owner=await userId();\n try { const row=await readRow(owner); return String(row.$updatedAt||""); } catch(e){if(Number((e as {code?:number}).code)===404)return "";throw e;}\n}\nexport async function uploadDespachante(data:Snapshot, expectedRevision?:string){
+export async function cloudRevision(){
+ const owner=await userId();
+ try { const row=await readRow(owner); return String(row.$updatedAt||""); } catch(e){if(Number((e as {code?:number}).code)===404)return "";throw e;}
+}
+export async function uploadDespachante(data:Snapshot, expectedRevision?:string){
  const owner=await userId();
  const encoded=encode(JSON.stringify(data));
  const parts=chunksOf(encoded);
@@ -54,7 +58,9 @@ export async function cloudRevision(){\n const owner=await userId();\n try { con
   await saveRow(rowId,owner,parts[i]);
   ids.push(rowId);
  }
- // Prevent a stale device from overwriting a newer manifest.\n if(expectedRevision!==undefined && await cloudRevision()!==expectedRevision)throw Error("Conflito: outro dispositivo atualizou os dados. Baixe a versão mais recente antes de enviar.");\n // The manifest changes only after all new chunks have been written.
+ // Prevent a stale device from overwriting a newer manifest.
+ if(expectedRevision!==undefined && await cloudRevision()!==expectedRevision)throw Error("Conflito: outro dispositivo atualizou os dados. Baixe a versão mais recente antes de enviar.");
+ // The manifest changes only after all new chunks have been written.
  const manifest:Manifest={version:2,chunks:ids,updatedAt:new Date().toISOString()};
  await saveRow(owner,owner,JSON.stringify(manifest));
 }
