@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Trash2, Download, Upload, BookOpen, Clock, Bold, Italic, Underline, List, ListOrdered, Highlighter, AlignLeft, Printer } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import InkNotebook from "../components/InkNotebook";
+import { readAgendaCloud, writeAgendaCloud, type AgendaSnapshot } from "../services/agendaSync";
 
 type EventItem={id:string;date:string;time:string;title:string;category:string;notes:string;done:boolean};
 type View="mes"|"semana"|"dia";
@@ -19,6 +20,8 @@ export default function Agenda(){
  const [notebook,setNotebook]=useState(false);
  const [inkMode,setInkMode]=useState(false);
  const [pageInfo,setPageInfo]=useState("");
+ const [cloudBusy,setCloudBusy]=useState(false);
+ const [cloudMessage,setCloudMessage]=useState("");
  const [ready,setReady]=useState(false);
  const [view,setView]=useState<View>("mes");
  const [selected,setSelected]=useState(format(new Date()));
@@ -54,11 +57,47 @@ export default function Agenda(){
  const loadItem=(x:EventItem)=>{setSelected(x.date);setTitle(x.title);setTime(x.time);setCategory(x.category);setNotes(x.notes);setEditing(x.id);};
  const btn="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50";
  const input="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#b69a6c]";
+ function snapshot():AgendaSnapshot {
+  const ink:Record<string,unknown[]>={};
+  const prefix=key+":ink:";
+  for(let i=0;i<localStorage.length;i++){
+   const itemKey=localStorage.key(i);if(!itemKey?.startsWith(prefix))continue;
+   try{const value=JSON.parse(localStorage.getItem(itemKey)||"[]");if(Array.isArray(value))ink[itemKey.slice(prefix.length)]=value;}catch{/* ignore malformed local stroke */}
+  }
+  return {version:3,items,pages,ink};
+ }
+ async function sendCloud(){
+  setCloudBusy(true);setCloudMessage("");
+  try{
+   const existing=await readAgendaCloud();
+   if(existing&&!confirm("Já existe agenda salva na nuvem. Substituir pelos dados deste dispositivo? Faça backup antes."))return;
+   await writeAgendaCloud(snapshot(),existing?.revision||"");
+   setCloudMessage("Agenda enviada para o Appwrite. Agora você pode baixar no tablet.");
+  }catch(e){setCloudMessage("Não foi possível enviar: "+(e instanceof Error?e.message:String(e)));}
+  finally{setCloudBusy(false);}
+ }
+ async function receiveCloud(){
+  setCloudBusy(true);setCloudMessage("");
+  try{
+   const cloud=await readAgendaCloud();
+   if(!cloud){setCloudMessage("Ainda não existem dados da Agenda no Appwrite.");return;}
+   if(!confirm("Substituir os compromissos, textos e páginas manuscritas deste dispositivo pelos dados da nuvem? Faça backup antes."))return;
+   setItems(cloud.data.items as EventItem[]);
+   setPages(cloud.data.pages);
+   const prefix=key+":ink:";
+   const oldKeys=Array.from({length:localStorage.length},(_,i)=>localStorage.key(i)).filter((k):k is string=>!!k&&k.startsWith(prefix));
+   oldKeys.forEach(k=>localStorage.removeItem(k));
+   for(const [date,strokes] of Object.entries(cloud.data.ink)){if(/^\\d{4}-\\d{2}-\\d{2}$/.test(date)&&Array.isArray(strokes))localStorage.setItem(prefix+date,JSON.stringify(strokes));}
+   setCloudMessage("Dados baixados. Reabra o caderno para atualizar a escrita manuscrita.");
+  }catch(e){setCloudMessage("Não foi possível baixar: "+(e instanceof Error?e.message:String(e)));}
+  finally{setCloudBusy(false);}
+ }
  function exportData(){const ink=Object.fromEntries(Object.keys(localStorage).filter(k=>k.startsWith(key+":ink:")).map(k=>[k.slice((key+":ink:").length),JSON.parse(localStorage.getItem(k)||"[]")]));const blob=new Blob([JSON.stringify({version:3,items,pages,ink},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="agenda-mw-tech-backup.json";a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);}
  async function importData(e:React.ChangeEvent<HTMLInputElement>){const file=e.target.files?.[0];if(!file)return;try{const parsed=JSON.parse(await file.text());if(![1,2,3].includes(parsed.version)||!Array.isArray(parsed.items)||!parsed.items.every((x:unknown)=>!!x&&typeof x==="object"&&typeof (x as EventItem).id==="string"&&typeof (x as EventItem).date==="string"&&typeof (x as EventItem).title==="string"))throw Error("Arquivo inválido");if(!confirm("Substituir compromissos locais pelo arquivo importado? Faça um backup antes."))return;setItems(parsed.items);if(parsed.pages&&typeof parsed.pages==="object"&&!Array.isArray(parsed.pages))setPages(Object.fromEntries(Object.entries(parsed.pages).map(([k,v])=>[k,safeHtml(String(v))])));if(parsed.ink&&typeof parsed.ink==="object"){for(const [day,strokes] of Object.entries(parsed.ink)){if(/^\\d{4}-\\d{2}-\\d{2}$/.test(day)&&Array.isArray(strokes))localStorage.setItem(key+":ink:"+day,JSON.stringify(strokes));}}setMessage("Backup importado. Reabra a página para visualizar a escrita à mão.");}catch{setMessage("Não foi possível importar este arquivo.");}finally{e.target.value="";}}
  return <div className="mx-auto max-w-7xl space-y-5">
  <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm"><div className="min-w-0 space-y-1"><p className="text-xs font-bold uppercase tracking-[.18em] text-[#95734d]">MW TECH CONTROL</p><h1 className="flex items-center gap-2 text-2xl font-extrabold text-[#122452]"><CalendarDays size={28} className="text-[#a18357]"/> Minha Agenda</h1><p className="text-sm text-slate-500">Planejamento de compromissos e registros do dia</p></div><div className="flex flex-wrap gap-2"><button onClick={exportData} className={btn}><Download size={15} className="mr-1 inline"/>Backup</button><label className={btn+" cursor-pointer"}><Upload size={15} className="mr-1 inline"/>Importar<input type="file" accept="application/json" className="hidden" onChange={e=>void importData(e)}/></label></div></header>
- <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Seus compromissos e páginas de anotações estão salvos neste navegador. Faça backup regularmente. A sincronização entre tablet e computador exige uma tabela própria no Appwrite, ainda não configurada.</div>
+ <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Os dados permanecem neste navegador até você enviar para a nuvem. Configure a tabela agenda_dados no Appwrite antes de usar os botões. A sincronização inicial é manual.</div>
+ <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#d9c4a2] bg-[#faf8f4] p-3"><span className="mr-auto text-xs font-semibold text-[#64513a]">Appwrite — Agenda independente</span><button disabled={cloudBusy} onClick={()=>void sendCloud()} className={btn+" disabled:opacity-50"}>Enviar agenda para nuvem</button><button disabled={cloudBusy} onClick={()=>void receiveCloud()} className={btn+" disabled:opacity-50"}>Baixar agenda da nuvem</button>{cloudMessage&&<p className="w-full text-xs text-[#795b39]" role="status">{cloudMessage}</p>}</div>
  <div className="flex flex-wrap gap-2"><button className={btn+(notebook?" !bg-[#122452] !text-white":"")} onClick={()=>setNotebook(false)}>Calendário e compromissos</button><button className={btn+(notebook?" !bg-[#122452] !text-white":"")} onClick={()=>setNotebook(true)}><BookOpen size={15} className="mr-1 inline"/>Caderno de anotações</button></div>
  {notebook?<div className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-widest text-[#987754]">Caderno digital MW TECH</p><h2 className="text-xl font-extrabold text-[#122452]">Anotações de {date.toLocaleDateString("pt-BR")}</h2></div><div className="flex items-center gap-2"><button type="button" className={btn} onClick={()=>setSelected(format(nextDay(date,-1)))}><ChevronLeft size={17}/></button><input type="date" className={input+" !w-auto"} value={selected} onChange={e=>setSelected(e.target.value)}/><button type="button" className={btn} onClick={()=>setSelected(format(nextDay(date,1)))}><ChevronRight size={17}/></button></div></div>
 <div className="mb-3 flex flex-wrap gap-2"><button type="button" className={btn+(inkMode?"":" !bg-[#122452] !text-white")} onClick={()=>setInkMode(false)}>Digitar e formatar</button><button type="button" className={btn+(inkMode?" !bg-[#122452] !text-white":"")} onClick={()=>setInkMode(true)}>Escrever com caneta</button></div>
