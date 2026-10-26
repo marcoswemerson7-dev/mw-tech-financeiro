@@ -48,7 +48,7 @@ export default function InkNotebook({dateKey,storageKey,active=true,embedded=fal
   drawing.current.points.push(point(e));render();
  };
  const finish=()=>{if(!drawing.current)return;const s=drawing.current;drawing.current=null;setStrokes(v=>[...v,s]);};
- return <div className={embedded?"absolute inset-0":"space-y-3"} style={embedded?{pointerEvents:active?"auto":"none"}:{}}>
+ return <div className={embedded?"absolute inset-0 z-20":"space-y-3"} style={embedded?{pointerEvents:active?"auto":"none"}:{}}>
  {active&&<div className={embedded?"absolute -top-[55px] left-0 right-0 z-20 flex flex-wrap items-center gap-2 rounded-xl border bg-[#f8f6f1] p-2":"flex flex-wrap items-center gap-2 rounded-xl border bg-[#f8f6f1] p-2"}>
   <button type="button" onClick={()=>setMode("pen")} className={"rounded-lg px-3 py-2 text-sm "+(mode==="pen"?"bg-[#122452] text-white":"bg-white")}><PenLine className="mr-1 inline" size={16}/> Caneta</button>
   <button type="button" onClick={()=>setMode("eraser")} className={"rounded-lg px-3 py-2 text-sm "+(mode==="eraser"?"bg-[#122452] text-white":"bg-white")}><Eraser className="mr-1 inline" size={16}/> Borracha</button>
