@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Eraser, PenLine, Undo2, Trash2 } from "lucide-react";
 
 type Stroke={points:{x:number;y:number}[];color:string;width:number};
-type Props={dateKey:string;storageKey:string};
+type Props={dateKey:string;storageKey:string;active?:boolean;embedded?:boolean};
 const colors=["#172d52","#171717","#b33131","#977043","#247b57"];
-export default function InkNotebook({dateKey,storageKey}:Props){
+export default function InkNotebook({dateKey,storageKey,active=true,embedded=false}:Props){
  const canvas=useRef<HTMLCanvasElement>(null);
  const drawn=useRef<Stroke[]>([]);
  const drawing=useRef<Stroke|null>(null);
@@ -18,7 +18,7 @@ export default function InkNotebook({dateKey,storageKey}:Props){
  const render=()=>{
   const el=canvas.current;if(!el)return;
   const ctx=el.getContext("2d");if(!ctx)return;
-  const box=el.getBoundingClientRect();const scale=window.devicePixelRatio||1;
+  const box=el.getBoundingClientRect();if(box.width===0||box.height===0)return;const scale=window.devicePixelRatio||1;
   const w=Math.max(1,Math.round(box.width*scale)),h=Math.max(1,Math.round(box.height*scale));
   if(el.width!==w||el.height!==h){el.width=w;el.height=h;}
   ctx.setTransform(scale,0,0,scale,0,0);ctx.clearRect(0,0,box.width,box.height);
@@ -34,7 +34,7 @@ export default function InkNotebook({dateKey,storageKey}:Props){
  useEffect(()=>{render();const obs=new ResizeObserver(render);if(canvas.current)obs.observe(canvas.current);return()=>obs.disconnect();},[dateKey,strokes]);
  const point=(e:React.PointerEvent<HTMLCanvasElement>)=>{const box=e.currentTarget.getBoundingClientRect();return{x:(e.clientX-box.left)/box.width,y:(e.clientY-box.top)/box.height};};
  const start=(e:React.PointerEvent<HTMLCanvasElement>)=>{
-  if(e.pointerType==="touch"&&mode==="pen")return; // preserve finger scrolling; pen or mouse draws
+  if(!active)return;if(e.pointerType==="touch")return; // preserve finger scrolling; pen or mouse draws
   if(e.button!==0&&e.pointerType==="mouse")return;
   e.currentTarget.setPointerCapture(e.pointerId);
   if(mode==="eraser"){
@@ -48,18 +48,18 @@ export default function InkNotebook({dateKey,storageKey}:Props){
   drawing.current.points.push(point(e));render();
  };
  const finish=()=>{if(!drawing.current)return;const s=drawing.current;drawing.current=null;setStrokes(v=>[...v,s]);};
- return <div className="space-y-3">
- <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-[#f8f6f1] p-2">
+ return <div className={embedded?"absolute inset-0":"space-y-3"} style={embedded?{pointerEvents:active?"auto":"none"}:{}}>
+ {active&&<div className={embedded?"absolute -top-[55px] left-0 right-0 z-20 flex flex-wrap items-center gap-2 rounded-xl border bg-[#f8f6f1] p-2":"flex flex-wrap items-center gap-2 rounded-xl border bg-[#f8f6f1] p-2"}>
   <button type="button" onClick={()=>setMode("pen")} className={"rounded-lg px-3 py-2 text-sm "+(mode==="pen"?"bg-[#122452] text-white":"bg-white")}><PenLine className="mr-1 inline" size={16}/> Caneta</button>
   <button type="button" onClick={()=>setMode("eraser")} className={"rounded-lg px-3 py-2 text-sm "+(mode==="eraser"?"bg-[#122452] text-white":"bg-white")}><Eraser className="mr-1 inline" size={16}/> Borracha</button>
   {colors.map(c=><button type="button" key={c} onClick={()=>{setColor(c);setMode("pen");}} aria-label={"Cor "+c} className={"h-7 w-7 rounded-full border-2 "+(color===c?"border-[#b89e71]":"border-white")} style={{backgroundColor:c}}/>)}
   <label className="flex items-center gap-1 text-xs">Espessura <input type="range" min="1" max="9" step=".5" value={width} onChange={e=>setWidth(Number(e.target.value))}/></label>
   <button type="button" onClick={()=>setStrokes(v=>v.slice(0,-1))} className="rounded-lg border bg-white p-2" title="Desfazer último traço"><Undo2 size={16}/></button>
   <button type="button" onClick={()=>{if(confirm("Apagar todos os traços deste dia?"))setStrokes([]);}} className="rounded-lg border bg-white p-2 text-red-600" title="Apagar escrita"><Trash2 size={16}/></button>
+ </div>}
+ <div className={embedded?"absolute inset-0":"relative overflow-hidden rounded-xl border border-[#dcc8a7] bg-[#fffefa]"} style={embedded?{}:{backgroundImage:"repeating-linear-gradient(to bottom,transparent 0px,transparent 35px,#e8ddd0 35px,#e8ddd0 36px)"}}>
+  <canvas ref={canvas} aria-label="Área de escrita livre com caneta" onPointerDown={start} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} className={embedded?"block h-full w-full cursor-crosshair":"block h-[700px] w-full cursor-crosshair"} style={{touchAction:"pan-y"}}/>
  </div>
- <div className="relative overflow-hidden rounded-xl border border-[#dcc8a7] bg-[#fffefa]" style={{backgroundImage:"repeating-linear-gradient(to bottom,transparent 0px,transparent 35px,#e8ddd0 35px,#e8ddd0 36px)"}}>
-  <canvas ref={canvas} aria-label="Área de escrita livre com caneta" onPointerDown={start} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} className="block h-[700px] w-full cursor-crosshair" style={{touchAction:"pan-y"}}/>
- </div>
- <p className="text-xs text-slate-500">Use a caneta do tablet ou o mouse para escrever. O toque do dedo permanece para rolar a página. A borracha remove os traços próximos ao toque. Os desenhos ficam salvos neste dispositivo.</p>
+ {!embedded&&<p className="text-xs text-slate-500">Use a caneta do tablet ou o mouse para escrever. O toque do dedo permanece para rolar a página.</p>}
  </div>;
 }
