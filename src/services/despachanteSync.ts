@@ -1,4 +1,4 @@
-import { Permission, Query, Role } from "appwrite";
+import { Permission, Role } from "appwrite";
 import { account, appwriteConfig, tables } from "../lib/appwrite";
 
 const TABLE = "despachante_dados";
