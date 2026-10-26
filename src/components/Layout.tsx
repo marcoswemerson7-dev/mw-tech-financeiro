@@ -29,6 +29,7 @@ import {
   Code2,
   Moon,
   ClipboardCheck,
+  CalendarDays,
   Sun,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -51,6 +52,7 @@ const financeItems = [
 
 const managementItems = [
   ["/despachante", "MW Despachante", ClipboardCheck],
+  ["/agenda", "Minha Agenda", CalendarDays],
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/central-municipal", "Central Municipal", Network],
   ["/monitoramento", "Monitoramento", Activity],
