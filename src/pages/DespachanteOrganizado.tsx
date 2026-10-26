@@ -61,21 +61,23 @@ function addModel(e:React.FormEvent){e.preventDefault();const docs=modelDocs.spl
 function removeClient(c:Client){if(data.jobs.some(j=>j.clientId===c.id)){alert("Exclua primeiro os atendimentos vinculados a este cliente.");return;}if(confirm("Excluir cliente "+c.name+"?"))setData(d=>({...d,clients:d.clients.filter(x=>x.id!==c.id)}));}
 function removeJob(j:Job){if(confirm("Excluir este atendimento e seu checklist?")){setData(d=>({...d,jobs:d.jobs.filter(x=>x.id!==j.id)}));if(selected===j.id)setSelected("");}}
 function printJob(j:Job){
- const popup=window.open("", "_blank");
- if(!popup){alert("Permita janelas pop-up para imprimir o relatório.");return;}
- popup.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório MW Despachante</title></head><body style="margin:0">Preparando relatório...</body></html>');
+ const clientName=data.clients.find(c=>c.id===j.clientId)?.name||"—";
+ const escapeHtml=(value:string)=>value.replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]||ch));
+ const received=(d:Job["docs"][number])=>d.status==="recebido"||(d.checked&&d.status!=="dispensado");
+ const exempt=(d:Job["docs"][number])=>d.status==="dispensado";
+ const pending=j.docs.filter(d=>!received(d)&&!exempt(d)).length;
+ const groups=Array.from(new Set(j.docs.map(d=>d.group)));
+ const tables=groups.map(group=>'<section class="group"><h2>'+escapeHtml(group)+'</h2><table><thead><tr><th>Documento / Informação complementar</th><th>Situação</th></tr></thead><tbody>'+
+ j.docs.filter(d=>d.group===group).map(d=>'<tr><td><span class="'+(exempt(d)?"strike":"")+'">'+escapeHtml(d.name)+'</span>'+(d.detail?'<span class="detail"> — '+escapeHtml(d.detail)+'</span>':'')+'</td><td class="'+(exempt(d)?"exempt":received(d)?"received":"pending")+'">'+(exempt(d)?"Dispensado":received(d)?"Recebido":"Pendente")+'</td></tr>').join("")+'</tbody></table></section>').join("");
+ const css=`@page{size:A4 portrait;margin:12mm 13mm}*{box-sizing:border-box}body{font:10pt Arial,sans-serif;color:#152747;margin:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.top{background:#122452;color:#fff;padding:15px 21px;border-bottom:6px solid #806c49;display:flex;align-items:center;gap:17px}.logo{font-size:34px;letter-spacing:-4px;color:#edb092;font-weight:800}.identity{font-size:13px;letter-spacing:1px;font-weight:bold}.tagline{font-size:9px;opacity:.85;margin-top:4px}.content{position:relative}.watermark{position:fixed;top:35%;right:2%;font-size:150px;font-weight:800;color:rgba(231,176,140,.10);z-index:-1;pointer-events:none}.title{text-align:center;margin:18px 0}.title h1{font-size:17pt;margin:0 0 5px}.title p{margin:0;color:#756443}.info{border:1px solid #d8dce5;border-left:4px solid #9b7951;border-radius:4px;padding:12px 16px;line-height:1.55;background:rgba(255,255,255,.9)}.info p{margin:3px 0;overflow-wrap:anywhere}.stats{display:flex;gap:9px;margin:13px 0 18px}.stats span{flex:1;text-align:center;border:1px solid #e0e3e8;background:#f8f7f4;padding:8px;border-radius:4px}.group{margin:15px 0;break-inside:auto}.group h2{font-size:10pt;background:#eeeae2;color:#5a4830;padding:9px 11px;margin:0;break-after:avoid}table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th{text-align:left;color:#5b6677;font-size:8pt;padding:8px;border-bottom:1px solid #ccd2db}th:last-child,td:last-child{width:84px;text-align:center}td{padding:7px 8px;border-bottom:1px solid #e0e4eb;vertical-align:top;font-size:9pt;overflow-wrap:anywhere}.detail{color:#956025;font-weight:700}.strike{text-decoration:line-through;color:#9ca3af}.received{color:#156c45;font-weight:bold}.pending{color:#936d29}.exempt{color:#6b7280}.notes{margin-top:20px;border-top:1px solid #ddd;padding-top:10px;white-space:pre-wrap;overflow-wrap:anywhere}.sign{text-align:center;margin:35px 0 20px;break-inside:avoid}.footer{margin-top:22px;padding:12px 18px;background:#806c49;color:white;display:flex;gap:16px;justify-content:space-between;font-size:8pt;line-height:1.6;break-inside:avoid}.footer div{flex:1} @media print{.top{break-after:avoid}.group h2{break-after:avoid}.footer{break-inside:avoid}}`;
+ const body='<div class="top"><div class="logo">MW</div><div><div class="identity">MW DESPACHANTE IMOBILIÁRIO</div><div class="tagline">CONTROLE DE DOCUMENTAÇÃO</div></div></div><main class="content"><div class="watermark">MW</div><div class="title"><h1>RELATÓRIO DE CHECKLIST</h1><p>Conferência de documentos do atendimento</p></div><div class="info"><p><b>Cliente:</b> '+escapeHtml(clientName)+'</p><p><b>Serviço:</b> '+escapeHtml(j.title)+'</p><p><b>Data:</b> '+new Date(j.created).toLocaleDateString("pt-BR")+'</p><p><b>Vendedores:</b> '+escapeHtml((j.sellers||[]).join("; ")||"Não informado")+'</p><p><b>Compradores:</b> '+escapeHtml((j.buyers||[]).join("; ")||"Não informado")+'</p></div><div class="stats"><span><b>'+j.docs.length+'</b> documentos</span><span><b>'+j.docs.filter(received).length+'</b> recebidos</span><span><b>'+pending+'</b> pendentes</span><span><b>'+j.docs.filter(exempt).length+'</b> dispensados</span></div>'+tables+'<div class="notes"><b>Observações:</b> '+escapeHtml(j.notes||"Nenhuma observação registrada.")+'</div><div class="sign">________________________________________<br>Responsável pelo atendimento</div></main><div class="footer"><div>(89) 9 9930-8209</div><div>despachantemarcoswemerson@gmail.com<br>marcoswemerson7@gmail.com</div><div>Ribeiro Gonçalves–PI<br>Baixa Grande do Ribeiro–PI</div></div>';
+ const popup=window.open("","_blank");
+ if(!popup){alert("O navegador bloqueou a janela de impressão. Permita pop-ups para este site.");return;}
+ popup.document.open();
+ popup.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Checklist - MW Despachante</title><style>'+css+'</style></head><body>'+body+'</body></html>');
  popup.document.close();
- setSelected(j.id);
- window.setTimeout(()=>{
-  const paper=document.querySelector(".mw-despachante-paper");
-  if(!paper){popup.close();alert("Não foi possível preparar a impressão.");return;}
-  const html=paper.outerHTML.replace('mw-despachante-paper hidden','mw-despachante-paper');
-  popup.document.open();
-  popup.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Checklist - MW Despachante</title><style>body{margin:0;font-family:Arial,sans-serif}</style></head><body>'+html+'</body></html>');
-  popup.document.close();
-  popup.focus();
-  popup.setTimeout(()=>popup.print(),350);
- },220);
+ popup.focus();
+ popup.setTimeout(()=>popup.print(),500);
 }
 function addPerson(kind:"sellers"|"buyers",name:string,jobId?:string){
  const cleaned=name.trim();if(!cleaned)return;
