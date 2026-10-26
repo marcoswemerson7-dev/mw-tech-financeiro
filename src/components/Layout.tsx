@@ -28,6 +28,7 @@ import {
   Siren,
   Code2,
   Moon,
+  ClipboardCheck,
   Sun,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -49,6 +50,7 @@ const financeItems = [
 ] as const;
 
 const managementItems = [
+  ["/despachante", "MW Despachante", ClipboardCheck],
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/central-municipal", "Central Municipal", Network],
   ["/monitoramento", "Monitoramento", Activity],
