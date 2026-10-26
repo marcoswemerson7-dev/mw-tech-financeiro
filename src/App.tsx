@@ -30,7 +30,7 @@ function lazyWithRecovery<T extends ComponentType<any>>(
   });
 }
 
-const Despachante = lazyWithRecovery(() => import("./pages/Despachante"), "despachante");
+const Despachante = lazyWithRecovery(() => import("./pages/DespachanteOrganizado"), "despachante");
 const Login = lazyWithRecovery(() => import("./pages/Login"), "login");
 const Dashboard = lazyWithRecovery(() => import("./pages/Dashboard"), "dashboard");
 const Cash = lazyWithRecovery(() => import("./pages/Cash"), "cash");
