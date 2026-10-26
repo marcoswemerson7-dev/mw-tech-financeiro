@@ -106,7 +106,6 @@ export default function Agenda(){
 <label className="ml-1 flex items-center gap-1 text-xs"><Highlighter size={17}/>Cor <input aria-label="Cor do texto" type="color" defaultValue="#9b642b" onChange={e=>apply("foreColor",e.target.value)}/></label>
 <button type="button" className={btn} onClick={()=>apply("removeFormat")}>Limpar formato</button>
 <button type="button" className={btn} onClick={()=>window.print()}><Printer size={16} className="inline"/> Imprimir página</button>
-</div>
 </div>}
 <div className={"relative rounded-xl border border-[#e4dbcc] bg-[#fffefa] p-5 shadow-inner sm:p-8 "+(inkMode?"mt-16":"")} >
 <div className="mb-5 border-b-2 border-[#d7b687] pb-2 text-center font-serif text-lg font-bold text-[#243b60]">Meu registro • {date.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
