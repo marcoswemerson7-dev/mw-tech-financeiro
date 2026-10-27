@@ -20,7 +20,7 @@ async function authorize(req: Req) {
 }
 async function googleToken() {
   const { GOOGLE_DRIVE_CLIENT_ID:id, GOOGLE_DRIVE_CLIENT_SECRET:secret, GOOGLE_DRIVE_REFRESH_TOKEN:refresh } = process.env;
-  if (!id || !secret || !refresh) throw new Error("A conexão de envio ao Google Drive ainda precisa ser autorizada.");
+  if (!id || !secret || !refresh) throw new Error("Integração Google Drive pendente: configure GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET e GOOGLE_DRIVE_REFRESH_TOKEN na Vercel.");
   const response = await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({client_id:id,client_secret:secret,refresh_token:refresh,grant_type:"refresh_token"})});
   const data = await response.json();
   if(!response.ok || !data.access_token) throw new Error("Não foi possível renovar a autorização do Google Drive.");
@@ -33,7 +33,7 @@ export default async function handler(req:Req,res:Res) {
     await authorize(req);
     const token = await googleToken();
     if(req.method === "GET") {
-      const q = new URLSearchParams({q:"'"+FOLDER_ID+"' in parents and trashed = false",fields:"nextPageToken,files(id,name,mimeType,size,createdTime,webViewLink)",page_size:"100",orderBy:"createdTime desc"});
+      const q = new URLSearchParams({q:"'"+FOLDER_ID+"' in parents and trashed = false",fields:"nextPageToken,files(id,name,mimeType,size,createdTime,webViewLink)",pageSize:"100",orderBy:"createdTime desc"});
       const r=await fetch("https://www.googleapis.com/drive/v3/files?"+q,{headers:{Authorization:"Bearer "+token}});
       const data=await r.json();
       if(!r.ok) throw new Error("Falha ao listar notas fiscais no Google Drive.");
