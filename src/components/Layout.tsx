@@ -249,7 +249,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-[#f3f6fa] text-slate-900">
-      <aside className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-[#102a43] text-white shadow-sm transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside id="app-sidebar" aria-label="Menu principal" data-open={open} className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-[#102a43] text-white shadow-sm transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="relative flex min-h-[183px] items-center justify-center border-b border-white/[.055] px-5 py-4">
           <img src="/mw-tech-logo.png" className="h-[148px] w-[215px] object-contain mix-blend-screen" alt="MW TECH" />
           <button className="absolute right-3 top-3 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu"><X size={22} /></button>
@@ -279,10 +279,11 @@ export default function Layout() {
 
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
 
+      <button type="button" className="mobile-menu-trigger fixed left-0 z-20 grid h-12 w-10 place-items-center rounded-r-xl border border-l-0 border-white/20 bg-[#102a43] text-white shadow-md lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu lateral" aria-controls="app-sidebar" aria-expanded={open}><Menu size={23} /></button>
       <div className="app-content-shell lg:pl-[254px]">
         <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-[#102a43] px-4 text-white shadow-sm sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
-            <button className="grid size-9 place-items-center rounded-lg text-white/90 transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
+            <button className="hidden size-9 place-items-center rounded-lg text-white/90 lg:grid transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
             <div className="hidden h-11 w-[500px] max-w-[40vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
               <Search size={18} className="text-slate-300" /><input aria-label="Buscar no sistema" placeholder="Buscar no sistema..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400" /><span className="rounded-md bg-white/[.07] px-2 py-1 text-[11px] text-slate-300">Ctrl + K</span>
             </div>
