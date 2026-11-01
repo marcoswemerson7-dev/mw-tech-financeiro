@@ -84,21 +84,40 @@ const predefined:Model[]=[
 {title:"Imóvel",docs:["Certidão de inteiro teor ou informação sobre ausência de matrícula","Certidões de ônus e ações, se matriculado","Certidão negativa de registro, se não matriculado","Matrículas dos imóveis confinantes","IPTU ou cadastro rural, ITR e CCIR","Valor venal ou laudo de avaliação","Mapa e memorial descritivo / peças geodésicas"]},
 {title:"Outros documentos",docs:["Procuração do advogado","Cópia da OAB do advogado"]}]}];
 const id=()=>crypto.randomUUID();
-function load():Store {
-let data:Store={clients:[],models:predefined,jobs:[]};
-try {
- const raw=localStorage.getItem(KEY);
- if(raw){const value=JSON.parse(raw);if(Array.isArray(value.clients)&&Array.isArray(value.models)&&Array.isArray(value.jobs)){const builtins=new Set(predefined.map(m=>m.id));return {...value,models:[...predefined,...value.models.filter((m:Model)=>!builtins.has(m.id))]};}}
- const legacy=localStorage.getItem("mw-despachante-local-v1");
- if(legacy){const old=JSON.parse(legacy);if(Array.isArray(old.templates)) {
- const names=new Set(predefined.map(m=>m.name));
- data.models=[...predefined,...old.templates.filter((t:{name:string})=>!names.has(t.name)).map((t:{id:string;name:string;docs:string[]})=>({id:t.id,name:t.name,groups:[{title:"Documentos",docs:t.docs}]}))];
- }
- if(Array.isArray(old.records))old.records.forEach((r:{client:string;phone:string;title:string;templateId:string;docs:{name:string;checked:boolean}[];notes:string;created:string;id:string})=>{const c=id();data.clients.push({id:c,name:r.client,phone:r.phone});data.jobs.push({id:r.id,clientId:c,title:r.title,modelId:r.templateId,docs:r.docs.map(d=>({...d,group:"Documentos"})),notes:r.notes,created:r.created});});
- }
-} catch {}
-return data;
+function legacyStore():Store {
+ const result:Store={clients:[],models:[],jobs:[]};
+ try {
+  const old=JSON.parse(localStorage.getItem("mw-despachante-local-v1")||"null");
+  if(!old)return result;
+  if(Array.isArray(old.templates))result.models=old.templates.map((t:{id:string;name:string;docs:string[]})=>({id:t.id,name:t.name,groups:[{title:"Documentos",docs:t.docs}]}));
+  if(Array.isArray(old.records))old.records.forEach((r:{id:string;client:string;phone:string;title:string;templateId:string;docs:Job["docs"];notes:string;created:string})=>{
+   if(!r.id)return;
+   const clientId="legacy-client-"+r.id;
+   result.clients.push({id:clientId,name:r.client,phone:r.phone||""});
+   result.jobs.push({id:r.id,clientId,title:r.title,modelId:r.templateId,docs:(r.docs||[]).map(d=>({...d,group:d.group||"Documentos"})),notes:r.notes||"",created:r.created});
+  });
+ }catch { /* Preserve current data if the legacy backup is unreadable. */ }
+ return result;
 }
+function mergeMissing(current:Store,incoming:Store):Store {
+ const add=<T extends {id:string}>(a:T[],b:T[])=>{const ids=new Set(a.map(x=>x.id));return [...a,...b.filter(x=>{if(ids.has(x.id))return false;ids.add(x.id);return true;})];};
+ // Import clients only when their job is absent, avoiding duplicate legacy clients.
+ const existingJobs=new Set(current.jobs.map(j=>j.id));
+ const neededClients=new Set(incoming.jobs.filter(j=>!existingJobs.has(j.id)).map(j=>j.clientId));
+ const legacyIds=new Set(incoming.clients.filter(c=>c.id.startsWith("legacy-client-")).map(c=>c.id));
+ return {clients:add(current.clients,incoming.clients.filter(c=>!legacyIds.has(c.id)||neededClients.has(c.id))),models:add(current.models,incoming.models),jobs:add(current.jobs,incoming.jobs)};
+}
+function load():Store {
+ try {
+  const value=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(value&&Array.isArray(value.clients)&&Array.isArray(value.models)&&Array.isArray(value.jobs)){
+   const builtins=new Set(predefined.map(m=>m.id));
+   return {...value,models:[...predefined,...value.models.filter((m:Model)=>!builtins.has(m.id))]};
+  }
+ }catch { /* Legacy remains available for recovery. */ }
+ return mergeMissing({clients:[],models:predefined,jobs:[]},legacyStore());
+}
+
 const input="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm outline-none focus:border-[#9b7951]";
 const panel="rounded-xl border border-slate-200 bg-white p-5 shadow-sm";
 export default function DespachanteOrganizado(){
@@ -216,6 +235,19 @@ function linkChecklist(processId:string,checklistId:string){
  const at=new Date().toISOString();setData(d=>({...d,jobs:d.jobs.map(j=>j.id!==processId?j:({...j,checklistJobId:processId===checklistId?undefined:checklistId,clientId:checklist.clientId,updatedAt:at,history:[{id:id(),at,title:"Vínculo do checklist atualizado",text:processId===checklistId?"Utilizando o checklist do próprio processo.":"Checklist vinculado: "+checklist.title},...(j.history||[])]}))}));
 }
 
+async function recoverMissing(){
+ setSyncBusy(true);setSyncInfo("Buscando cadastros antigos e cópia da nuvem...");
+ let remote:Store|null=null;let cloudError="";
+ try{remote=await downloadDespachante() as Store|null;}catch(e){cloudError="Não foi possível consultar a nuvem: "+(e instanceof Error?e.message:String(e));}
+ try{
+  // Back up before adding records; existing IDs always keep the current version.
+  localStorage.setItem(KEY+"-antes-recuperacao",localStorage.getItem(KEY)||JSON.stringify(data));
+  setData(current=>{let next=mergeMissing(current,legacyStore());if(remote)next=mergeMissing(next,remote);return next;});
+  setSelected("");setSearch("");setJobClient("");
+  setSyncInfo("Busca concluída. Cadastros ausentes foram adicionados; registros existentes foram preservados. "+cloudError);
+ }catch(e){setSyncInfo("A recuperação não foi concluída: "+(e instanceof Error?e.message:String(e)));}
+ finally{setSyncBusy(false);}
+}
 async function syncUpload(){
  if(!window.confirm("Enviar os dados deste dispositivo para a nuvem? Isso substitui a versão da nuvem. Confirme somente no dispositivo com os checklists mais atualizados."))return;
  setSyncBusy(true);setSyncInfo("");
@@ -310,7 +342,7 @@ function peopleFields(kind:"sellers"|"buyers",names:string[],draft:string,setDra
  {names.length>0&&<div className="mt-2 space-y-1">{names.map((name,i)=><div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs"><span>{i+1}. {name}</span><button type="button" aria-label={"Remover "+name} onClick={()=>jobId?changeJob(jobId,j=>({...j,[kind]:(j[kind]||[]).filter((_,n)=>n!==i)})):kind==="sellers"?setSellers(x=>x.filter((_,n)=>n!==i)):setBuyers(x=>x.filter((_,n)=>n!==i))} className="text-red-600"><Trash2 size={15}/></button></div>)}</div>}</div>;
 }
 return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#967852]">MW TECH CONTROL</p><h1 className="text-2xl font-extrabold text-[#10234d]">MW Despachante</h1><p className="text-sm text-slate-500">Organização de clientes, atendimentos e documentação imobiliária</p></div><ClipboardCheck size={35} color="#967852"/></div>
-<div className="rounded-lg border border-[#b6a07a] bg-[#faf8f3] p-4 space-y-2"><div className="font-bold text-sm text-[#122452]">Sincronização entre computador e tablet</div><p className="text-xs font-semibold text-[#715735]">{syncStatus}</p><button type="button" disabled={syncBusy} onClick={()=>autoSync?(setAutoSync(false),localStorage.removeItem("mw-despachante-auto-v1"),setSyncStatus("Sincronização automática desativada")):void enableAutoSync()} className="rounded-lg border border-[#806d4e] px-3 py-2 text-xs font-bold">{autoSync?"Desativar sincronização automática":"Ativar sincronização automática"}</button><p className="text-xs text-slate-600">Primeiro, no computador que contém seus atendimentos, clique em Enviar para a nuvem. Depois, no tablet, clique em Baixar da nuvem. Esta primeira etapa é manual, para evitar substituir dados sem querer.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Enviar dados deste dispositivo</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Baixar dados da nuvem</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">A sincronização automática ainda não está ativada. Sempre envie suas alterações antes de baixar em outro dispositivo. O armazenamento local permanece como cópia de segurança.</p></div>{error&&<p role="alert" className="text-red-600">{error}</p>}
+<div className="rounded-lg border border-[#b6a07a] bg-[#faf8f3] p-4 space-y-2"><div className="font-bold text-sm text-[#122452]">Sincronização entre computador e tablet</div><p className="text-xs font-semibold text-[#715735]">{syncStatus}</p><button type="button" disabled={syncBusy} onClick={()=>autoSync?(setAutoSync(false),localStorage.removeItem("mw-despachante-auto-v1"),setSyncStatus("Sincronização automática desativada")):void enableAutoSync()} className="rounded-lg border border-[#806d4e] px-3 py-2 text-xs font-bold">{autoSync?"Desativar sincronização automática":"Ativar sincronização automática"}</button><p className="text-xs text-slate-600">Primeiro, no computador que contém seus atendimentos, clique em Enviar para a nuvem. Depois, no tablet, clique em Baixar da nuvem. Esta primeira etapa é manual, para evitar substituir dados sem querer.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={recoverMissing} className="rounded-lg border border-emerald-700 bg-white px-3 py-2 text-xs font-bold text-emerald-800 disabled:opacity-50">Buscar clientes e checklists ausentes</button><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Enviar dados deste dispositivo</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Baixar dados da nuvem</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">{autoSync?"Sincronização automática ativada.":"Sincronização manual. Para localizar cadastros antigos sem substituir os atuais, use Buscar clientes e checklists ausentes."}</p></div>{error&&<p role="alert" className="text-red-600">{error}</p>}
 <div className="grid grid-cols-3 gap-3">{[{name:"Clientes",n:data.clients.length},{name:"Atendimentos",n:data.jobs.length},{name:"Concluídos",n:data.jobs.filter(j=>j.docs.length>0&&j.docs.every(d=>d.checked)).length}].map(item=><div key={item.name} className={panel}><p className="text-xs text-slate-500">{item.name}</p><p className="mt-1 text-2xl font-bold text-[#10234d]">{item.n}</p></div>)}</div>
 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">{([{k:"processos",label:"Processos",Icon:FolderOpen},{k:"atendimentos",label:"Atendimentos",Icon:FolderOpen},{k:"clientes",label:"Clientes",Icon:Users},{k:"modelos",label:"Modelos de checklist",Icon:FileText}] as const).map(x=><button key={x.k} onClick={()=>{setTab(x.k);setSelected("");setJobClient("");}} className={"flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold "+(tab===x.k?"bg-[#10234d] text-white":"border border-slate-200 bg-white text-slate-700")}><x.Icon size={16}/>{x.label}</button>)}</div>
 {tab==="processos"&&<Processos linkChecklist={linkChecklist} remove={jobId=>{const job=data.jobs.find(j=>j.id===jobId);if(job)removeJob(job);}} key={selected+jobClient} initialId={selected} initialClient={jobClient?data.clients.find(c=>c.id===jobClient)?.name||"":""} printCover={jobId=>{const job=data.jobs.find(j=>j.id===jobId);if(job){const checklist=data.jobs.find(j=>j.id===(job.checklistJobId||job.id));printJob({...job,docs:checklist?.docs||job.docs,sellers:checklist?.sellers||job.sellers,buyers:checklist?.buyers||job.buyers,notes:checklist&&checklist.id!==job.id?[job.notes&&"Observações do processo: "+job.notes,checklist.notes&&"Observações do checklist: "+checklist.notes].filter(Boolean).join("\n\n"):job.notes,history:checklist&&checklist.id!==job.id?[...(job.history||[]),...(checklist.history||[])].sort((a,b)=>b.at.localeCompare(a.at)):job.history},true);}}} jobs={data.jobs} clients={data.clients} update={(jobId,fn)=>changeJob(jobId,j=>({...j,...fn(j)}))} create={(clientId,title)=>{const jobId=id();const at=new Date().toISOString();setData(d=>({...d,jobs:[{id:jobId,clientId,title,modelId:"",docs:[],notes:"",created:at,status:"preparacao",location:"Escritório"},...d.jobs]}));return jobId;}} openChecklist={jobId=>{const job=data.jobs.find(j=>j.id===jobId);setSearch("");setSelected(job?.checklistJobId||jobId);setTab("atendimentos");}}/>}
