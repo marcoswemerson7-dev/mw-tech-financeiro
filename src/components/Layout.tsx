@@ -279,7 +279,7 @@ export default function Layout() {
 
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
 
-      <button type="button" className="mobile-menu-trigger fixed left-0 z-20 grid h-12 w-10 place-items-center rounded-r-xl border border-l-0 border-white/20 bg-[#102a43] text-white shadow-md lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu lateral" aria-controls="app-sidebar" aria-expanded={open}><Menu size={23} /></button>
+      {!open && <button type="button" className="mobile-menu-trigger fixed left-0 z-40 grid h-12 w-10 place-items-center rounded-r-xl border border-l-0 border-white/20 bg-[#102a43] text-white shadow-md lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu lateral" aria-controls="app-sidebar" aria-expanded={open}><Menu size={23} /></button>}
       <div className="app-content-shell lg:pl-[254px]">
         <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-[#102a43] px-4 text-white shadow-sm sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
