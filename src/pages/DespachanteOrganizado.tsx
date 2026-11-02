@@ -1,3 +1,5 @@
+import SyncConflictReview, { type SyncConflict } from "../components/despachante/SyncConflictReview";
+import { reconcileSnapshots, sameSnapshot } from "../services/despachanteReconcile";
 import Dashboard from "../components/despachante/Dashboard";
 import Processos, { type Tracking } from "../components/despachante/Processos";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -148,145 +150,103 @@ const input="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-
 const panel="rounded-xl border border-slate-200 bg-white p-5 shadow-sm";
 export default function DespachanteOrganizado(){
 const [syncBusy,setSyncBusy]=useState(false),[syncInfo,setSyncInfo]=useState(""),[data,setData]=useState<Store>(load),[sellerDraft,setSellerDraft]=useState(""),[buyerDraft,setBuyerDraft]=useState(""),[sellers,setSellers]=useState<string[]>([]),[buyers,setBuyers]=useState<string[]>([]),[tab,setTab]=useState<Tab>("dashboard"),[selected,setSelected]=useState(""),[search,setSearch]=useState(""),[clientName,setClientName]=useState(""),[phone,setPhone]=useState(""),[jobClient,setJobClient]=useState(""),[jobModel,setJobModel]=useState("rural"),[jobTitle,setJobTitle]=useState(""),[modelName,setModelName]=useState(""),[modelDocs,setModelDocs]=useState(""),[error,setError]=useState("");
-const [autoSync,setAutoSync]=useState(()=>localStorage.getItem("mw-despachante-auto-v1")==="on");
-const [syncStatus,setSyncStatus]=useState("Sincronização manual");
-const baseline=useRef<string|null>(null);
-const revision=useRef<string>("");
-const busyAuto=useRef(false);
+const [autoSync,setAutoSync]=useState(()=>localStorage.getItem("mw-despachante-sync-mode-v2")!=="off");
+const [syncStatus,setSyncStatus]=useState("Conectando à nuvem...");
 const [initialLoaded,setInitialLoaded]=useState(false);
-const initialRequest=useRef<ReturnType<typeof downloadDespachante>|null>(null);
+const [syncRequest,setSyncRequest]=useState(0);
+const dataRef=useRef(data);
+const busyAuto=useRef(false);
+const syncRunner=useRef<(()=>Promise<void>)|null>(null);
+const [savedBase]=useState<Store|null>(()=>{try{const raw=localStorage.getItem(KEY+"-sync-base-v2");return raw?normalizeStore(JSON.parse(raw)):null;}catch{return null;}});
+const baseline=useRef<Store|null>(savedBase);
+const [syncConflict,setSyncConflict]=useState<SyncConflict|null>(null);
+const conflictRef=useRef<SyncConflict|null>(null);
 useEffect(()=>{
- let active=true;
- const recoverOnOpen=async()=>{
-  const recoveryKey=KEY+"-automatic-recovery-v1";
-  let recoverAll=false;
-  try {recoverAll=!localStorage.getItem(recoveryKey);}catch { /* Keep storage failure visible below. */ }
-  // One additive recovery pass repairs devices created before unified loading.
-  // Later opens leave established local records/deletions to the existing sync flow.
-  if(!recoverAll){
-   setInitialLoaded(true);return;
-  }
-  setSyncInfo("Carregando clientes e checklists já cadastrados...");
-  let remote:Store|null=null;let failure="";
-  try {
-   initialRequest.current??=downloadDespachante();
-   remote=await initialRequest.current as Store|null;
-  }catch(e){failure="Não foi possível consultar a nuvem: "+(e instanceof Error?e.message:String(e));}
-  if(!active)return;
-  try {
-   const local=localStorage.getItem(KEY);
-   if(local&&!localStorage.getItem(KEY+"-antes-carregamento-integrado"))localStorage.setItem(KEY+"-antes-carregamento-integrado",local);
-   const legacy=legacyStore();
-   setData(current=>{let next=mergeMissing(current,legacy);if(remote)next=mergeMissing(next,remote);return next;});
-   if(!failure&&(remote?.jobs.length||legacy.jobs.length))localStorage.setItem(recoveryKey,"done");
-   setSyncInfo(failure|| (remote?"Clientes e checklists da nuvem carregados. Os dados atuais deste aparelho foram preservados.":"Cadastros locais carregados. Não foi encontrada uma cópia na nuvem desta conta."));
-  }catch(e){setSyncInfo("Falha ao carregar cadastros: "+(e instanceof Error?e.message:String(e)));}
-  finally{setInitialLoaded(true);}
- };
- void recoverOnOpen();
- return()=>{active=false;};
-},[]);
-
-useEffect(()=>{try{localStorage.setItem(KEY,JSON.stringify(data));setError("");}catch{setError("Não foi possível salvar os dados neste navegador.");}},[data]);
+ dataRef.current=data;
+ try{localStorage.setItem(KEY,JSON.stringify(data));setError("");}catch{setError("Não foi possível salvar os dados neste navegador.");}
+},[data]);
 useEffect(()=>{
- if(!autoSync||!initialLoaded)return;
+ localStorage.setItem("mw-despachante-sync-mode-v2",autoSync?"on":"off");
+ if(!autoSync){setSyncBusy(false);setInitialLoaded(true);setSyncStatus("Salvo neste aparelho · sincronização pausada");return;}
  let alive=true;
- const initialize=async()=>{
-  if(busyAuto.current)return;
-  busyAuto.current=true;
-  try{
-   const remote=await downloadDespachante();
-   const currentRevision=await cloudRevision();
-   if(!alive)return;
-   if(remote){
-    const content=JSON.stringify(remote);
-    const local=localStorage.getItem(KEY);
-    if(local&&local!==content&&baseline.current===null){
-     // No silent overwrite on a device with unknown local changes.
-     setSyncStatus("Dados locais e da nuvem diferem. Use Baixar da nuvem para escolher a versão.");
-     setAutoSync(false);localStorage.removeItem("mw-despachante-auto-v1");return;
-    }
-    baseline.current=content;revision.current=currentRevision;
-   }else{
-    baseline.current=localStorage.getItem(KEY)||JSON.stringify(data);
-    revision.current="";
-   }
-   setSyncStatus("Sincronização automática ativa");
-  }catch(e){if(alive)setSyncStatus("Falha ao conectar: "+(e instanceof Error?e.message:String(e)));}
-  finally{busyAuto.current=false;}
+ const canonical=(value:Store):Store=>{
+  const normalized=normalizeStore(value),builtins=new Set(predefined.map(m=>m.id));
+  return {...normalized,models:[...predefined,...normalized.models.filter(m=>!builtins.has(m.id))]};
  };
- void initialize();
- return ()=>{alive=false;};
-},[autoSync,initialLoaded]);
-useEffect(()=>{
- if(!autoSync||!initialLoaded||baseline.current===null||busyAuto.current)return;
- const serialized=JSON.stringify(data);
- if(serialized===baseline.current)return;
- const handle=window.setTimeout(async()=>{
-  if(busyAuto.current)return;
-  busyAuto.current=true;setSyncStatus("Salvando na nuvem...");
+ const sync=async()=>{
+  if(!alive||busyAuto.current||conflictRef.current)return;
+  busyAuto.current=true;setSyncBusy(true);setSyncStatus("Sincronizando processos e checklists...");
   try{
-   await uploadDespachante(data,revision.current);
-   revision.current=await cloudRevision();
-   baseline.current=serialized;
-   setSyncStatus("Alterações salvas na nuvem");
-  }catch(e){
-   setSyncStatus("Sincronização interrompida: "+(e instanceof Error?e.message:String(e)));
-   setAutoSync(false);localStorage.removeItem("mw-despachante-auto-v1");
-  }finally{busyAuto.current=false;}
- },1700);
- return ()=>window.clearTimeout(handle);
-},[data,autoSync,initialLoaded]);
+   let remote:Store|null=null,revision="";
+   for(let attempt=0;attempt<3;attempt++){
+    const before=await cloudRevision();
+    remote=await downloadDespachante() as Store|null;
+    const after=await cloudRevision();
+    if(before===after){revision=after;break;}
+    if(attempt===2)throw Error("A nuvem está recebendo alterações. Uma nova tentativa será feita automaticamente.");
+   }
+   if(!alive)return;
+   const local=canonical(dataRef.current);
+   const empty:Store={clients:[],models:predefined,jobs:[],processes:[]};
+   const cloud=canonical(remote||empty);
+   const result=reconcileSnapshots(baseline.current?canonical(baseline.current):null,local,cloud);
+   if(result.conflicts.length){
+    const conflict={base:baseline.current,local,remote:cloud,conflicts:result.conflicts};
+    conflictRef.current=conflict;setSyncConflict(conflict);
+    const conflictIds=[...new Set(result.conflicts.map(path=>path.split('.')[1]))];
+    const names=conflictIds.map(id=>[...local.processes,...local.jobs,...local.clients].find(x=>x.id===id)).map(x=>x&&('title' in x?x.title:x.name)).filter(Boolean);
+    setSyncStatus("Conflito de edição: "+(names.join(", ")||"há alterações diferentes nos dois aparelhos")+". As duas versões foram preservadas. Abra Sincronização para revisar.");
+    setSyncInfo("Nenhum dado foi substituído. Há campos editados de formas diferentes nos dois aparelhos. Antes de escolher uma versão, mantenha os dados nos dois dispositivos.");
+    return;
+   }
+   const merged=result.data as Store;
+   if(!sameSnapshot(merged,cloud)){
+    // Keep both pre-sync copies locally before publishing a merged snapshot.
+    localStorage.setItem(KEY+"-antes-sincronizacao",JSON.stringify({local,remote}));
+    await uploadDespachante(merged,revision);
+   }
+   if(!alive)return;
+   baseline.current=merged;
+   localStorage.setItem(KEY+"-sync-base-v2",JSON.stringify(merged));
+   setData(current=>{
+    // Preserve edits typed while the network request was running.
+    const latest=reconcileSnapshots(local,canonical(current),merged);
+    return latest.conflicts.length||sameSnapshot(current,latest.data)?current:latest.data as Store;
+   });
+   setSyncStatus("Sincronizado às "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})+" · processos e checklists");
+   setSyncInfo("");
+  }catch(e){if(alive)setSyncStatus("Salvo neste aparelho · "+(e instanceof Error?e.message:String(e))+" · nova tentativa automática");}
+  finally{busyAuto.current=false;if(alive){setSyncBusy(false);setInitialLoaded(true);}}
+ };
+ syncRunner.current=sync;
+ void sync();
+ const timer=window.setInterval(()=>void sync(),7000);
+ const resume=()=>{if(document.visibilityState==="visible")void sync();};
+ window.addEventListener("online",resume);window.addEventListener("focus",resume);document.addEventListener("visibilitychange",resume);
+ return()=>{alive=false;if(syncRunner.current===sync)syncRunner.current=null;window.clearInterval(timer);window.removeEventListener("online",resume);window.removeEventListener("focus",resume);document.removeEventListener("visibilitychange",resume);};
+},[autoSync]);
+useEffect(()=>{if(autoSync)void syncRunner.current?.();},[syncRequest,autoSync]);
 useEffect(()=>{
  if(!autoSync||!initialLoaded)return;
- let live=true;
- const refresh=async()=>{
-  if(!live||busyAuto.current||baseline.current===null)return;
-  if((localStorage.getItem(KEY)||"")!==baseline.current)return;
-  busyAuto.current=true;
-  try{
-   const nextRevision=await cloudRevision();
-   if(!nextRevision||nextRevision===revision.current)return;
-   const remote=await downloadDespachante();
-   if(!live||!remote)return;
-   const valid=normalizeStore(remote as Store);const builtinIds=new Set(predefined.map(m=>m.id));
-   const next={...valid,models:[...predefined,...valid.models.filter(m=>!builtinIds.has(m.id))]};
-   baseline.current=JSON.stringify(next);
-   revision.current=nextRevision;
-   setData(next);setSyncStatus("Atualizado com as mudanças da nuvem");
-  }catch(e){if(live)setSyncStatus("Falha ao buscar alterações: "+(e instanceof Error?e.message:String(e)));}
-  finally{busyAuto.current=false;}
- };
- const timer=window.setInterval(()=>void refresh(),15000);
- const onVisible=()=>{if(document.visibilityState==="visible")void refresh();};
- document.addEventListener("visibilitychange",onVisible);
- return()=>{live=false;window.clearInterval(timer);document.removeEventListener("visibilitychange",onVisible);};
-},[autoSync,initialLoaded]);
-async function enableAutoSync(){
- setSyncBusy(true);
- try{
-  const remote=await downloadDespachante();
-  if(remote){
-   if(!window.confirm("Para ativar a sincronização automática, os dados deste dispositivo serão substituídos pela cópia da nuvem. Confirme somente se os dados mais recentes já foram enviados."))return;
-   const valid=normalizeStore(remote as Store); const builtins=new Set(predefined.map(m=>m.id));
-   const dataNext={...valid,models:[...predefined,...valid.models.filter(m=>!builtins.has(m.id))]};
-   baseline.current=JSON.stringify(dataNext);
-   revision.current=await cloudRevision();setData(dataNext);
-  }else{
-   if(!window.confirm("Não existe cópia na nuvem. Ativar salvamento automático dos dados deste dispositivo?"))return;
-   baseline.current=JSON.stringify(data);revision.current="";
-   await uploadDespachante(data,"");
-   revision.current=await cloudRevision();
-  }
-  localStorage.setItem("mw-despachante-auto-v1","on");
-  setAutoSync(true);setSyncStatus("Sincronização automática ativa");
- }catch(e){setSyncStatus("Erro: "+(e instanceof Error?e.message:String(e)));}
- finally{setSyncBusy(false);}
+ const timer=window.setTimeout(()=>setSyncRequest(n=>n+1),1400);
+ return()=>window.clearTimeout(timer);
+},[data,autoSync,initialLoaded]);
+function resolveSyncConflict(choices:Record<string,"local"|"remote">){
+ const conflict=conflictRef.current;if(!conflict)return;
+ // Reapply the reviewed merge to the latest local edits before attempting another upload.
+ const result=reconcileSnapshots(conflict.base, dataRef.current, conflict.remote, choices);
+ if(result.conflicts.length){setSyncInfo("Surgiram novas alterações. Revise novamente antes de sincronizar.");conflictRef.current=null;setSyncConflict(null);setSyncRequest(n=>n+1);return;}
+ localStorage.setItem(KEY+"-antes-resolver-conflito",JSON.stringify(conflict));
+ baseline.current=conflict.remote as Store;
+ localStorage.setItem(KEY+"-sync-base-v2",JSON.stringify(conflict.remote));
+ dataRef.current=result.data as Store;setData(result.data as Store);
+ conflictRef.current=null;setSyncConflict(null);setSyncRequest(n=>n+1);
 }
+async function enableAutoSync(){setAutoSync(true);setSyncRequest(n=>n+1);}
 
 const current=data.jobs.find(j=>j.id===selected);const currentClient=data.clients.find(c=>c.id===current?.clientId);
 const jobs=useMemo(()=>data.jobs.filter(j=>{const c=data.clients.find(c=>c.id===j.clientId);return (c?.name+" "+j.title).toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"));}),[data,search]);
-const changeJob=(jobId:string,fn:(j:Job)=>Job)=>setData(d=>({...d,jobs:d.jobs.map(j=>j.id===jobId?fn(j):j)}));
+const changeJob=(jobId:string,fn:(j:Job)=>Job)=>setData(d=>({...d,jobs:d.jobs.map(j=>j.id===jobId?{...fn(j),updatedAt:new Date().toISOString()}:j)}));
 const changeProcess=(processId:string,fn:(j:Job)=>Job)=>setData(d=>({...d,processes:d.processes.map(j=>{
  if(j.id!==processId)return j;
  const next=fn(j),checklist=d.jobs.find(c=>c.id===next.checklistJobId);
@@ -313,31 +273,8 @@ async function recoverMissing(){
  }catch(e){setSyncInfo("A recuperação não foi concluída: "+(e instanceof Error?e.message:String(e)));}
  finally{setSyncBusy(false);}
 }
-async function syncUpload(){
- if(!window.confirm("Enviar os dados deste dispositivo para a nuvem? Isso substitui a versão da nuvem. Confirme somente no dispositivo com os checklists mais atualizados."))return;
- setSyncBusy(true);setSyncInfo("");
- try {
-   const remote=await downloadDespachante();
-   if(remote&& !window.confirm("Já existem dados na nuvem ("+remote.jobs.length+" atendimentos). Substituí-los pelos "+data.jobs.length+" atendimentos deste aparelho? Faça backup antes de continuar."))return;
-   await uploadDespachante(data);
-   setSyncInfo("Dados enviados com sucesso. No tablet, escolha 'Baixar da nuvem'.");
- }catch(e){setSyncInfo("Erro ao enviar: "+(e instanceof Error?e.message:String(e))+". Verifique a tabela despachante_dados no Appwrite.");}
- finally{setSyncBusy(false);}
-}
-async function syncDownload(){
- setSyncBusy(true);setSyncInfo("");
- try {
-  const remote=await downloadDespachante();
-  if(!remote){setSyncInfo("Nenhum backup salvo na nuvem. Envie primeiro os dados do computador.");return;}
-  if(!window.confirm("Baixar "+remote.jobs.length+" atendimentos da nuvem? Os dados locais deste dispositivo serão substituídos. Não faça isso no computador com registros mais novos."))return;
-  const valid=normalizeStore(remote as Store);
-  const builtins=new Set(predefined.map(m=>m.id));
-  setData({...valid,models:[...predefined,...valid.models.filter(m=>!builtins.has(m.id))]});
-  setSelected("");
-  setSyncInfo("Dados baixados com sucesso. "+valid.jobs.length+" atendimentos disponíveis neste dispositivo.");
- }catch(e){setSyncInfo("Erro ao baixar: "+(e instanceof Error?e.message:String(e))+". Verifique a tabela despachante_dados no Appwrite.");}
- finally{setSyncBusy(false);}
-}
+async function syncUpload(){setAutoSync(true);setSyncRequest(n=>n+1);}
+async function syncDownload(){setAutoSync(true);setSyncRequest(n=>n+1);}
 function addClient(e:React.FormEvent){e.preventDefault();if(!clientName.trim())return;const c={id:id(),name:clientName.trim(),phone:phone.trim()};setData(d=>({...d,clients:[...d.clients,c]}));setJobClient(c.id);setClientName("");setPhone("");}
 function addJob(e:React.FormEvent){e.preventDefault();const m=data.models.find(m=>m.id===jobModel);if(!m||!jobClient||!jobTitle.trim())return;const j:Job={id:id(),clientId:jobClient,title:jobTitle.trim(),modelId:m.id,sellers:[...sellers],buyers:[...buyers],docs:m.groups.flatMap(g=>g.docs.map(name=>({name,group:g.title,checked:false}))),notes:"",created:new Date().toISOString()};setData(d=>({...d,jobs:[j,...d.jobs]}));setSelected(j.id);setJobTitle("");setSellers([]);setBuyers([]);setSellerDraft("");setBuyerDraft("");}
 function addModel(e:React.FormEvent){e.preventDefault();const docs=modelDocs.split("\n").map(s=>s.trim()).filter(Boolean);if(!modelName.trim()||!docs.length)return;const m={id:id(),name:modelName.trim(),groups:[{title:"Documentação",docs}]};setData(d=>({...d,models:[...d.models,m]}));setModelName("");setModelDocs("");}
@@ -407,7 +344,9 @@ function peopleFields(kind:"sellers"|"buyers",names:string[],draft:string,setDra
  {names.length>0&&<div className="mt-2 space-y-1">{names.map((name,i)=><div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs"><span>{i+1}. {name}</span><button type="button" aria-label={"Remover "+name} onClick={()=>jobId?changeJob(jobId,j=>({...j,[kind]:(j[kind]||[]).filter((_,n)=>n!==i)})):kind==="sellers"?setSellers(x=>x.filter((_,n)=>n!==i)):setBuyers(x=>x.filter((_,n)=>n!==i))} className="text-red-600"><Trash2 size={15}/></button></div>)}</div>}</div>;
 }
 return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#967852]">MW TECH CONTROL</p><h1 className="text-2xl font-extrabold text-[#10234d]">MW Despachante</h1><p className="text-sm text-slate-500">Gestão de processos e documentação imobiliária</p></div><ClipboardCheck size={35} color="#967852"/></div>
-<details className="rounded-xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-[#122452]">Sincronização e cadastros <span className="ml-2 text-xs font-normal text-slate-500">{syncBusy?"Em andamento…":autoSync?"Automática":"Manual"}</span></summary><div className="mt-4 space-y-3"><p className="text-xs font-semibold text-[#715735]">{syncStatus}</p><button type="button" disabled={syncBusy} onClick={()=>autoSync?(setAutoSync(false),localStorage.removeItem("mw-despachante-auto-v1"),setSyncStatus("Sincronização automática desativada")):void enableAutoSync()} className="rounded-lg border border-[#806d4e] px-3 py-2 text-xs font-bold">{autoSync?"Desativar sincronização automática":"Ativar sincronização automática"}</button><p className="text-xs text-slate-600">Primeiro, no computador que contém seus atendimentos, clique em Enviar para a nuvem. Depois, no tablet, clique em Baixar da nuvem. Esta primeira etapa é manual, para evitar substituir dados sem querer.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={recoverMissing} className="rounded-lg border border-emerald-700 bg-white px-3 py-2 text-xs font-bold text-emerald-800 disabled:opacity-50">Buscar clientes e checklists ausentes</button><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Enviar dados deste dispositivo</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Baixar dados da nuvem</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">{autoSync?"Sincronização automática ativada.":"Sincronização manual. Para localizar cadastros antigos sem substituir os atuais, use Buscar clientes e checklists ausentes."}</p></div></details>{error&&<p role="alert" className="text-red-600">{error}</p>}
+{syncConflict&&<SyncConflictReview conflict={syncConflict} onResolve={resolveSyncConflict}/>}
+<div role="status" aria-live="polite" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs"><span className="font-semibold text-slate-600">{syncStatus}</span><button type="button" disabled={syncBusy} onClick={syncUpload} className="font-semibold text-[#846640] disabled:opacity-50">{syncBusy?"Sincronizando…":"Sincronizar agora"}</button></div>
+<details className="rounded-xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-[#122452]">Sincronização e cadastros <span className="ml-2 text-xs font-normal text-slate-500">{syncBusy?"Em andamento…":autoSync?"Automática":"Manual"}</span></summary><div className="mt-4 space-y-3"><p className="text-xs font-semibold text-[#715735]">{syncStatus}</p><button type="button" disabled={syncBusy} onClick={()=>autoSync?(setAutoSync(false),setSyncStatus("Sincronização pausada")):void enableAutoSync()} className="rounded-lg border border-[#806d4e] px-3 py-2 text-xs font-bold">{autoSync?"Desativar sincronização automática":"Ativar sincronização automática"}</button><p className="text-xs text-slate-600">Processos, clientes e checklists são sincronizados automaticamente entre aparelhos conectados à mesma conta. Mantenha a página aberta até aparecer “Sincronizado”.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={recoverMissing} className="rounded-lg border border-emerald-700 bg-white px-3 py-2 text-xs font-bold text-emerald-800 disabled:opacity-50">Buscar clientes e checklists ausentes</button><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Sincronizar agora</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Buscar atualizações</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">{autoSync?"Sincronização automática ativada.":"Sincronização manual. Para localizar cadastros antigos sem substituir os atuais, use Buscar clientes e checklists ausentes."}</p></div></details>{error&&<p role="alert" className="text-red-600">{error}</p>}
 {!initialLoaded&&<p role="status" className="text-sm text-slate-500">Carregando os cadastros existentes…</p>}
 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">{([{k:"dashboard",label:"Visão geral",Icon:FolderOpen},{k:"processos",label:"Processos",Icon:FolderOpen},{k:"atendimentos",label:"Checklists",Icon:ClipboardCheck},{k:"clientes",label:"Clientes",Icon:Users},{k:"modelos",label:"Modelos de checklist",Icon:FileText}] as const).map(x=><button key={x.k} onClick={()=>{setTab(x.k);setSelected("");setJobClient("");}} className={"flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold "+(tab===x.k?"bg-[#10234d] text-white":"border border-slate-200 bg-white text-slate-700")}><x.Icon size={16}/>{x.label}</button>)}</div>
 {tab==="dashboard"&&<Dashboard processes={data.processes} checklists={data.jobs} clients={data.clients} navigate={section=>{setTab(section);setSelected("");setJobClient("");setSearch("");}} openProcess={processId=>{setSelected(processId);setJobClient("");setTab("processos");}} openChecklist={checklistId=>{setSelected(checklistId);setSearch("");setTab("atendimentos");}}/>}
