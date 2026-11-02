@@ -5,7 +5,7 @@ const TABLE = "despachante_dados";
 // The Appwrite Text column is capped at 16,383 characters. Store independent,
 // immutable chunks and publish the manifest LAST to make uploads recoverable.
 const CHUNK_SIZE = 12000;
-type Snapshot = { clients:unknown[]; models:unknown[]; jobs:unknown[] };
+type Snapshot = { clients:unknown[]; models:unknown[]; jobs:unknown[]; processes?:unknown[] };
 type Manifest = { version:2; chunks:string[]; updatedAt:string };
 const encode = (s:string) => btoa(Array.from(new TextEncoder().encode(s),b=>String.fromCharCode(b)).join(""));
 const decode = (s:string) => new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));
@@ -22,7 +22,7 @@ async function saveRow(rowId:string,owner:string,payload:string){
 function valid(value:unknown):value is Snapshot {
  if(!value||typeof value!=="object")return false;
  const d=value as Record<string,unknown>;
- return Array.isArray(d.clients)&&Array.isArray(d.models)&&Array.isArray(d.jobs);
+ return Array.isArray(d.clients)&&Array.isArray(d.models)&&Array.isArray(d.jobs)&&(d.processes===undefined||Array.isArray(d.processes));
 }
 export async function downloadDespachante():Promise<Snapshot|null>{
  const owner=await userId();
