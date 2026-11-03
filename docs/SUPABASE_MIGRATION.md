@@ -44,3 +44,11 @@
 4. Funções transacionais criadas para lançamentos, transferências, despesas, pagamentos, estornos e idempotência.
 5. Testes de RLS, permissões, login e sincronização multi-dispositivo sem perdas.
 6. Build de produção e testes em ambiente separado; só então mudança de deploy.
+
+## Etapa 4 — Validação automatizada da migração (03/11/2026)
+- Verificador preliminar compara também o snapshot do Despachante salvo no navegador com a cópia no Appwrite, apontando registros presentes exclusivamente no dispositivo.
+- Para contas financeiras exportadas, recalcula o saldo a partir de saldo inicial e movimentações, com precisão de centavos inteiros, e aponta divergências para revisão. **Não corrige nem altera saldos automaticamente.**
+- `tests/migrationAudit.test.ts`: testes de vínculo quebrado, registro local exclusivo, soma exata de centavos e exportação incompleta.
+- `npm run test:migration` executa a suíte. O workflow `.github/workflows/migration-validation.yml` solicita teste e build nos pull requests correspondentes.
+- O verificador tem caráter **preliminar**: não pode declarar a migração pronta sem extratos completos do Appwrite, documentos de Storage, usuários Auth e reconciliação entre todos os aparelhos.
+- **Status:** testes definidos no GitHub, mas a execução deve ser confirmada pelos checks. O importador definitivo ainda não foi ativado.
