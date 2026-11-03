@@ -1,0 +1,26 @@
+name: MW TECH Control migration validation
+on:
+  pull_request:
+    paths:
+      - 'src/services/migrationAudit.ts'
+      - 'src/services/migrationBackup.ts'
+      - 'src/services/financialMigrationExport.ts'
+      - 'tests/migrationAudit.test.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/migration-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run test:migration
+      - run: npm run build
