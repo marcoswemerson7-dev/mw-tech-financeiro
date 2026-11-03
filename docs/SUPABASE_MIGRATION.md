@@ -52,3 +52,11 @@
 - `npm run test:migration` executa a suíte. O workflow `.github/workflows/migration-validation.yml` solicita teste e build nos pull requests correspondentes.
 - O verificador tem caráter **preliminar**: não pode declarar a migração pronta sem extratos completos do Appwrite, documentos de Storage, usuários Auth e reconciliação entre todos os aparelhos.
 - **Status:** testes definidos no GitHub, mas a execução deve ser confirmada pelos checks. O importador definitivo ainda não foi ativado.
+
+## Teste isolado de login Supabase para o MW Despachante
+- Rota de testes: `/despachante-supabase`, fora da rota protegida por login Appwrite.
+- Usa apenas a URL e a chave **publishable** do projeto MW TECH CONTROL em variáveis públicas de **Preview da branch**, nunca um segredo administrativo.
+- Login via Supabase Auth com e-mail/senha; sessão de teste guardada em `sessionStorage` (não funciona como sessão do Appwrite).
+- Mostra contagens e clientes do novo banco, além de permitir cadastro de cliente com RLS por proprietário.
+- **Não é a interface completa do MW Despachante e não substitui o login principal.** Monitoramento, Financeiro, Agenda e interfaces existentes não foram alterados.
+- Antes de lançar: implementar o restante do repositório de dados do MW Despachante, testes multi-dispositivo, segurança e revisão das permissões. Não mesclar a branch inteira, que contém preparação de migração mais ampla.
