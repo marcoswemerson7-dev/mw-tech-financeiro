@@ -20,3 +20,27 @@
 
 ## Staging criado
 `public.mw_control_snapshots` contém somente snapshots JSON vinculados a `auth.users` com RLS por usuário. Sua existência **não** faz migração, sincronização ou autenticação automaticamente. Nunca expor `service_role` / secret key no frontend. Nenhum registro foi importado até o momento.
+
+## Etapa 3 — Financeiro (preparado em 03/11/2026)
+- Tabelas criadas no Supabase: `mw_financial_accounts`, `mw_financial_categories`, `mw_financial_expenses`, `mw_financial_movements`, `mw_financial_payments`.
+- O vínculo entre usuários Appwrite e Supabase ficará em `mw_legacy_user_map`; esta tabela **não concede acesso ao navegador**, mesmo com RLS ativado.
+- Todas as cinco tabelas financeiras têm **somente SELECT** autenticado, filtrado por `owner_id`. INSERT/UPDATE/DELETE permanecem revogados até existir operação financeira transacional do lado do servidor.
+- Os valores monetários serão armazenados em **centavos inteiros** para evitar erros de arredondamento. Importação deve comparar saldos de abertura, movimentos por conta, pagamentos e estornos, sem reconstruir saldos a partir de linhas parciais.
+- A tabela `mw_legacy_user_map` gera uma observação informativa `rls_enabled_no_policy`: é deliberado, pois não existem políticas nem grants para o browser.
+- O banco foi atualizado por `apply_migration` sob o nome `create_financial_read_only_migration_destination`. A migração aplicada consta no histórico do Supabase; não reaplicar automaticamente no mesmo projeto.
+
+## Exportação e conferência (ramificação, não publicada)
+- `src/services/financialMigrationExport.ts`: percorre páginas de 100 registros das tabelas Appwrite que o usuário conectado pode ler. Cada tabela registra sucesso ou erro; uma leitura parcial é marcada como erro.
+- `src/services/migrationBackup.ts`: inclui financeiro, Agenda, Despachante e armazenamento local no JSON; não move os dados para Supabase e não altera Appwrite.
+- `src/services/migrationAudit.ts`: valida contagens, IDs duplicados e referências de clientes, processos, checklists, contas, pagamentos e despesas. A validação é preliminar, não substitui a conferência de saldos e anexos.
+- Acessos administrativos de `sistemas_orgaos` / `usuarios_acessos` podem não permitir leitura direta; esses erros devem ser resolvidos por exportação administrativa segura.
+- **NÃO exporta arquivos binários** de Storage, senhas, dados de sessões Auth ou dados locais de outros aparelhos.
+- Como o backup contém dados pessoais e financeiros, mantê-lo criptografado e não enviá-lo a repositórios públicos nem mensagens desnecessárias.
+
+## Aceitação obrigatória para ativação
+1. Backup do Appwrite conferido e exportado com permissões administrativas, incluindo arquivos do Storage e usuários.
+2. Mapeamento aprovado de usuários, IDs antigos e novos, com política de acesso por empresa.
+3. Comparação de contagem por tabela e valores centavo a centavo, com relatório de divergências.
+4. Funções transacionais criadas para lançamentos, transferências, despesas, pagamentos, estornos e idempotência.
+5. Testes de RLS, permissões, login e sincronização multi-dispositivo sem perdas.
+6. Build de produção e testes em ambiente separado; só então mudança de deploy.
