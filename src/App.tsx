@@ -33,6 +33,7 @@ function lazyWithRecovery<T extends ComponentType<any>>(
 const Agenda = lazyWithRecovery(() => import("./pages/Agenda"), "agenda");
 const Despachante = lazyWithRecovery(() => import("./pages/DespachanteOrganizado"), "despachante");
 const Login = lazyWithRecovery(() => import("./pages/Login"), "login");
+const DespachanteSupabaseAccess = lazyWithRecovery(() => import("./pages/DespachanteSupabaseAccess"), "despachante-supabase");
 const Dashboard = lazyWithRecovery(() => import("./pages/Dashboard"), "dashboard");
 const Cash = lazyWithRecovery(() => import("./pages/Cash"), "cash");
 const Transactions = lazyWithRecovery(() => import("./pages/Transactions"), "transactions");
@@ -163,6 +164,7 @@ export default function App() {
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/despachante-supabase" element={<DespachanteSupabaseAccess />} />
             <Route element={<Private />}>
               <Route index element={<Dashboard />} />
               <Route path="caixa" element={<Cash />} />
