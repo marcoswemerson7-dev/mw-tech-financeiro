@@ -241,6 +241,7 @@ useEffect(()=>{
    }
    if(!alive)return;
    baseline.current=merged;
+   localStorage.setItem("mw-despachante-linked-owner",cloudOwner);
    localStorage.setItem(KEY+"-sync-base-supabase-v1",JSON.stringify(merged));
    setData(current=>{
     // Preserve edits typed while the network request was running.
