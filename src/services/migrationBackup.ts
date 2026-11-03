@@ -1,3 +1,4 @@
+import { exportFinancialAppwrite } from "./financialMigrationExport";
 import { readAgendaCloud } from "./agendaSync";
 import { downloadDespachante } from "./despachanteSync";
 
@@ -46,14 +47,19 @@ export async function downloadMigrationBackup(userId: string) {
     status.push({ module: "despachante", source: "appwrite", status: "error", message: String(error) });
   }
 
+  const financial = await exportFinancialAppwrite();
+  for (const row of financial.status) {
+    status.push({ module: `financeiro:${row.table}`, source: "appwrite", status: row.status === "ok" ? (row.rows ? "ok" : "empty") : "error", message: row.status === "error" ? row.error : `${row.rows} registros` });
+  }
+
   const backup = {
     format: "mw-tech-control-migration-backup",
     version: 1,
     exportedAt: new Date().toISOString(),
     appwriteUserId: userId,
-    sources: { local, appwrite: { agenda: cloudAgenda, despachante: cloudDespachante } },
+    sources: { local, appwrite: { agenda: cloudAgenda, despachante: cloudDespachante, financeiro: financial.datasets } },
     status,
-    note: "Backup parcial dos modulos Agenda e Despachante; NAO inclui dados financeiros, arquivos nem autenticacao.",
+    note: "Backup dos dados acessiveis ao usuario autenticado. NAO inclui arquivos binarios do Storage, usuarios Auth ou dados exclusivos de outros dispositivos. Verifique status e complete a exportacao administrativa antes do corte.",
   };
   const fileName = "mw-tech-control-migracao-" + new Date().toISOString().slice(0, 10) + ".json";
   const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
