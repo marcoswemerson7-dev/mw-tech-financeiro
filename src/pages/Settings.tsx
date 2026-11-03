@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Building2, Landmark, Mail, MapPin, Phone, Save } from "lucide-react";
+import { Building2, Download, Landmark, Mail, MapPin, Phone, Save } from "lucide-react";
+import { useAuth } from "../lib/auth";
+import { downloadMigrationBackup } from "../services/migrationBackup";
 import { getCompanySettings, saveCompanySettings } from "../services/reports";
 import { PageHeader, Toast } from "../components/UI";
 
@@ -27,6 +29,21 @@ const sections = [
 ] as const;
 
 export default function Settings() {
+  const { session } = useAuth();
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupMessage, setBackupMessage] = useState("");
+  async function backupAgendaDespachante() {
+    setBackupBusy(true);
+    setBackupMessage("");
+    try {
+      const result = await downloadMigrationBackup(session?.$id || "");
+      setBackupMessage(result.hasErrors
+        ? "Backup parcial baixado. Alguns dados do Appwrite não puderam ser lidos; verifique o relatório no arquivo antes de migrar."
+        : `Backup baixado: ${result.fileName}. Inclui somente Agenda e Despachante; não inclui financeiro nem anexos.`);
+    } catch (error) {
+      setBackupMessage("Erro no backup: " + (error instanceof Error ? error.message : String(error)));
+    } finally { setBackupBusy(false); }
+  }
   const [data, setData] = useState<Record<string, string>>(defaults);
   const [recordId, setRecordId] = useState<string | undefined>();
   const [msg, setMsg] = useState("");
@@ -117,6 +134,13 @@ export default function Settings() {
           <p className="mt-3 text-center text-[10px] text-slate-400">As alterações são aplicadas aos documentos e relatórios do sistema.</p>
         </aside>
       </form>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <h3 className="text-[15px] font-semibold text-[#0b2239]">Backup para migração</h3>
+        <p className="mt-2 text-sm text-slate-600">Exporte uma cópia da Agenda e do MW Despachante deste navegador e da nuvem Appwrite, sem apagar ou alterar os dados atuais. Repita em cada dispositivo que tenha registros exclusivos.</p>
+        <button type="button" onClick={() => void backupAgendaDespachante()} disabled={backupBusy || !session || session.$id === "demo"} className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-[#0b2239] disabled:opacity-50"><Download size={17} />{backupBusy ? "Preparando backup..." : "Baixar backup da Agenda e Despachante"}</button>
+        {backupMessage && <p role="status" className="mt-3 text-xs text-slate-700">{backupMessage}</p>}
+        <p className="mt-2 text-xs text-amber-800">Arquivo com informações pessoais. Guarde-o em local seguro. O financeiro e os arquivos de comprovantes exigem backup separado.</p>
+      </section>
     </div>
   );
 }
