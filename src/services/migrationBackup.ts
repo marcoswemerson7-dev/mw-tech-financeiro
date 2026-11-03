@@ -53,7 +53,7 @@ export async function downloadMigrationBackup(userId: string) {
     status.push({ module: `financeiro:${row.table}`, source: "appwrite", status: row.status === "ok" ? (row.rows ? "ok" : "empty") : "error", message: row.status === "error" ? row.error : `${row.rows} registros` });
   }
 
-  const audit = auditMigrationBackup(cloudDespachante, financial.datasets, status);
+  const audit = auditMigrationBackup(cloudDespachante, financial.datasets, status, local);
 
   const backup = {
     format: "mw-tech-control-migration-backup",
@@ -75,5 +75,5 @@ export async function downloadMigrationBackup(userId: string) {
   } finally {
     window.setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
-  return { fileName, status, hasErrors: status.some(item => item.status === "error") || audit.findings.length > 0, audit };
+  return { fileName, status, hasErrors: status.some(item => item.status === "error") || audit.findings.length > 0 || audit.requiresManualReview, audit };
 }
