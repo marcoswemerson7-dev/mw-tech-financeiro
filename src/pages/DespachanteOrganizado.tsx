@@ -4,7 +4,7 @@ import Dashboard from "../components/despachante/Dashboard";
 import Processos, { type Tracking } from "../components/despachante/Processos";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { downloadDespachante, uploadDespachante, cloudRevision } from "../services/despachanteSync";
+import { downloadDespachante, uploadDespachante, cloudRevision, despachanteCloudConfigured, despachanteCloudLogin, despachanteCloudLogout, despachanteCloudSession } from "../services/despachanteCloud";
 import { ClipboardCheck, Printer, Plus, Trash2, Users, FolderOpen, FileText, Pencil, X } from "lucide-react";
 
 type Client = {id:string; name:string; phone:string};
@@ -151,13 +151,46 @@ const panel="rounded-xl border border-slate-200 bg-white p-5 shadow-sm";
 export default function DespachanteOrganizado(){
 const [syncBusy,setSyncBusy]=useState(false),[syncInfo,setSyncInfo]=useState(""),[data,setData]=useState<Store>(load),[sellerDraft,setSellerDraft]=useState(""),[buyerDraft,setBuyerDraft]=useState(""),[sellers,setSellers]=useState<string[]>([]),[buyers,setBuyers]=useState<string[]>([]),[tab,setTab]=useState<Tab>("dashboard"),[selected,setSelected]=useState(""),[search,setSearch]=useState(""),[clientName,setClientName]=useState(""),[phone,setPhone]=useState(""),[jobClient,setJobClient]=useState(""),[jobModel,setJobModel]=useState("rural"),[jobTitle,setJobTitle]=useState(""),[modelName,setModelName]=useState(""),[modelDocs,setModelDocs]=useState(""),[error,setError]=useState("");
 const [autoSync,setAutoSync]=useState(()=>localStorage.getItem("mw-despachante-sync-mode-v2")!=="off");
+const [cloudOwner,setCloudOwner]=useState<string|null>(null);
+const [cloudChecking,setCloudChecking]=useState(true);
+const [cloudEmail,setCloudEmail]=useState("");
+const [cloudPassword,setCloudPassword]=useState("");
+const [cloudBusy,setCloudBusy]=useState(false);
+const [cloudMessage,setCloudMessage]=useState("");
+useEffect(()=>{
+ let active=true;
+ void despachanteCloudSession().then(session=>{
+   if(!active)return;
+   setCloudOwner(session?.user.id||null);
+   if(session?.user.email)setCloudEmail(session.user.email);
+   if(!session)setSyncStatus("Salvo neste aparelho · conecte o Supabase para sincronizar");
+ }).finally(()=>{if(active)setCloudChecking(false);});
+ return()=>{active=false;};
+},[]);
+async function connectSupabase(e:React.FormEvent){
+ e.preventDefault();setCloudBusy(true);setCloudMessage("");
+ try{
+   const user=await despachanteCloudLogin(cloudEmail,cloudPassword);
+   setCloudPassword("");
+   setCloudOwner(user.id);
+   setSyncStatus("Conectado ao Supabase · sincronizando...");
+   setSyncRequest(n=>n+1);
+ }catch(err){setCloudMessage(err instanceof Error?err.message:String(err));}
+ finally{setCloudBusy(false);}
+}
+async function disconnectSupabase(){
+ if(!confirm("Desconectar a sincronização deste aparelho? Os dados locais serão preservados."))return;
+ await despachanteCloudLogout();
+ setCloudOwner(null);setCloudMessage("");
+ setSyncStatus("Salvo neste aparelho · conecte o Supabase para sincronizar");
+}
 const [syncStatus,setSyncStatus]=useState("Conectando à nuvem...");
 const [initialLoaded,setInitialLoaded]=useState(false);
 const [syncRequest,setSyncRequest]=useState(0);
 const dataRef=useRef(data);
 const busyAuto=useRef(false);
 const syncRunner=useRef<(()=>Promise<void>)|null>(null);
-const [savedBase]=useState<Store|null>(()=>{try{const raw=localStorage.getItem(KEY+"-sync-base-v2");return raw?normalizeStore(JSON.parse(raw)):null;}catch{return null;}});
+const [savedBase]=useState<Store|null>(()=>{try{const raw=localStorage.getItem(KEY+"-sync-base-supabase-v1");return raw?normalizeStore(JSON.parse(raw)):null;}catch{return null;}});
 const baseline=useRef<Store|null>(savedBase);
 const [syncConflict,setSyncConflict]=useState<SyncConflict|null>(null);
 const conflictRef=useRef<SyncConflict|null>(null);
@@ -168,6 +201,7 @@ useEffect(()=>{
 useEffect(()=>{
  localStorage.setItem("mw-despachante-sync-mode-v2",autoSync?"on":"off");
  if(!autoSync){setSyncBusy(false);setInitialLoaded(true);setSyncStatus("Salvo neste aparelho · sincronização pausada");return;}
+ if(!cloudOwner){setSyncBusy(false);setInitialLoaded(true);setSyncStatus("Salvo neste aparelho · conecte o Supabase para sincronizar");return;}
  let alive=true;
  const canonical=(value:Store):Store=>{
   const normalized=normalizeStore(value),builtins=new Set(predefined.map(m=>m.id));
@@ -207,7 +241,8 @@ useEffect(()=>{
    }
    if(!alive)return;
    baseline.current=merged;
-   localStorage.setItem(KEY+"-sync-base-v2",JSON.stringify(merged));
+   localStorage.setItem("mw-despachante-linked-owner",cloudOwner);
+   localStorage.setItem(KEY+"-sync-base-supabase-v1",JSON.stringify(merged));
    setData(current=>{
     // Preserve edits typed while the network request was running.
     const latest=reconcileSnapshots(local,canonical(current),merged);
@@ -224,8 +259,8 @@ useEffect(()=>{
  const resume=()=>{if(document.visibilityState==="visible")void sync();};
  window.addEventListener("online",resume);window.addEventListener("focus",resume);document.addEventListener("visibilitychange",resume);
  return()=>{alive=false;if(syncRunner.current===sync)syncRunner.current=null;window.clearInterval(timer);window.removeEventListener("online",resume);window.removeEventListener("focus",resume);document.removeEventListener("visibilitychange",resume);};
-},[autoSync]);
-useEffect(()=>{if(autoSync)void syncRunner.current?.();},[syncRequest,autoSync]);
+},[autoSync,cloudOwner]);
+useEffect(()=>{if(autoSync&&cloudOwner)void syncRunner.current?.();},[syncRequest,autoSync,cloudOwner]);
 useEffect(()=>{
  if(!autoSync||!initialLoaded)return;
  const timer=window.setTimeout(()=>setSyncRequest(n=>n+1),1400);
@@ -238,7 +273,7 @@ function resolveSyncConflict(choices:Record<string,"local"|"remote">){
  if(result.conflicts.length){setSyncInfo("Surgiram novas alterações. Revise novamente antes de sincronizar.");conflictRef.current=null;setSyncConflict(null);setSyncRequest(n=>n+1);return;}
  localStorage.setItem(KEY+"-antes-resolver-conflito",JSON.stringify(conflict));
  baseline.current=conflict.remote as Store;
- localStorage.setItem(KEY+"-sync-base-v2",JSON.stringify(conflict.remote));
+ localStorage.setItem(KEY+"-sync-base-supabase-v1",JSON.stringify(conflict.remote));
  dataRef.current=result.data as Store;setData(result.data as Store);
  conflictRef.current=null;setSyncConflict(null);setSyncRequest(n=>n+1);
 }
@@ -273,7 +308,7 @@ async function recoverMissing(){
  }catch(e){setSyncInfo("A recuperação não foi concluída: "+(e instanceof Error?e.message:String(e)));}
  finally{setSyncBusy(false);}
 }
-async function syncUpload(){setAutoSync(true);setSyncRequest(n=>n+1);}
+async function syncUpload(){if(!cloudOwner){setCloudMessage("Conecte sua conta Supabase antes de sincronizar.");return;}setAutoSync(true);setSyncRequest(n=>n+1);}
 async function syncDownload(){setAutoSync(true);setSyncRequest(n=>n+1);}
 function addClient(e:React.FormEvent){e.preventDefault();if(!clientName.trim())return;const c={id:id(),name:clientName.trim(),phone:phone.trim()};setData(d=>({...d,clients:[...d.clients,c]}));setJobClient(c.id);setClientName("");setPhone("");}
 function addJob(e:React.FormEvent){e.preventDefault();const m=data.models.find(m=>m.id===jobModel);if(!m||!jobClient||!jobTitle.trim())return;const j:Job={id:id(),clientId:jobClient,title:jobTitle.trim(),modelId:m.id,sellers:[...sellers],buyers:[...buyers],docs:m.groups.flatMap(g=>g.docs.map(name=>({name,group:g.title,checked:false}))),notes:"",created:new Date().toISOString()};setData(d=>({...d,jobs:[j,...d.jobs]}));setSelected(j.id);setJobTitle("");setSellers([]);setBuyers([]);setSellerDraft("");setBuyerDraft("");}
@@ -346,6 +381,20 @@ function peopleFields(kind:"sellers"|"buyers",names:string[],draft:string,setDra
 return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#967852]">MW TECH CONTROL</p><h1 className="text-2xl font-extrabold text-[#10234d]">MW Despachante</h1><p className="text-sm text-slate-500">Gestão de processos e documentação imobiliária</p></div><ClipboardCheck size={35} color="#967852"/></div>
 {syncConflict&&<SyncConflictReview conflict={syncConflict} onResolve={resolveSyncConflict}/>}
 <div role="status" aria-live="polite" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-xs"><span className="font-semibold text-slate-600">{syncStatus}</span><button type="button" disabled={syncBusy} onClick={syncUpload} className="font-semibold text-[#846640] disabled:opacity-50">{syncBusy?"Sincronizando…":"Sincronizar agora"}</button></div>
+{!cloudChecking&&!cloudOwner&&(
+ <form onSubmit={connectSupabase} className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+  <p className="text-sm font-bold text-[#122452]">Conectar MW Despachante ao Supabase</p>
+  <p className="mt-1 text-xs text-slate-600">Use o e-mail e a senha cadastrados no Supabase. Seus clientes, checklists e processos serão sincronizados entre aparelhos com esta mesma conta. O restante do MW TECH Control não será alterado.</p>
+  <div className="mt-3 flex flex-wrap gap-2">
+   <input type="email" required aria-label="E-mail do Supabase" placeholder="E-mail do Supabase" autoComplete="username" value={cloudEmail} onChange={e=>setCloudEmail(e.target.value)} className="min-h-[42px] min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm"/>
+   <input type="password" required aria-label="Senha do Supabase" placeholder="Senha do Supabase" autoComplete="current-password" value={cloudPassword} onChange={e=>setCloudPassword(e.target.value)} className="min-h-[42px] min-w-[180px] flex-1 rounded-lg border border-slate-300 bg-white px-3 text-sm"/>
+   <button type="submit" disabled={cloudBusy||!despachanteCloudConfigured} className="rounded-lg bg-[#122452] px-4 py-2 text-xs font-bold text-white disabled:opacity-50">{cloudBusy?"Conectando...":"Conectar e sincronizar"}</button>
+  </div>
+  {!despachanteCloudConfigured&&<p className="mt-2 text-xs text-red-700">Conexão Supabase ainda não configurada neste ambiente.</p>}
+  {cloudMessage&&<p role="alert" className="mt-2 text-xs text-red-700">{cloudMessage}</p>}
+ </form>
+)}
+{cloudOwner&&<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-2 text-xs text-emerald-900"><span>Supabase conectado · seus cadastros ficam disponíveis em outros aparelhos</span><button type="button" onClick={()=>void disconnectSupabase()} className="font-semibold underline">Desconectar deste aparelho</button></div>}
 <details className="rounded-xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer text-sm font-semibold text-[#122452]">Sincronização e cadastros <span className="ml-2 text-xs font-normal text-slate-500">{syncBusy?"Em andamento…":autoSync?"Automática":"Manual"}</span></summary><div className="mt-4 space-y-3"><p className="text-xs font-semibold text-[#715735]">{syncStatus}</p><button type="button" disabled={syncBusy} onClick={()=>autoSync?(setAutoSync(false),setSyncStatus("Sincronização pausada")):void enableAutoSync()} className="rounded-lg border border-[#806d4e] px-3 py-2 text-xs font-bold">{autoSync?"Desativar sincronização automática":"Ativar sincronização automática"}</button><p className="text-xs text-slate-600">Processos, clientes e checklists são sincronizados automaticamente entre aparelhos conectados à mesma conta. Mantenha a página aberta até aparecer “Sincronizado”.</p><div className="flex gap-2 flex-wrap"><button type="button" disabled={syncBusy} onClick={recoverMissing} className="rounded-lg border border-emerald-700 bg-white px-3 py-2 text-xs font-bold text-emerald-800 disabled:opacity-50">Buscar clientes e checklists ausentes</button><button type="button" disabled={syncBusy} onClick={syncUpload} className="rounded-lg bg-[#122452] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">Sincronizar agora</button><button type="button" disabled={syncBusy} onClick={syncDownload} className="rounded-lg border border-[#122452] px-3 py-2 text-xs font-bold text-[#122452] disabled:opacity-50">Buscar atualizações</button></div>{syncInfo&&<p role="status" className="text-xs text-[#745a35]">{syncInfo}</p>}<p className="text-xs text-amber-900">{autoSync?"Sincronização automática ativada.":"Sincronização manual. Para localizar cadastros antigos sem substituir os atuais, use Buscar clientes e checklists ausentes."}</p></div></details>{error&&<p role="alert" className="text-red-600">{error}</p>}
 {!initialLoaded&&<p role="status" className="text-sm text-slate-500">Carregando os cadastros existentes…</p>}
 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">{([{k:"dashboard",label:"Visão geral",Icon:FolderOpen},{k:"processos",label:"Processos",Icon:FolderOpen},{k:"atendimentos",label:"Checklists",Icon:ClipboardCheck},{k:"clientes",label:"Clientes",Icon:Users},{k:"modelos",label:"Modelos de checklist",Icon:FileText}] as const).map(x=><button key={x.k} onClick={()=>{setTab(x.k);setSelected("");setJobClient("");}} className={"flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold "+(tab===x.k?"bg-[#10234d] text-white":"border border-slate-200 bg-white text-slate-700")}><x.Icon size={16}/>{x.label}</button>)}</div>
