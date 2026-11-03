@@ -38,8 +38,8 @@ export default function Settings() {
     try {
       const result = await downloadMigrationBackup(session?.$id || "");
       setBackupMessage(result.hasErrors
-        ? "Backup parcial baixado. Alguns dados do Appwrite não puderam ser lidos; verifique o relatório no arquivo antes de migrar."
-        : `Backup baixado: ${result.fileName}. Inclui somente Agenda e Despachante; não inclui financeiro nem anexos.`);
+        ? "Backup baixado com falhas em algumas fontes do Appwrite. Verifique o relatório antes de migrar; o financeiro pode estar incompleto."
+        : `Backup baixado: ${result.fileName}. Inclui Agenda, Despachante e tabelas financeiras acessíveis. Não inclui anexos binários nem usuários Auth.`);
     } catch (error) {
       setBackupMessage("Erro no backup: " + (error instanceof Error ? error.message : String(error)));
     } finally { setBackupBusy(false); }
@@ -136,10 +136,10 @@ export default function Settings() {
       </form>
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <h3 className="text-[15px] font-semibold text-[#0b2239]">Backup para migração</h3>
-        <p className="mt-2 text-sm text-slate-600">Exporte uma cópia da Agenda e do MW Despachante deste navegador e da nuvem Appwrite, sem apagar ou alterar os dados atuais. Repita em cada dispositivo que tenha registros exclusivos.</p>
-        <button type="button" onClick={() => void backupAgendaDespachante()} disabled={backupBusy || !session || session.$id === "demo"} className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-[#0b2239] disabled:opacity-50"><Download size={17} />{backupBusy ? "Preparando backup..." : "Baixar backup da Agenda e Despachante"}</button>
+        <p className="mt-2 text-sm text-slate-600">Exporte uma cópia dos dados locais e dos registros acessíveis no Appwrite, incluindo tabelas financeiras. A ferramenta não apaga nem altera registros. Repita em dispositivos que tenham dados exclusivos.</p>
+        <button type="button" onClick={() => void backupAgendaDespachante()} disabled={backupBusy || !session || session.$id === "demo"} className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-[#0b2239] disabled:opacity-50"><Download size={17} />{backupBusy ? "Preparando backup..." : "Baixar backup para migração"}</button>
         {backupMessage && <p role="status" className="mt-3 text-xs text-slate-700">{backupMessage}</p>}
-        <p className="mt-2 text-xs text-amber-800">Arquivo com informações pessoais. Guarde-o em local seguro. O financeiro e os arquivos de comprovantes exigem backup separado.</p>
+        <p className="mt-2 text-xs text-amber-800">Arquivo com informações pessoais. Guarde-o em local seguro. Os arquivos binários de comprovantes, usuários de autenticação e tabelas sem permissão de leitura precisam de exportação administrativa separada. Confira os status do JSON.</p>
       </section>
     </div>
   );
