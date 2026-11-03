@@ -1,3 +1,4 @@
+import { auditMigrationBackup } from "./migrationAudit";
 import { exportFinancialAppwrite } from "./financialMigrationExport";
 import { readAgendaCloud } from "./agendaSync";
 import { downloadDespachante } from "./despachanteSync";
@@ -52,6 +53,8 @@ export async function downloadMigrationBackup(userId: string) {
     status.push({ module: `financeiro:${row.table}`, source: "appwrite", status: row.status === "ok" ? (row.rows ? "ok" : "empty") : "error", message: row.status === "error" ? row.error : `${row.rows} registros` });
   }
 
+  const audit = auditMigrationBackup(cloudDespachante, financial.datasets, status);
+
   const backup = {
     format: "mw-tech-control-migration-backup",
     version: 1,
@@ -59,6 +62,7 @@ export async function downloadMigrationBackup(userId: string) {
     appwriteUserId: userId,
     sources: { local, appwrite: { agenda: cloudAgenda, despachante: cloudDespachante, financeiro: financial.datasets } },
     status,
+    audit,
     note: "Backup dos dados acessiveis ao usuario autenticado. NAO inclui arquivos binarios do Storage, usuarios Auth ou dados exclusivos de outros dispositivos. Verifique status e complete a exportacao administrativa antes do corte.",
   };
   const fileName = "mw-tech-control-migracao-" + new Date().toISOString().slice(0, 10) + ".json";
@@ -71,5 +75,5 @@ export async function downloadMigrationBackup(userId: string) {
   } finally {
     window.setTimeout(() => URL.revokeObjectURL(url), 60000);
   }
-  return { fileName, status, hasErrors: status.some(item => item.status === "error") };
+  return { fileName, status, hasErrors: status.some(item => item.status === "error") || audit.findings.length > 0, audit };
 }
