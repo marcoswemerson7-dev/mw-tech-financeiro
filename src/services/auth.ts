@@ -1,3 +1,4 @@
+import { isMwSupabaseAuthEnabled, mwSupabaseSignIn, mwSupabaseCurrent, mwSupabaseSignOut } from "../lib/mwSupabase";
 import { account } from "../lib/appwrite";
 
 function onlyDigits(value: string) {
@@ -96,6 +97,7 @@ async function resolveEmail(identifier: string) {
 
 export const authService = {
   async login(identifier: string, password: string) {
+    if (isMwSupabaseAuthEnabled) return mwSupabaseSignIn(identifier.trim(), password);
     const email = await resolveEmail(identifier);
     try {
       return await account.createEmailPasswordSession({ email, password });
@@ -108,6 +110,16 @@ export const authService = {
       throw getAppwriteLoginError(error);
     }
   },
-  current: () => account.get(),
-  logout: () => account.deleteSession({ sessionId: "current" }),
+  current: async () => {
+    if (!isMwSupabaseAuthEnabled) return account.get();
+    const session = await mwSupabaseCurrent();
+    if (!session) throw new Error("Sessão não encontrada.");
+    return {
+      $id: session.user.id,
+      email: session.user.email,
+      name: session.user.user_metadata?.name || session.user.email.split("@")[0],
+      prefs: {},
+    };
+  },
+  logout: () => isMwSupabaseAuthEnabled ? mwSupabaseSignOut() : account.deleteSession({ sessionId: "current" }),
 };
