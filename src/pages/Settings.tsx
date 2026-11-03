@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, Download, Landmark, Mail, MapPin, Phone, Save } from "lucide-react";
-import { useAuth } from "../lib/auth";
-import { downloadMigrationBackup } from "../services/migrationBackup";
+import { Building2, Landmark, Mail, MapPin, Phone, Save } from "lucide-react";
 import { getCompanySettings, saveCompanySettings } from "../services/reports";
 import { PageHeader, Toast } from "../components/UI";
 
@@ -29,21 +27,6 @@ const sections = [
 ] as const;
 
 export default function Settings() {
-  const { session } = useAuth();
-  const [backupBusy, setBackupBusy] = useState(false);
-  const [backupMessage, setBackupMessage] = useState("");
-  async function backupAgendaDespachante() {
-    setBackupBusy(true);
-    setBackupMessage("");
-    try {
-      const result = await downloadMigrationBackup(session?.$id || "");
-      setBackupMessage(result.hasErrors
-        ? "Backup baixado com falhas em algumas fontes do Appwrite. Verifique o relatório antes de migrar; o financeiro pode estar incompleto."
-        : `Backup baixado: ${result.fileName}. Inclui Agenda, Despachante e tabelas financeiras acessíveis. Não inclui anexos binários nem usuários Auth.`);
-    } catch (error) {
-      setBackupMessage("Erro no backup: " + (error instanceof Error ? error.message : String(error)));
-    } finally { setBackupBusy(false); }
-  }
   const [data, setData] = useState<Record<string, string>>(defaults);
   const [recordId, setRecordId] = useState<string | undefined>();
   const [msg, setMsg] = useState("");
@@ -134,13 +117,6 @@ export default function Settings() {
           <p className="mt-3 text-center text-[10px] text-slate-400">As alterações são aplicadas aos documentos e relatórios do sistema.</p>
         </aside>
       </form>
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h3 className="text-[15px] font-semibold text-[#0b2239]">Backup para migração</h3>
-        <p className="mt-2 text-sm text-slate-600">Exporte uma cópia dos dados locais e dos registros acessíveis no Appwrite, incluindo tabelas financeiras. A ferramenta não apaga nem altera registros. Repita em dispositivos que tenham dados exclusivos.</p>
-        <button type="button" onClick={() => void backupAgendaDespachante()} disabled={backupBusy || !session || session.$id === "demo"} className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-[#0b2239] disabled:opacity-50"><Download size={17} />{backupBusy ? "Preparando backup..." : "Baixar backup para migração"}</button>
-        {backupMessage && <p role="status" className="mt-3 text-xs text-slate-700">{backupMessage}</p>}
-        <p className="mt-2 text-xs text-amber-800">Arquivo com informações pessoais. Guarde-o em local seguro. Os arquivos binários de comprovantes, usuários de autenticação e tabelas sem permissão de leitura precisam de exportação administrativa separada. Confira os status do JSON.</p>
-      </section>
     </div>
   );
 }
