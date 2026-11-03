@@ -65,5 +65,5 @@ export function auditMigrationBackup(
   duplicateIds(processes, "id", "processos");
   duplicateIds(accounts, "$id", "contas");
   duplicateIds(moves, "$id", "movimentacoes");
-  return { readyForImport: findings.length === 0 && errors.length === 0, counts: checks, findings };
+  return { basicChecksPassed: findings.length === 0 && errors.length === 0, counts: checks, findings };
 }
