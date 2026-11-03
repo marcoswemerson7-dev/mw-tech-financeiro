@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Models } from "appwrite";
 import { isAppwriteConfigured } from "./appwrite";
+import { isMwSupabaseAuthEnabled, isMwSupabaseConfigured } from "./mwSupabase";
 import { authService } from "../services/auth";
 
 type Demo = { $id: string; email: string; name: string };
-type AuthValue = { session: Models.User<Models.Preferences> | Demo | null; loading: boolean; enterDemo: () => void; logout: () => Promise<void>; refresh: () => Promise<void> };
+type SupabaseUser = Demo & { prefs?: Record<string, unknown> };
+type AuthValue = { session: Models.User<Models.Preferences> | SupabaseUser | null; loading: boolean; enterDemo: () => void; logout: () => Promise<void>; refresh: () => Promise<void> };
 const C = createContext<AuthValue>({ session: null, loading: true, enterDemo: () => {}, logout: async () => {}, refresh: async () => {} });
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthValue["session"]>(null);
@@ -15,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession({ $id: "demo", email: "demo@mwtech.local", name: "Demonstração" });
         return;
       }
-      if (!isAppwriteConfigured) {
+      if (!(isMwSupabaseAuthEnabled ? isMwSupabaseConfigured : isAppwriteConfigured)) {
         setSession(null);
         return;
       }
@@ -36,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   useEffect(() => { void refresh(); }, []);
   const enterDemo = () => { localStorage.setItem("mw-demo", "1"); void refresh(); };
-  const logout = async () => { localStorage.removeItem("mw-demo"); if (isAppwriteConfigured && session?.$id !== "demo") await authService.logout().catch(() => undefined); setSession(null); };
+  const logout = async () => { localStorage.removeItem("mw-demo"); if ((isMwSupabaseAuthEnabled ? isMwSupabaseConfigured : isAppwriteConfigured) && session?.$id !== "demo") await authService.logout().catch(() => undefined); setSession(null); };
   return <C.Provider value={{ session, loading, enterDemo, logout, refresh }}>{children}</C.Provider>;
 }
 export const useAuth = () => useContext(C);

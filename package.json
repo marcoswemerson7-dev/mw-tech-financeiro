@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "appwrite:setup": "tsx scripts/setup-appwrite.ts"
+    "appwrite:setup": "tsx scripts/setup-appwrite.ts",
+    "test:migration": "tsx --test tests/migrationAudit.test.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
