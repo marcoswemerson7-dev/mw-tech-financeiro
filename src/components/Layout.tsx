@@ -31,6 +31,7 @@ import {
   ClipboardCheck,
   CalendarDays,
   Sun,
+  BadgeCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
@@ -55,6 +56,7 @@ const managementItems = [
   ["/agenda", "Minha Agenda", CalendarDays],
   ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
   ["/central-municipal", "Central Municipal", Network],
+  ["/certidoes", "Certidões e regularidade", BadgeCheck],
   ["/monitoramento", "Monitoramento", Activity],
   ["/monitoramento/incidentes", "Central de Incidentes", Siren],  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
   ["/projetos-codigo", "Projetos / Código", Code2],
