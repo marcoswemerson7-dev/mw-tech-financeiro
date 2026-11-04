@@ -40,6 +40,7 @@ const DataPage = lazyWithRecovery(() => import("./pages/DataPage"), "data-page")
 const Expenses = lazyWithRecovery(() => import("./pages/Expenses"), "expenses");
 const Reports = lazyWithRecovery(() => import("./pages/Reports"), "reports");
 const FinancialDocuments = lazyWithRecovery(() => import("./pages/FinancialDocuments"), "financial-documents");
+const Certificates = lazyWithRecovery(() => import("./pages/Certificates"), "certificates");
 const Settings = lazyWithRecovery(() => import("./pages/Settings"), "settings");
 const Accounts = lazyWithRecovery(() => import("./pages/Accounts"), "accounts");
 const SupportCenter = lazyWithRecovery(() => import("./pages/SupportCenter"), "support");
@@ -124,6 +125,7 @@ function Private() {
         import("./pages/Accounts"),
         import("./pages/Expenses"),
         import("./pages/Reports"),
+        import("./pages/Certificates"),
         import("./pages/Systems"),
         import("./pages/Monitoring"),
         import("./pages/IncidentCenter"),
@@ -173,6 +175,7 @@ export default function App() {
               <Route path="despesas" element={<Expenses />} />
               <Route path="relatorios" element={<Reports />} />
               <Route path="documentos-financeiros" element={<FinancialDocuments />} />
+              <Route path="certidoes" element={<Certificates />} />
               <Route path="armazenamento" element={<Storage />} />
               <Route path="acesso-remoto" element={<RemoteAccess />} />
               <Route path="suporte" element={<SupportCenter />} />
