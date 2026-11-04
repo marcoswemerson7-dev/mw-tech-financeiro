@@ -154,7 +154,7 @@ export default function Certificates() {
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
+        {([
           ["Total controlado", stats.total, FileCheck2, "text-slate-700 bg-slate-50"],
           ["Válidas", stats.validas, BadgeCheck, "text-emerald-700 bg-emerald-50"],
           ["Vencendo em 30 dias", stats.atencao, CalendarClock, "text-amber-700 bg-amber-50"],
