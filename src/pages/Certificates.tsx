@@ -159,7 +159,7 @@ export default function Certificates() {
           ["Válidas", stats.validas, BadgeCheck, "text-emerald-700 bg-emerald-50"],
           ["Vencendo em 30 dias", stats.atencao, CalendarClock, "text-amber-700 bg-amber-50"],
           ["Vencidas", stats.vencidas, AlertTriangle, "text-rose-700 bg-rose-50"],
-        ].map(([label, value, Icon, cls]) => (
+        ] as const).map(([label, value, Icon, cls]) => (
           <div key={String(label)} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-500">{label}</span><span className={`grid size-10 place-items-center rounded-xl ${cls}`}><Icon size={20}/></span></div>
             <strong className="mt-4 block text-3xl font-black text-[#07182d]">{value as number}</strong>
