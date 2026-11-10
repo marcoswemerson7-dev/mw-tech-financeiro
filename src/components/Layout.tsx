@@ -33,6 +33,7 @@ import {
   CalendarDays,
   Sun,
   BadgeCheck,
+  ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../lib/auth";
