@@ -131,7 +131,6 @@ export default function Layout() {
     return () => { document.documentElement.classList.remove("mw-dark"); document.documentElement.style.colorScheme = ""; };
   }, [darkMode]);
   const [open, setOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileModal, setProfileModal] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -298,15 +297,15 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-[#f3f6fa] text-slate-900">
-      <aside id="app-sidebar" aria-label="Menu principal" data-open={open} className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-x-hidden overflow-y-auto bg-[#102a43] text-white shadow-sm transition-[width,transform] duration-200 lg:translate-x-0 ${sidebarCollapsed ? "lg:w-[80px]" : "lg:w-[254px]"} ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className={`relative flex items-center justify-center border-b border-white/[.055] py-4 ${sidebarCollapsed ? "min-h-[110px] px-2" : "min-h-[183px] px-5"}`}>
-          <img src="/mw-tech-logo.png" className={`object-contain mix-blend-screen ${sidebarCollapsed ? "h-[70px] w-[65px]" : "h-[148px] w-[215px]"}`} alt="MW TECH" />
+      <aside id="app-sidebar" aria-label="Menu principal" data-open={open} className={`fixed inset-y-0 left-0 z-30 flex w-[254px] flex-col overflow-y-auto bg-[#102a43] text-white shadow-sm transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="relative flex min-h-[183px] items-center justify-center border-b border-white/[.055] px-5 py-4">
+          <img src="/mw-tech-logo.png" className="h-[148px] w-[215px] object-contain mix-blend-screen" alt="MW TECH" />
           <button className="absolute right-3 top-3 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu"><X size={22} /></button>
         </div>
 
-        <nav aria-label="Navegação por áreas" className={`flex-1 space-y-2 overflow-y-auto py-5 ${sidebarCollapsed ? "px-2" : "px-3"}`}>
-          <NavLink to="/" end onClick={() => setOpen(false)} className={(props) => `${navClass(props)} ${sidebarCollapsed ? "justify-center px-0" : ""}`} title={sidebarCollapsed ? "Visão geral" : undefined}>
-            <House size={19} className="shrink-0" strokeWidth={2} />{!sidebarCollapsed && <span>Visão geral</span>}
+        <nav aria-label="Navegação por áreas" className="flex-1 space-y-2 overflow-y-auto px-3 py-5">
+          <NavLink to="/" end onClick={() => setOpen(false)} className={navClass}>
+            <House size={19} strokeWidth={2} /><span>Visão geral</span>
           </NavLink>
           <div className="my-3 h-px bg-white/10" />
           {sidebarSections.map((section) => {
@@ -317,19 +316,18 @@ export default function Layout() {
             return <div key={section.id} className="space-y-1">
               <button
                 type="button"
-                onClick={() => { if (sidebarCollapsed) { setSidebarCollapsed(false); setExpandedSections(current => ({ ...current, [section.id]: true })); } else toggleSection(section.id); }}
-                aria-expanded={!sidebarCollapsed && expanded}
-                title={sidebarCollapsed ? section.title : undefined}
+                onClick={() => toggleSection(section.id)}
+                aria-expanded={expanded}
                 aria-controls={panelId}
-                className={`flex min-h-[46px] w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors ${sidebarCollapsed ? "justify-center !px-0" : ""} focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
+                className={`flex min-h-[46px] w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
                   active ? "bg-white/[.08] text-[#f5c75b]" : "text-slate-100 hover:bg-white/[.07]"
                 }`}
               >
-                <Icon size={19} className="shrink-0" strokeWidth={2} />
-                {!sidebarCollapsed && <span className="min-w-0 flex-1">{section.title}</span>}
-                {!sidebarCollapsed && <ChevronDown size={16} className={`shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />}
+                <Icon size={19} strokeWidth={2} />
+                <span className="min-w-0 flex-1">{section.title}</span>
+                <ChevronDown size={16} className={`shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
               </button>
-              {!sidebarCollapsed && expanded && <div id={panelId} className="ml-5 space-y-0.5 border-l border-white/15 py-1 pl-3">
+              {expanded && <div id={panelId} className="ml-5 space-y-0.5 border-l border-white/15 py-1 pl-3">
                 {section.items.map(([to, label, I]) =>
                   <NavLink
                     key={to}
@@ -347,16 +345,16 @@ export default function Layout() {
           })}
         </nav>
 
-        <button onClick={logout} title={sidebarCollapsed ? "Sair" : undefined} className={`mb-4 flex min-h-[42px] items-center gap-3 rounded-xl text-sm font-semibold text-slate-400 transition hover:bg-white/[.05] hover:text-white ${sidebarCollapsed ? "mx-2 justify-center px-1" : "mx-4 px-4"}`}><LogOut size={18} className="shrink-0" />{!sidebarCollapsed && "Sair"}</button>
+        <button onClick={logout} className="mx-4 mb-4 flex min-h-[42px] items-center gap-3 rounded-xl px-4 text-sm font-semibold text-slate-400 transition hover:bg-white/[.05] hover:text-white"><LogOut size={18} />Sair</button>
       </aside>
 
       {open && <button onClick={() => setOpen(false)} className="fixed inset-0 z-20 bg-black/50 lg:hidden" aria-label="Fechar menu" />}
 
       {!open && <button type="button" className="mobile-menu-trigger fixed left-0 z-40 grid h-12 w-10 place-items-center rounded-r-xl border border-l-0 border-white/20 bg-[#102a43] text-white shadow-md lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menu lateral" aria-controls="app-sidebar" aria-expanded={open}><Menu size={23} /></button>}
-      <div className={`app-content-shell transition-[padding] duration-200 ${sidebarCollapsed ? "lg:pl-[80px]" : "lg:pl-[254px]"}`}>
+      <div className="app-content-shell lg:pl-[254px]">
         <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-[#102a43] px-4 text-white shadow-sm sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
-            <button className="hidden size-9 place-items-center rounded-lg text-white/90 lg:grid transition hover:bg-white/10" onClick={() => setSidebarCollapsed(value => !value)} aria-label={sidebarCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"} aria-controls="app-sidebar" aria-expanded={!sidebarCollapsed}><Menu size={24} /></button>
+            <button className="hidden size-9 place-items-center rounded-lg text-white/90 lg:grid transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
             <div className="hidden h-11 w-[500px] max-w-[40vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
               <Search size={18} className="text-slate-300" /><input aria-label="Buscar no sistema" placeholder="Buscar no sistema..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400" /><span className="rounded-md bg-white/[.07] px-2 py-1 text-[11px] text-slate-300">Ctrl + K</span>
             </div>
