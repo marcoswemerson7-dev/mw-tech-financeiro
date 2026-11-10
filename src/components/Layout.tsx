@@ -354,7 +354,7 @@ export default function Layout() {
       <div className="app-content-shell lg:pl-[254px]">
         <header className="sticky top-0 z-20 flex h-[72px] items-center justify-between border-b border-white/10 bg-[#102a43] px-4 text-white shadow-sm sm:px-7 lg:px-6">
           <div className="flex items-center gap-5">
-            <button className="hidden size-9 place-items-center rounded-lg text-white/90 lg:grid transition hover:bg-white/10" onClick={() => setOpen(true)} aria-label="Abrir menu"><Menu size={24} /></button>
+            <button className="hidden size-9 place-items-center rounded-lg text-white/90 lg:grid transition hover:bg-white/10" onClick={() => window.dispatchEvent(new Event("mw-tech:toggle-sidebar"))} aria-label="Recolher ou expandir barra lateral" title="Recolher ou expandir menu"><Menu size={24} /></button>
             <div className="hidden h-11 w-[500px] max-w-[40vw] items-center gap-3 rounded-xl border border-white/10 bg-white/[.055] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] md:flex">
               <Search size={18} className="text-slate-300" /><input aria-label="Buscar no sistema" placeholder="Buscar no sistema..." className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-400" /><span className="rounded-md bg-white/[.07] px-2 py-1 text-[11px] text-slate-300">Ctrl + K</span>
             </div>
