@@ -18,7 +18,6 @@ import {
   Search,
   Cloud,
   Headphones,
-  Building2,
   Network,
   Camera,
   UserRound,
