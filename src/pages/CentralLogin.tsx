@@ -12,7 +12,7 @@ export default function CentralLogin() {
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (session) return <Navigate to="/central-sistemas" replace />;
+  if (session && session.$id !== "demo") return <Navigate to="/central-sistemas" replace />;
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true); setError("");
