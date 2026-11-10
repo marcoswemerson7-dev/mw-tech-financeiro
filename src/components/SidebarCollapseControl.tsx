@@ -4,123 +4,124 @@ import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 
 const STORAGE_KEY = "mw-tech:sidebar-collapsed";
-const EXPANDED = 254;
-const COLLAPSED = 86;
+const EXPANDED_WIDTH = 254;
+const COLLAPSED_WIDTH = 80;
 
 export default function SidebarCollapseControl() {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(STORAGE_KEY) === "1");
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  // Start expanded after correcting the previously broken collapsed layout.
+  const [collapsed, setCollapsed] = useState(false);
+  const [target, setTarget] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0");
+    const sidebar = document.getElementById("app-sidebar") as HTMLElement | null;
+    const shell = document.querySelector<HTMLElement>(".app-content-shell");
+    const logo = sidebar?.firstElementChild as HTMLElement | null;
+    setTarget(logo || null);
+    if (!sidebar || !shell) return;
 
-    const applyLayout = () => {
-      const sidebar = document.querySelector<HTMLElement>("aside.fixed.inset-y-0.left-0");
-      const appHeader = document.querySelector<HTMLElement>("header.sticky.top-0");
-      const shell = appHeader?.parentElement as HTMLElement | null;
-      const logoArea = sidebar?.firstElementChild as HTMLElement | null;
+    const apply = () => {
       const desktop = window.matchMedia("(min-width: 1024px)").matches;
-
-      setPortalTarget(logoArea || null);
-
-      if (!sidebar || !shell) return;
-
-      if (!desktop) {
+      const compact = desktop && collapsed;
+      document.body.classList.toggle("mw-sidebar-collapsed", compact);
+      if (desktop) {
+        sidebar.style.setProperty("width", `${compact ? COLLAPSED_WIDTH : EXPANDED_WIDTH}px`, "important");
+        shell.style.setProperty("padding-left", `${compact ? COLLAPSED_WIDTH : EXPANDED_WIDTH}px`, "important");
+        sidebar.style.setProperty("overflow-x", "hidden", "important");
+        sidebar.style.setProperty("transition", "width 180ms ease", "important");
+        shell.style.setProperty("transition", "padding-left 180ms ease", "important");
+      } else {
         sidebar.style.removeProperty("width");
         sidebar.style.removeProperty("overflow-x");
         sidebar.style.removeProperty("transition");
         shell.style.removeProperty("padding-left");
         shell.style.removeProperty("transition");
-        document.body.classList.remove("mw-sidebar-collapsed");
-        return;
       }
-
-      const width = collapsed ? COLLAPSED : EXPANDED;
-      sidebar.style.setProperty("width", `${width}px`, "important");
-      sidebar.style.setProperty("overflow-x", "hidden", "important");
-      sidebar.style.setProperty("transition", "width 220ms ease", "important");
-      shell.style.setProperty("padding-left", `${width}px`, "important");
-      shell.style.setProperty("transition", "padding-left 220ms ease", "important");
-      document.body.classList.toggle("mw-sidebar-collapsed", collapsed);
     };
-
-    applyLayout();
-    const raf = window.requestAnimationFrame(applyLayout);
-    const timer = window.setTimeout(applyLayout, 250);
-    const observer = new MutationObserver(applyLayout);
-    observer.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener("resize", applyLayout);
-
+    apply();
+    window.addEventListener("resize", apply);
     return () => {
-      window.cancelAnimationFrame(raf);
-      window.clearTimeout(timer);
-      observer.disconnect();
-      window.removeEventListener("resize", applyLayout);
+      window.removeEventListener("resize", apply);
+      document.body.classList.remove("mw-sidebar-collapsed");
+      sidebar.style.removeProperty("width");
+      sidebar.style.removeProperty("overflow-x");
+      sidebar.style.removeProperty("transition");
+      shell.style.removeProperty("padding-left");
+      shell.style.removeProperty("transition");
     };
   }, [collapsed, location.pathname]);
 
-  if (location.pathname === "/login") return null;
-
-  const button = (
+  if (location.pathname === "/login" || location.pathname.startsWith("/central-")) return null;
+  const toggle = (
     <button
       type="button"
-      onClick={() => setCollapsed((value) => !value)}
-      className="absolute bottom-3 right-3 z-50 hidden size-9 place-items-center rounded-xl border border-white/15 bg-white/10 text-white shadow-[0_8px_20px_rgba(0,0,0,.20)] backdrop-blur-sm transition hover:bg-white/20 lg:grid"
+      onClick={() => {
+        setCollapsed(value => {
+          const next = !value;
+          try { localStorage.setItem(STORAGE_KEY, next ? "1" : "0"); } catch { /* optional */ }
+          return next;
+        });
+      }}
+      className="absolute bottom-3 right-3 z-50 hidden h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-white shadow-lg hover:bg-white/20 lg:flex"
+      aria-label={collapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
+      aria-expanded={!collapsed}
       title={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-      aria-label={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
     >
-      {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+      {collapsed ? <ChevronRight size={19} /> : <ChevronLeft size={19} />}
     </button>
   );
 
   return (
     <>
       <style>{`
-        @media (min-width: 1024px) {
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 > div:first-child {
-            min-height: 112px !important;
-            padding-left: 8px !important;
-            padding-right: 8px !important;
+        @media (min-width:1024px) {
+          body.mw-sidebar-collapsed #app-sidebar > div:first-child {
+            min-height:112px !important;
+            padding:8px !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 > div:first-child img {
-            width: 68px !important;
-            height: 82px !important;
+          body.mw-sidebar-collapsed #app-sidebar > div:first-child img {
+            width:62px !important;
+            height:74px !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 nav a,
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 nav > div > div:first-child {
-            justify-content: center !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
-            font-size: 0 !important;
-            gap: 0 !important;
+          body.mw-sidebar-collapsed #app-sidebar > nav {
+            padding-left:7px !important;
+            padding-right:7px !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 nav a span,
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 nav > div > div:first-child span,
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 nav > div > div:first-child svg:last-child {
-            display: none !important;
+          body.mw-sidebar-collapsed #app-sidebar > nav > a,
+          body.mw-sidebar-collapsed #app-sidebar > nav > div > button {
+            min-width:0 !important;
+            width:100% !important;
+            justify-content:center !important;
+            gap:0 !important;
+            padding-left:0 !important;
+            padding-right:0 !important;
+            font-size:0 !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 nav > div > div:nth-child(2) {
-            display: none !important;
+          body.mw-sidebar-collapsed #app-sidebar > nav > a > span,
+          body.mw-sidebar-collapsed #app-sidebar > nav > div > button > span,
+          body.mw-sidebar-collapsed #app-sidebar > nav > div > button > svg:last-child {
+            display:none !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 > div:nth-last-of-type(1) {
-            display: none !important;
+          body.mw-sidebar-collapsed #app-sidebar > nav > div > div[id^="sidebar-section-"] {
+            display:none !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 > button:last-child {
-            justify-content: center !important;
-            font-size: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+          body.mw-sidebar-collapsed #app-sidebar > nav svg {
+            display:block !important;
+            flex:none !important;
           }
-          body.mw-sidebar-collapsed aside.fixed.inset-y-0.left-0 > div:first-child button[aria-label*="menu lateral"] {
-            bottom: 8px !important;
-            right: 8px !important;
-            width: 32px !important;
-            height: 32px !important;
+          body.mw-sidebar-collapsed #app-sidebar > button:last-child {
+            justify-content:center !important;
+            padding:0 !important;
+            font-size:0 !important;
+            gap:0 !important;
+          }
+          body.mw-sidebar-collapsed #app-sidebar > div:first-child button[aria-label*="barra lateral"] {
+            right:7px !important;
+            bottom:6px !important;
           }
         }
       `}</style>
-      {portalTarget ? createPortal(button, portalTarget) : null}
+      {target ? createPortal(toggle, target) : null}
     </>
   );
 }
