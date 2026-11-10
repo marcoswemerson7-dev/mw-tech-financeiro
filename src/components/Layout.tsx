@@ -39,36 +39,62 @@ import { useAuth } from "../lib/auth";
 import { supportService, type SupportTicket } from "../services/support";
 import { changeUserPassword, updateUserProfile } from "../services/userProfile";
 
-const topItems = [
-  ["/", "Visão geral", House],
-  ["/caixa", "Caixa", Wallet],
-] as const;
+type SidebarItem = readonly [string, string, typeof House];
+type SidebarSection = { id: string; title: string; icon: typeof House; items: readonly SidebarItem[] };
 
-const financeItems = [
-  ["/movimentacoes", "Entradas e saídas", CircleDollarSign],
-  ["/contas", "Contas bancárias", Landmark],
-  ["/despesas", "Contas a pagar", Wallet],
-  ["/relatorios", "Relatórios", FileChartColumn],
-  ["/documentos-financeiros", "Notas fiscais", Files],
-] as const;
+const sidebarSections: SidebarSection[] = [
+  {
+    id: "financeiro", title: "Financeiro", icon: Wallet,
+    items: [
+      ["/caixa", "Caixa", Wallet],
+      ["/movimentacoes", "Entradas e saídas", CircleDollarSign],
+      ["/contas", "Contas bancárias", Landmark],
+      ["/despesas", "Contas a pagar", Wallet],
+      ["/documentos-financeiros", "Notas fiscais", Files],
+      ["/relatorios", "Relatórios financeiros", FileChartColumn],
+    ],
+  },
+  {
+    id: "rotina", title: "Rotina e serviços", icon: CalendarDays,
+    items: [
+      ["/agenda", "Minha Agenda", CalendarDays],
+      ["/despachante", "MW Despachante", ClipboardCheck],
+      ["/certidoes", "Certidões", BadgeCheck],
+    ],
+  },
+  {
+    id: "sistemas", title: "Sistemas e clientes", icon: LayoutGrid,
+    items: [
+      ["/central-sistemas", "Central de Sistemas", LayoutGrid],
+      ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
+      ["/central-municipal", "Central Municipal", Network],
+      ["/projetos-codigo", "Projetos / Código", Code2],
+    ],
+  },
+  {
+    id: "infraestrutura", title: "Tecnologia e suporte", icon: Activity,
+    items: [
+      ["/monitoramento", "Monitoramento", Activity],
+      ["/monitoramento/tecnico", "Monitoramento técnico", Monitor],
+      ["/monitoramento/incidentes", "Central de Incidentes", Siren],
+      ["/monitoramento/auditoria", "Auditoria de acessos", ShieldCheck],
+      ["/acesso-remoto", "Acesso remoto", Monitor],
+      ["/armazenamento", "Armazenamento (Drive)", Cloud],
+      ["/suporte", "Central de Suporte", Headphones],
+    ],
+  },
+  {
+    id: "administracao", title: "Administração", icon: Settings,
+    items: [
+      ["/usuarios", "Usuários e acessos", UsersRound],
+      ["/monitoramento/usuarios", "Usuários monitorados", UserRound],
+      ["/configuracoes", "Configurações", Settings],
+    ],
+  },
+];
 
-const managementItems = [
-  ["/despachante", "MW Despachante", ClipboardCheck],
-  ["/agenda", "Minha Agenda", CalendarDays],
-  ["/sistemas", "Sistemas e órgãos", PanelsTopLeft],
-  ["/central-sistemas", "Central de Sistemas", LayoutGrid],
-  ["/central-municipal", "Central Municipal", Network],
-  ["/certidoes", "Certidões e regularidade", BadgeCheck],
-  ["/monitoramento", "Monitoramento", Activity],
-  ["/monitoramento/incidentes", "Central de Incidentes", Siren],  ["/acesso-remoto", "Acesso remoto (AnyDesk)", Monitor],
-  ["/projetos-codigo", "Projetos / Código", Code2],
-  ["/usuarios", "Usuários e acessos", UsersRound],
-] as const;
-
-const bottomItems = [
-  ["/suporte", "Central de Suporte", Headphones],
-  ["/configuracoes", "Configurações", Settings],
-] as const;
+const activeSidebarPath = (pathname: string, path: string) =>
+  pathname === path || (path !== "/" && pathname.startsWith(path + "/"));
 
 const supportStamp = (ticket: SupportTicket) => new Date(ticket.last_message_at || ticket.updated_at || ticket.created_at).getTime();
 
@@ -121,7 +147,25 @@ export default function Layout() {
   const loc = useLocation();
   const navigate = useNavigate();
   const { session, logout, refresh } = useAuth();
-  const financeActive = financeItems.some(([path]) => loc.pathname.startsWith(path));
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("mw-control:sidebar-sections") || "{}"); }
+    catch { return {}; }
+  });
+  const activeSection = sidebarSections.find((section) =>
+    section.items.some(([path]) => activeSidebarPath(loc.pathname, path))
+  )?.id;
+  useEffect(() => {
+    if (!activeSection) return;
+    setExpandedSections((current) => current[activeSection] ? current : { ...current, [activeSection]: true });
+  }, [activeSection]);
+  const toggleSection = (id: string) => {
+    setExpandedSections((current) => {
+      const next = { ...current, [id]: !(current[id] ?? id === activeSection) };
+      try { localStorage.setItem("mw-control:sidebar-sections", JSON.stringify(next)); } catch { /* opcional */ }
+      return next;
+    });
+  };
+
 
   const prefs = ((session as { prefs?: Record<string, unknown> } | null)?.prefs || {}) as Record<string, unknown>;
   const userName = String(session?.name || session?.email?.split("@")[0] || "Usuário");
@@ -245,10 +289,10 @@ export default function Layout() {
   };
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
-    `flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold transition-all ${
+    `flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
       isActive
-        ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b] shadow-[inset_0_0_0_1px_rgba(255,255,255,.025)]"
-        : "border-transparent text-slate-100 hover:bg-white/[.05] hover:text-white"
+        ? "bg-[#f0b83f]/15 text-[#f5c75b]"
+        : "text-slate-200 hover:bg-white/[.07] hover:text-white"
     }`;
 
   return (
@@ -259,19 +303,46 @@ export default function Layout() {
           <button className="absolute right-3 top-3 rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden" onClick={() => setOpen(false)} aria-label="Fechar menu"><X size={22} /></button>
         </div>
 
-        <nav className="flex-1 space-y-2 px-3 py-4">
-          {topItems.map(([to, label, I]) => <NavLink key={to} to={to} end={to === "/"} onClick={() => setOpen(false)} className={navClass}><I size={21} strokeWidth={2} /><span>{label}</span></NavLink>)}
-          <div className="pt-1">
-            <div className={`flex min-h-[48px] items-center gap-3 rounded-xl border-l-[4px] px-4 text-[14px] font-bold ${financeActive ? "border-[#f0b83f] bg-white/[.085] text-[#f5c75b]" : "border-transparent text-slate-100"}`}>
-              <CircleDollarSign size={21} strokeWidth={2} /><span>Financeiro</span><ChevronDown size={15} className="ml-auto" />
-            </div>
-            <div className="mt-1 space-y-1 pl-6">
-              {financeItems.map(([to, label, I]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-[36px] items-center gap-2.5 rounded-lg px-3 text-[12px] font-semibold transition ${isActive ? "bg-white/[.07] text-[#f5c75b]" : "text-slate-300 hover:bg-white/[.05] hover:text-white"}`}><I size={15} />{label}</NavLink>)}
-            </div>
-          </div>
-          {managementItems.map(([to, label, I]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={navClass}><I size={21} strokeWidth={2} /><span>{label}</span></NavLink>)}
-          <NavLink to="/armazenamento" onClick={() => setOpen(false)} className={navClass}><Cloud size={21} strokeWidth={2} /><span>Armazenamento (Drive)</span></NavLink>
-          {bottomItems.map(([to, label, I]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={navClass}><I size={21} strokeWidth={2} /><span>{label}</span></NavLink>)}
+        <nav aria-label="Navegação por áreas" className="flex-1 space-y-2 overflow-y-auto px-3 py-5">
+          <NavLink to="/" end onClick={() => setOpen(false)} className={navClass}>
+            <House size={19} strokeWidth={2} /><span>Visão geral</span>
+          </NavLink>
+          <div className="my-3 h-px bg-white/10" />
+          {sidebarSections.map((section) => {
+            const active = section.id === activeSection;
+            const expanded = expandedSections[section.id] ?? active;
+            const Icon = section.icon;
+            const panelId = `sidebar-section-${section.id}`;
+            return <div key={section.id} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => toggleSection(section.id)}
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                className={`flex min-h-[46px] w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${
+                  active ? "bg-white/[.08] text-[#f5c75b]" : "text-slate-100 hover:bg-white/[.07]"
+                }`}
+              >
+                <Icon size={19} strokeWidth={2} />
+                <span className="min-w-0 flex-1">{section.title}</span>
+                <ChevronDown size={16} className={`shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
+              </button>
+              {expanded && <div id={panelId} className="ml-5 space-y-0.5 border-l border-white/15 py-1 pl-3">
+                {section.items.map(([to, label, I]) =>
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={to === "/monitoramento"}
+                    onClick={() => setOpen(false)}
+                    className={navClass}
+                  >
+                    <I size={16} className="shrink-0" strokeWidth={1.9} />
+                    <span className="min-w-0 leading-5">{label}</span>
+                  </NavLink>
+                )}
+              </div>}
+            </div>;
+          })}
         </nav>
 
         <div className="relative mx-4 mb-3 overflow-hidden rounded-2xl border border-[#c99a38]/35 bg-white/[.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
