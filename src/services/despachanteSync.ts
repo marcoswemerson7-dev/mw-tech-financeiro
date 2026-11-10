@@ -1,3 +1,5 @@
+import { isMwSupabaseAuthEnabled } from "../lib/mwSupabase";
+import { downloadSupabaseDespachante, supabaseDespachanteRevision, uploadSupabaseDespachante } from "./supabaseDespachanteSync";
 import { Permission, Role } from "appwrite";
 import { account, appwriteConfig, tables } from "../lib/appwrite";
 
@@ -25,6 +27,7 @@ function valid(value:unknown):value is Snapshot {
  return Array.isArray(d.clients)&&Array.isArray(d.models)&&Array.isArray(d.jobs)&&(d.processes===undefined||Array.isArray(d.processes));
 }
 export async function downloadDespachante():Promise<Snapshot|null>{
+ if (isMwSupabaseAuthEnabled) return downloadSupabaseDespachante();
  const owner=await userId();
  let head;
  try{head=await readRow(owner);}catch(e){if(Number((e as {code?:number}).code)===404)return null;throw e;}
@@ -43,10 +46,12 @@ export async function downloadDespachante():Promise<Snapshot|null>{
  return snapshot;
 }
 export async function cloudRevision(){
+ if (isMwSupabaseAuthEnabled) return supabaseDespachanteRevision();
  const owner=await userId();
  try { const row=await readRow(owner); return String(row.$updatedAt||""); } catch(e){if(Number((e as {code?:number}).code)===404)return "";throw e;}
 }
 export async function uploadDespachante(data:Snapshot, expectedRevision?:string){
+ if (isMwSupabaseAuthEnabled) { await uploadSupabaseDespachante(data,expectedRevision); return; }
  const owner=await userId();
  const encoded=encode(JSON.stringify(data));
  const parts=chunksOf(encoded);

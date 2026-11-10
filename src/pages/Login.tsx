@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Eye, EyeOff, Fingerprint, LockKeyhole, MonitorPlay, ShieldCheck } from "lucide-react";
 import { isAppwriteConfigured } from "../lib/appwrite";
+import { isMwSupabaseAuthEnabled, isMwSupabaseConfigured } from "../lib/mwSupabase";
 import { useAuth } from "../lib/auth";
 import { authService } from "../services/auth";
 
@@ -17,6 +18,7 @@ function formatIdentifier(value: string) {
 
 export default function Login() {
   const { session, enterDemo, refresh } = useAuth();
+  const configured = isMwSupabaseAuthEnabled ? isMwSupabaseConfigured : isAppwriteConfigured;
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -56,13 +58,13 @@ export default function Login() {
             <p className="text-[11px] font-semibold uppercase tracking-[.22em] text-[#b78331]">MW TECH Control</p>
             <h1 className="mt-2 text-[30px] font-semibold tracking-[-.035em] text-[#06192d]">Acesse sua conta</h1>
             <p className="mx-auto mt-2 max-w-xs text-[13px] leading-5 text-slate-500">
-              Entre usando seu CPF ou e-mail cadastrado.
+              {isMwSupabaseAuthEnabled ? "Entre com o e-mail cadastrado no Supabase." : "Entre usando seu CPF ou e-mail cadastrado."}
             </p>
           </div>
 
-          {!isAppwriteConfigured && (
+          {!configured && (
             <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-xs leading-5 text-blue-900">O Appwrite ainda não está configurado neste ambiente.</p>
+              <p className="text-xs leading-5 text-blue-900">O banco de autenticação ainda não está configurado neste ambiente.</p>
               <button
                 type="button"
                 onClick={enterDemo}
@@ -75,16 +77,16 @@ export default function Login() {
 
           <div className="mt-7 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-[12px] font-semibold text-slate-700">CPF ou e-mail</span>
+              <span className="mb-2 block text-[12px] font-semibold text-slate-700">{isMwSupabaseAuthEnabled ? "E-mail" : "CPF ou e-mail"}</span>
               <div className="relative">
                 <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   required
                   autoComplete="username"
                   value={identifier}
-                  onChange={(e) => setIdentifier(formatIdentifier(e.target.value))}
+                  onChange={(e) => setIdentifier(isMwSupabaseAuthEnabled ? e.target.value : formatIdentifier(e.target.value))}
                   disabled={!isAppwriteConfigured}
-                  placeholder="000.000.000-00 ou email@empresa.com"
+                  placeholder={isMwSupabaseAuthEnabled ? "email@empresa.com" : "000.000.000-00 ou email@empresa.com"}
                   className="h-[52px] w-full rounded-xl border border-slate-200 bg-[#f8fafc] pl-11 pr-4 text-[14px] font-semibold text-[#07182d] outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-[#b78331] focus:bg-white focus:ring-4 focus:ring-amber-500/[.08] disabled:bg-slate-100"
                 />
               </div>
