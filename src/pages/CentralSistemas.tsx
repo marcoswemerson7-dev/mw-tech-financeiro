@@ -118,7 +118,7 @@ export default function CentralSistemas() {
           {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-[#105897] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#0d497d]">Acessar <ExternalLink size={15}/></a> : <span className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">Link não cadastrado</span>}
         </article>;
       })}</div> : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
-        Nenhum órgão ativo encontrado para este sistema. Cadastre o órgão e seu endereço em <Link className="font-bold text-blue-700 underline" to="/sistemas">Sistemas e órgãos</Link>.
+        Nenhum órgão ativo encontrado para este sistema. Cadastre o órgão e seu endereço na opção <strong>Sistemas e órgãos</strong> do MW TECH Control.
       </div>}
       <div className="mt-8 flex items-start gap-3 rounded-xl border border-[#dde5ee] bg-[#eaf0f7]/70 px-5 py-4 text-xs leading-5 text-slate-600">
         <ShieldCheck size={18} className="shrink-0 text-[#235b88]"/>
