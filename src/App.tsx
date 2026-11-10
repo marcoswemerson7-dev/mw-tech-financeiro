@@ -33,6 +33,8 @@ function lazyWithRecovery<T extends ComponentType<any>>(
 const Agenda = lazyWithRecovery(() => import("./pages/Agenda"), "agenda");
 const Despachante = lazyWithRecovery(() => import("./pages/DespachanteOrganizado"), "despachante");
 const Login = lazyWithRecovery(() => import("./pages/Login"), "login");
+const CentralLogin = lazyWithRecovery(() => import("./pages/CentralLogin"), "central-login");
+const CentralSistemas = lazyWithRecovery(() => import("./pages/CentralSistemas"), "central-sistemas");
 const Dashboard = lazyWithRecovery(() => import("./pages/Dashboard"), "dashboard");
 const Cash = lazyWithRecovery(() => import("./pages/Cash"), "cash");
 const Transactions = lazyWithRecovery(() => import("./pages/Transactions"), "transactions");
@@ -112,6 +114,12 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: bo
   }
 }
 
+function CentralPrivate() {
+  const { session, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  return session && session.$id !== "demo" ? <CentralSistemas /> : <Navigate to="/central-login" replace />;
+}
+
 function Private() {
   const { session, loading } = useAuth();
 
@@ -165,6 +173,8 @@ export default function App() {
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/central-login" element={<CentralLogin />} />
+            <Route path="/central-sistemas" element={<CentralPrivate />} />
             <Route element={<Private />}>
               <Route index element={<Dashboard />} />
               <Route path="caixa" element={<Cash />} />
