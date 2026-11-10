@@ -346,10 +346,6 @@ export default function Layout() {
           })}
         </nav>
 
-        <div className="relative mx-4 mb-3 overflow-hidden rounded-2xl border border-[#c99a38]/35 bg-white/[.035] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.03)]">
-          <div className="absolute inset-x-0 bottom-0 h-px bg-[#b8924b]/40" />
-          <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f0b83f]/10 text-[#f0b83f]"><Building2 size={21} /></span><div><b className="text-sm">MW TECH</b><p className="mt-1 text-xs leading-5 text-slate-300">Gestão hoje.<br />Resultados amanhã.</p></div></div>
-        </div>
         <button onClick={logout} className="mx-4 mb-4 flex min-h-[42px] items-center gap-3 rounded-xl px-4 text-sm font-semibold text-slate-400 transition hover:bg-white/[.05] hover:text-white"><LogOut size={18} />Sair</button>
       </aside>
 
