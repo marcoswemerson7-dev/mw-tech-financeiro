@@ -164,6 +164,8 @@ function Private() {
 }
 
 export default function App() {
+  // The dedicated portal domain must not expose the main Control routes.
+  const isCentralDomain = window.location.hostname === "central.mwtechsistemas.com.br";
   return (
     <AppErrorBoundary>
       <AuthProvider>
@@ -171,7 +173,11 @@ export default function App() {
         <IncidentNotifier />
         <SidebarCollapseControl />
         <Suspense fallback={<LoadingScreen />}>
-          <Routes>
+          {isCentralDomain ? <Routes>
+            <Route path="/central-login" element={<CentralLogin />} />
+            <Route path="/central-sistemas" element={<CentralPrivate />} />
+            <Route path="*" element={<CentralPrivate />} />
+          </Routes> : <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/central-login" element={<CentralLogin />} />
             <Route path="/central-sistemas" element={<CentralPrivate />} />
@@ -205,7 +211,7 @@ export default function App() {
               <Route path="retiradas" element={<DataPage kind="retiradas" />} />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          </Routes>}
         </Suspense>
       </AuthProvider>
     </AppErrorBoundary>
