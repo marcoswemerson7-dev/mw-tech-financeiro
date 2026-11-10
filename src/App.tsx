@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/auth";
 import Layout from "./components/Layout";
 import SupportNotifier from "./components/SupportNotifier";
-import SidebarCollapseControl from "./components/SidebarCollapseControl";
 import IncidentNotifier from "./components/IncidentNotifier";
 
 function lazyWithRecovery<T extends ComponentType<any>>(
@@ -171,7 +170,6 @@ export default function App() {
       <AuthProvider>
         <SupportNotifier />
         <IncidentNotifier />
-        <SidebarCollapseControl />
         <Suspense fallback={<LoadingScreen />}>
           {isCentralDomain ? <Routes>
             <Route path="/central-login" element={<CentralLogin />} />
