@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Cloud, FolderOpen, RefreshCw } from "lucide-react";
+import { AlertTriangle, Cloud, ExternalLink, FolderOpen, RefreshCw } from "lucide-react";
 import { getCachedDriveStorageUsage, getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 
 export default function Storage() {
@@ -19,6 +19,10 @@ export default function Storage() {
   useEffect(() => { load(false); }, []);
 
   const percent = Math.max(0, Math.min(100, data?.percent || 0));
+  const formatFolderSize = (bytes: number) => bytes >= 1024 ** 3
+    ? `${(bytes / 1024 ** 3).toFixed(2)} GB`
+    : bytes >= 1024 ** 2 ? `${(bytes / 1024 ** 2).toFixed(2)} MB`
+    : `${(bytes / 1024).toFixed(1)} KB`;
 
   return (
     <div className="space-y-5 pb-6">
@@ -66,9 +70,10 @@ export default function Storage() {
               <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold text-[#071d35]">Pastas por órgão</h2><span className="text-xs font-semibold text-slate-500">{data.folders.length} monitorada(s)</span></div>
               {data.folders.length ? <div className="grid gap-3 sm:grid-cols-2">{data.folders.map(folder => (
                 <article key={folder.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-white text-[#d49d24]"><FolderOpen size={20}/></span><div className="min-w-0"><b className="block truncate text-sm text-[#071d35]">{folder.name}</b><span className="text-xs text-slate-500">{folder.files.toLocaleString("pt-BR")} arquivos • {folder.folders.toLocaleString("pt-BR")} pastas</span></div></div><strong className="whitespace-nowrap text-sm font-semibold text-[#071d35]">{folder.usedGb.toFixed(2)} GB</strong></div>
+                  <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-white text-[#d49d24]"><FolderOpen size={20}/></span><div className="min-w-0"><b className="block truncate text-sm text-[#071d35]">{folder.name}</b><span className="text-xs text-slate-500">{folder.files.toLocaleString("pt-BR")} arquivos • {folder.folders.toLocaleString("pt-BR")} pastas</span></div></div><div className="shrink-0 text-right"><strong className="block whitespace-nowrap text-sm font-semibold text-[#071d35]">{folder.usedGb.toFixed(2)} GB</strong><span className="text-[10px] text-slate-500">{formatFolderSize(folder.bytes)}</span></div></div>
                   <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-blue-600" style={{width:`${Math.min(100,folder.percentOfTotal)}%`}}/></div>
                   <p className="mt-2 text-right text-[11px] font-bold text-slate-500">{folder.percentOfTotal.toFixed(1)}% do armazenamento total</p>
+                  <a href={`https://drive.google.com/drive/folders/${encodeURIComponent(folder.id)}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:underline"><ExternalLink size={13}/> Abrir pasta no Google Drive</a>
                 </article>
               ))}</div> : <div className="grid min-h-[180px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-center text-sm text-slate-500"><div><FolderOpen className="mx-auto mb-2 text-slate-400"/><b>Nenhuma pasta configurada</b></div></div>}
             </div>
