@@ -14,9 +14,7 @@ const DRIVE_STORAGE_ENDPOINT =
   process.env.DRIVE_STORAGE_ENDPOINT ||
   "https://kiviwxonxeqmzqlmshpc.supabase.co/functions/v1/mw-drive-storage-summary";
 
-const MW_TECH_DRIVE_KEY =
-  process.env.MW_TECH_DRIVE_KEY ||
-  "ADJ9w5w15Tinci91aHGav4vWjpqDqhq2NBeHqqOoQH4";
+const MW_TECH_DRIVE_KEY = process.env.MW_TECH_DRIVE_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
@@ -25,6 +23,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ error: "Método não permitido." });
     return;
   }
+
+  if (!MW_TECH_DRIVE_KEY) { res.status(503).json({ error: "Integração de armazenamento não configurada." }); return; }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 55000);
