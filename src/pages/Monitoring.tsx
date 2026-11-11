@@ -200,6 +200,15 @@ function systemChartLabel(item: SystemHealthSnapshot) {
 
 function getSystemTheme(item: SystemHealthSnapshot) {
   const haystack = `${item.name} ${item.shortName}`.toLowerCase();
+  if (item.tenantKey?.startsWith("camara_")) {
+    return {
+      header: "bg-[#183747]",
+      accent: item.tenantKey === "camara_frota" ? "bg-teal-400" : item.tenantKey === "camara_patrimonio" ? "bg-violet-400" : "bg-sky-400",
+      soft: "bg-teal-50 text-teal-800 border-teal-200",
+      button: "bg-teal-700 hover:bg-teal-800",
+      fallback: "bg-teal-700",
+    };
+  }
   if (item.tenantKey === "bg" || haystack.includes("baixa grande")) {
     return {
       header: "bg-[#163f35]",
@@ -239,6 +248,7 @@ function SystemCard({
   const m = item.metrics;
   const isVpsTest = String(item.ambiente || "").toLowerCase() === "teste" && String(item.infraestrutura || "").toLowerCase().includes("vps");
   const metricsAvailable = Boolean(m?.configured);
+  const isChamberSystem = Boolean(item.tenantKey?.startsWith("camara_"));
   const theme = getSystemTheme(item);
   const badge = item.tenantKey?.toUpperCase() || item.shortName.slice(0, 2).toUpperCase() || "SI";
   const displayName = systemChartLabel(item);
@@ -338,6 +348,14 @@ function SystemCard({
               hint="Tamanho do banco PostgreSQL; não inclui arquivos do Drive"
             />
           </div>
+        </div>}
+
+        {isChamberSystem && <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+          <h4 className="text-[11px] font-semibold text-blue-900">Monitoramento da Câmara Municipal</h4>
+          <p className="mt-1 text-[10px] leading-5 text-blue-800">
+            O sistema está incluído no painel. Indicadores específicos de {item.tenantKey === "camara_frota" ? "abastecimentos e notas fiscais" : item.tenantKey === "camara_patrimonio" ? "bens, tombamentos e arquivos" : "processos, contratos e documentos"} serão apresentados quando a integração de telemetria for configurada. Os campos sem fonte de dados permanecem sem informação.
+          </p>
+          {!item.accessUrl && <p className="mt-2 text-[10px] font-semibold text-amber-800">Endereço público do sistema ainda não cadastrado. Configure-o em Sistemas para habilitar o teste de disponibilidade e latência da aplicação.</p>}
         </div>}
 
         {isVpsTest && <VpsServerPanel />}
