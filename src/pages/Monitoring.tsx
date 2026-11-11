@@ -442,6 +442,7 @@ export default function Monitoring() {
       return [];
     }
   });
+  const [activeTab, setActiveTab] = useState<"overview" | "latency" | "storage" | "systems">("overview");
   const [chartRange, setChartRange] = useState(30);
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [orgFilter, setOrgFilter] = useState("todos");
@@ -630,6 +631,54 @@ export default function Monitoring() {
       </section>
 
 
+      <nav className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 xl:grid-cols-4" aria-label="Seções do monitoramento">
+        {([
+          {key:"overview",label:"Visão geral",hint:"Indicadores principais",icon:Activity},
+          {key:"latency",label:"Latência",hint:"Ping e histórico",icon:Gauge},
+          {key:"storage",label:"Armazenamento",hint:"Drive e Supabase",icon:HardDrive},
+          {key:"systems",label:"Sistemas e alertas",hint:"Órgãos e detalhes",icon:Server},
+        ] as const).map(({key,label,hint,icon:Icon}) => (
+          <button key={key} type="button" aria-current={activeTab === key ? "page" : undefined} onClick={() => setActiveTab(key)}
+            className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${activeTab === key ? "border-blue-200 bg-blue-600 text-white shadow-sm" : "border-transparent bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-blue-50"}`}>
+            <Icon size={20} className="shrink-0" />
+            <span className="min-w-0"><b className="block text-xs font-semibold">{label}</b><span className={`block text-[10px] ${activeTab === key ? "text-blue-100" : "text-slate-500"}`}>{hint}</span></span>
+          </button>
+        ))}
+      </nav>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online + summary.attention}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} operacional com atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
+        <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
+        <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
+        <SummaryCard label="Contratos" value={loading ? "—" : String(summary.contracts)} hint="Total cadastrado" icon={<FileText size={20} />} tone="slate" />
+        <SummaryCard label="Notas fiscais" value={loading ? "—" : String(summary.invoices)} hint="Total cadastrado" icon={<Receipt size={20} />} tone="amber" />
+        <SummaryCard label="Pagamentos" value={loading ? "—" : String(summary.payments)} hint="Registros financeiros" icon={<CreditCard size={20} />} tone="emerald" />
+        <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
+        <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
+      </div>
+
+      {activeTab === "overview" && (
+        <section className="grid gap-3 md:grid-cols-3" aria-label="Resumo do monitoramento">
+          <button type="button" onClick={() => setActiveTab("systems")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
+            <div className="mb-3 flex items-center justify-between"><ShieldCheck className="text-emerald-600" size={23}/><ArrowRight className="text-slate-400" size={17}/></div>
+            <p className="text-xs font-semibold text-slate-500">Sistemas e alertas</p>
+            <b className="mt-1 block text-2xl font-semibold text-[#07182d]">{summary.online + summary.attention} <span className="text-sm text-slate-400">/ {items.length}</span></b>
+            <p className="mt-2 text-[11px] text-slate-500">{summary.offline} indisponíveis · {items.filter((item) => effectiveState(history,item) === "unconfigured").length} aguardando configuração</p>
+          </button>
+          <button type="button" onClick={() => setActiveTab("latency")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
+            <div className="mb-3 flex items-center justify-between"><Gauge className="text-blue-600" size={23}/><ArrowRight className="text-slate-400" size={17}/></div>
+            <p className="text-xs font-semibold text-slate-500">Latência dos sistemas configurados</p>
+            <b className="mt-1 block text-2xl font-semibold text-[#07182d]">{formatMs(summary.average)}</b>
+            <p className="mt-2 text-[11px] text-slate-500">Medições atualizadas a cada 60 segundos</p>
+          </button>
+          <button type="button" onClick={() => setActiveTab("storage")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
+            <div className="mb-3 flex items-center justify-between"><HardDrive className="text-violet-600" size={23}/><ArrowRight className="text-slate-400" size={17}/></div>
+            <p className="text-xs font-semibold text-slate-500">Armazenamento Google Drive</p>
+            <b className="mt-1 block text-2xl font-semibold text-[#07182d]">{driveData ? `${driveData.usedGb.toFixed(2)} GB` : "—"}</b>
+            <p className="mt-2 text-[11px] text-slate-500">{driveError ? "Dados em cache · conferir integração" : "Arquivos e bancos acompanhados separadamente"}</p>
+          </button>
+        </section>
+      )}
+      {activeTab === "latency" && (<>
       <section className="mw-monitor-panel overflow-hidden rounded-3xl shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b mp-divider px-5 py-5">
           <div className="flex items-center gap-3">
@@ -733,17 +782,8 @@ export default function Monitoring() {
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online + summary.attention}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} operacional com atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
-        <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
-        <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
-        <SummaryCard label="Contratos" value={loading ? "—" : String(summary.contracts)} hint="Total cadastrado" icon={<FileText size={20} />} tone="slate" />
-        <SummaryCard label="Notas fiscais" value={loading ? "—" : String(summary.invoices)} hint="Total cadastrado" icon={<Receipt size={20} />} tone="amber" />
-        <SummaryCard label="Pagamentos" value={loading ? "—" : String(summary.payments)} hint="Registros financeiros" icon={<CreditCard size={20} />} tone="emerald" />
-        <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
-        <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
-      </div>
-
+      </>)}
+      {activeTab === "storage" && (<>
       <section className="rounded-3xl border border-blue-100 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -860,6 +900,8 @@ export default function Monitoring() {
         </div>
       </section>
 
+      </>)}
+      {activeTab === "systems" && (<>
       <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]">
           <span className="flex items-center gap-2 font-semibold text-emerald-800"><span className="size-2 rounded-full bg-emerald-500" /> Monitoramento automático ativo</span>
@@ -1017,6 +1059,7 @@ export default function Monitoring() {
           </p>
         </div>
       </section>
+      </>)}
     </div>
   );
 }
