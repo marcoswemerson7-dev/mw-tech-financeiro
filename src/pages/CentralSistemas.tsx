@@ -103,7 +103,7 @@ export default function CentralSistemas() {
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
       {!selected ? <div className="grid gap-5 md:grid-cols-2">
-        {categories.map(({name,description,icon:Icon,terms}, index) => {
+        {categories.map(({name,description,icon:Icon,terms}) => {
           const available = systems.filter((item) => normalize(item.status || "ativo") !== "inativo" && matches(item, terms)).length;
           return <button type="button" key={name} onClick={() => setSelected(name)} className="group relative flex min-h-[184px] w-full items-center gap-4 overflow-hidden rounded-[23px] border border-[#d7e4f1] bg-white/95 p-5 text-left shadow-[0_9px_25px_rgba(14,48,91,.07)] transition duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_14px_34px_rgba(35,92,165,.14)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:gap-5 sm:p-7">
             <span className="pointer-events-none absolute -bottom-16 -right-16 size-52 rounded-full bg-blue-50/70 transition group-hover:bg-blue-100/60" aria-hidden="true"/>
