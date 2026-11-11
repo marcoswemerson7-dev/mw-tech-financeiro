@@ -846,6 +846,16 @@ export default function Monitoring() {
         )}
       </section>
 
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700"><FolderOpen size={22}/></span>
+          <div>
+            <h3 className="text-sm font-semibold text-[#07182d]">Google Drive — MW TECH Patrimônio · Câmara RG</h3>
+            <p className="mt-1 text-[11px] text-slate-500">Pasta do Patrimônio conectada. Medição de tamanho ainda não integrada aos totais de RG e BGR.</p>
+          </div>
+        </div>
+        <a href="https://drive.google.com/drive/folders/1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-blue-200 px-4 py-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50">Abrir pasta <ExternalLink size={14}/></a>
+      </section>
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="pointer-events-none absolute -right-20 -top-20 size-56 rounded-full bg-blue-200/20 blur-3xl" />
         <div className="relative mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
