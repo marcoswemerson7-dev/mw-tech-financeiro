@@ -645,6 +645,7 @@ export default function Monitoring() {
           </button>
         ))}
       </nav>
+      {activeTab === "overview" && (<>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online + summary.attention}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} operacional com atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
         <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
@@ -656,6 +657,7 @@ export default function Monitoring() {
         <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
       </div>
 
+      </>)}
       {activeTab === "overview" && (
         <section className="grid gap-3 md:grid-cols-3" aria-label="Resumo do monitoramento">
           <button type="button" onClick={() => setActiveTab("systems")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
