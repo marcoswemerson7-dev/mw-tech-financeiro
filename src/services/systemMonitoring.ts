@@ -256,6 +256,8 @@ async function loadMetrics() {
 }
 
 function combine(app: EndpointHealth, database: EndpointHealth, backend: EndpointHealth): HealthState {
+  // A reachable database alone is not proof that the application is available.
+  if (app.state === "unconfigured") return "unconfigured";
   const configuredStates = [app, database, backend].filter((item) => item.state !== "unconfigured");
   if (!configuredStates.length) return "unconfigured";
   if (configuredStates.some((item) => item.state === "offline")) return "offline";
