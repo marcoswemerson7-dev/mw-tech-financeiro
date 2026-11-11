@@ -1,7 +1,40 @@
 import { useEffect, useMemo, useState } from "react";
-import { Building2, ExternalLink, Globe2, ImagePlus, Pencil, Plus, Server, Trash2, X } from "lucide-react";
+import { Building2, ExternalLink, Globe2, ImagePlus, Pencil, Plus, Server, Trash2, X, Landmark, Truck, FolderKanban, FileCheck2, ShieldCheck } from "lucide-react";
 import { ActionButton, Empty, PageHeader, Toast } from "../components/UI";
 import { deleteManagedSystem, getManagedSystems, getManagedSystemsCached, saveManagedSystem, type ManagedSystem, uploadSystemLogo } from "../services/managedSystems";
+
+// Catálogo visual de implantação: não cria registros no Appwrite nem inventa URLs.
+// Registros efetivamente cadastrados substituem estes rascunhos por chave estável.
+const CATALOG: Array<Partial<ManagedSystem> & { catalogKey: string }> = [
+  {catalogKey:"rg",orgao:"Prefeitura Municipal de Ribeiro Gonçalves - PI",tipo_orgao:"Prefeitura",sistema:"Gestão Licita RG",monitoring_key:"rg",ambiente:"Produção",status:"implantacao",infraestrutura:"Vercel + Supabase"},
+  {catalogKey:"bg",orgao:"Prefeitura Municipal de Baixa Grande do Ribeiro - PI",tipo_orgao:"Prefeitura",sistema:"Gestão Licita BG",monitoring_key:"bg",ambiente:"Produção",status:"implantacao",infraestrutura:"Vercel + Supabase"},
+  {catalogKey:"camara_licita",orgao:"Câmara Municipal de Ribeiro Gonçalves - PI",tipo_orgao:"Câmara",sistema:"Gestão Licita Câmara RG",monitoring_key:"camara_licita",ambiente:"Produção",status:"implantacao",infraestrutura:"Vercel + Supabase + Cloudflare R2",supabase_url:"https://supabase.com/dashboard/project/qnitcxoekxkwyqoirdka"},
+  {catalogKey:"camara_frota",orgao:"Câmara Municipal de Ribeiro Gonçalves - PI",tipo_orgao:"Câmara",sistema:"Gestão Frota Câmara RG",monitoring_key:"camara_frota",ambiente:"Produção",status:"implantacao",infraestrutura:"Vercel + Supabase",supabase_url:"https://uydappvzmdpkkyxslrye.supabase.co"},
+  {catalogKey:"camara_patrimonio",orgao:"Câmara Municipal de Ribeiro Gonçalves - PI",tipo_orgao:"Câmara",sistema:"MW TECH Patrimônio — Câmara RG",monitoring_key:"camara_patrimonio",ambiente:"Produção",status:"implantacao",infraestrutura:"Vercel + Supabase + Google Drive",supabase_url:"https://supabase.com/dashboard/project/ybljkroautoqzmifrkbi"},
+  {catalogKey:"rg_controladoria",orgao:"Prefeitura Municipal de Ribeiro Gonçalves - PI",tipo_orgao:"Prefeitura",sistema:"Controladoria Digital RG",monitoring_key:"rg_controladoria",ambiente:"Produção",status:"implantacao",infraestrutura:"Vercel + Supabase"},
+];
+const normalized = (value?: string) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+function systemKey(item: Partial<ManagedSystem>) {
+  const key = normalized(item.monitoring_key);
+  if (key) return key;
+  const title = normalized(item.sistema);
+  const org = normalized(item.orgao);
+  if (title.includes("patrimonio")) return "camara_patrimonio";
+  if (title.includes("frota")) return "camara_frota";
+  if (title.includes("controladoria")) return "rg_controladoria";
+  if (title.includes("licita") && (org.includes("camara") || title.includes("camara"))) return "camara_licita";
+  if (title.includes("licita") && (org.includes("baixa grande") || title.includes("bg"))) return "bg";
+  if (title.includes("licita") && (org.includes("ribeiro") || title.includes("rg"))) return "rg";
+  return normalized(item.orgao) + ":" + title;
+}
+function systemIcon(item: Partial<ManagedSystem>) {
+  const title = normalized(item.sistema);
+  if (title.includes("frota")) return Truck;
+  if (title.includes("patrimonio")) return Landmark;
+  if (title.includes("controladoria")) return ShieldCheck;
+  if (title.includes("licita")) return FileCheck2;
+  return FolderKanban;
+}
 
 type SystemTheme = {
   header: string;
@@ -32,6 +65,20 @@ function getSystemTheme(item: Partial<ManagedSystem>): SystemTheme {
     };
   }
 
+  if (org.includes("câmara") || org.includes("camara")) {
+    return {
+      header: "bg-[#34334d]",
+      accentBar: "bg-violet-500",
+      badge: "border border-violet-200/40 bg-violet-300/15 text-violet-100",
+      icon: "text-violet-700",
+      iconBox: "bg-violet-50 ring-1 ring-violet-100",
+      button: "bg-violet-600",
+      buttonHover: "hover:bg-violet-700",
+      edit: "border-violet-200 text-violet-700 hover:bg-violet-50",
+      glow: "shadow-sm",
+    };
+  }
+
   if (org.includes("ribeiro gonçalves") || org.includes("ribeiro goncalves")) {
     return {
       header: "bg-[#173b61]",
@@ -46,19 +93,7 @@ function getSystemTheme(item: Partial<ManagedSystem>): SystemTheme {
     };
   }
 
-  if (org.includes("câmara") || org.includes("camara")) {
-    return {
-      header: "bg-[#34334d]",
-      accentBar: "bg-violet-500",
-      badge: "border border-violet-200/40 bg-violet-300/15 text-violet-100",
-      icon: "text-violet-700",
-      iconBox: "bg-violet-50 ring-1 ring-violet-100",
-      button: "bg-violet-600",
-      buttonHover: "hover:bg-violet-700",
-      edit: "border-violet-200 text-violet-700 hover:bg-violet-50",
-      glow: "shadow-sm",
-    };
-  }
+
 
   return {
     header: "bg-[#55452b]",
@@ -93,7 +128,22 @@ export default function Systems() {
     return () => { active = false; };
   }, []);
 
-  const visible = useMemo(() => rows.filter((x) => JSON.stringify(x).toLowerCase().includes(query.toLowerCase())), [rows, query]);
+  const catalogRows = useMemo(() => {
+    const existing = new Set(rows.map(systemKey));
+    const missing = CATALOG.filter(item => !existing.has(item.catalogKey)).map(item => ({
+      ...item, id: "catalog:" + item.catalogKey, created_at: "", updated_at: "",
+    } as ManagedSystem));
+    return [...rows, ...missing].sort((a,b) => a.tipo_orgao.localeCompare(b.tipo_orgao,"pt-BR") || a.orgao.localeCompare(b.orgao,"pt-BR") || a.sistema.localeCompare(b.sistema,"pt-BR"));
+  }, [rows]);
+  const visible = useMemo(() => catalogRows.filter((x) => JSON.stringify(x).toLowerCase().includes(query.toLowerCase())), [catalogRows, query]);
+  const groups = useMemo(() => {
+    const result = new Map<string,ManagedSystem[]>();
+    for (const item of visible) {
+      const name = item.orgao || "Órgão não informado";
+      result.set(name,[...(result.get(name) || []),item]);
+    }
+    return [...result.entries()];
+  },[visible]);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setError(""); setBusy(true);
@@ -103,11 +153,10 @@ export default function Systems() {
       const file = (form.elements.namedItem("logo") as HTMLInputElement).files?.[0];
       if (file) {
         values.logo_url = await uploadSystemLogo(file);
-      } else if (!values.logo_url) {
-        values.logo_url = faviconFor(values.acesso_url || values.dominio_url || values.vercel_url);
       }
-      const saved = await saveManagedSystem({ ...edit, ...values });
-      setRows((current) => edit?.id ? current.map((x) => x.id === edit.id ? saved : x) : [...current, saved]);
+      // Nunca substituir brasão ou logomarca oficial por favicon de outro domínio.
+      const saved = await saveManagedSystem({ ...edit, id: edit?.id?.startsWith("catalog:") ? undefined : edit?.id, ...values });
+      setRows((current) => edit?.id && !edit.id.startsWith("catalog:") ? current.map((x) => x.id === edit.id ? saved : x) : [...current, saved]);
       setEdit(null); setToast("Sistema salvo com sucesso."); setTimeout(() => setToast(""), 2500);
     } catch (e: any) { setError(e.message); }
     finally { setBusy(false); }
@@ -134,7 +183,15 @@ export default function Systems() {
       <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar prefeitura, Câmara, domínio ou sistema..." className="input !mt-0" />
     </div>
     {error && <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">{error}</p>}
-    {loading ? <SystemsSkeleton /> : visible.length ? <div className="grid gap-6 lg:grid-cols-2 2xl:grid-cols-3">{visible.map((item) => {
+    {loading ? <SystemsSkeleton /> : visible.length ? <div className="space-y-7">{groups.map(([orgao, systems]) => (
+      <section key={orgao} className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+          <div className="flex items-center gap-2"><Building2 size={19} className="text-blue-700"/><h2 className="text-base font-semibold text-[#102a43]">{orgao}</h2></div>
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{systems.length} sistema(s)</span>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">{systems.map((item) => {
+      const draft = item.id.startsWith("catalog:");
+      const Icon = systemIcon(item);
       const theme = getSystemTheme(item);
       return <article key={item.id} className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200  ${theme.glow}`}>
         <div className={`h-1.5 w-full ${theme.accentBar}`} />
@@ -142,15 +199,15 @@ export default function Systems() {
           <div className="pointer-events-none absolute -right-10 -top-14 size-44 rounded-full bg-white/[.06] blur-2xl" />
           <div className="flex items-start justify-between gap-5">
             <span className="grid size-[76px] shrink-0 place-items-center overflow-hidden rounded-2xl border border-white/25 bg-white p-2 shadow-sm">
-              {item.logo_url ? <img src={item.logo_url} alt={`Logomarca ${item.orgao}`} className="size-full object-contain"/> : <Building2 size={34} className="text-[#d9a441]"/>}
+              {item.logo_url ? <img src={item.logo_url} alt={`Logomarca de ${item.sistema}`} className="size-full object-contain"/> : <div className="flex flex-col items-center gap-1 text-slate-500"><Icon size={28} /><span className="text-[8px] font-semibold">Logo pendente</span></div>}
             </span>
-            <span className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${theme.badge}`}>{statusLabel(item.status)}</span>
+            <span className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold uppercase tracking-wide ${theme.badge}`}>{draft ? "Preparar cadastro" : statusLabel(item.status)}</span>
           </div>
-          <h3 className="relative mt-5 max-w-[92%] text-[21px] font-semibold leading-[1.32] tracking-[.01em]">{item.orgao}</h3>
-          <p className="relative mt-2 text-[13px] font-medium text-white/75">{item.tipo_orgao} · {item.ambiente}</p>
+          <h3 className="relative mt-5 max-w-[92%] text-[18px] font-semibold leading-[1.32] tracking-[.01em]">{item.sistema}</h3>
+          <p className="relative mt-2 text-[12px] font-medium text-white/75">{item.tipo_orgao} · {item.ambiente}</p>
         </div>
         <div className="space-y-4 p-5">
-          <div><span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">Sistema</span><b className="mt-1 block text-[#061426]">{item.sistema}</b></div>
+          <div><span className="text-[12px] font-bold uppercase tracking-wide text-slate-400">Órgão</span><b className="mt-1 block text-sm text-[#061426]">{item.orgao}</b></div>
           <LinkRow icon={<Globe2 size={17}/>} label="Domínio" url={item.dominio_url} theme={theme}/>
           <InfoRow icon={<Server size={17}/>} label="Infraestrutura" value={item.infraestrutura || (item.vercel_url ? "Vercel" : item.ambiente === "Teste" ? "VPS / Servidor" : "Não informado")} theme={theme}/>
           {item.provedor && <InfoRow icon={<Server size={17}/>} label="Provedor" value={item.provedor} theme={theme}/>} 
@@ -160,19 +217,19 @@ export default function Systems() {
           <LinkRow icon={<Server size={17}/>} label="Supabase" url={item.supabase_url} theme={theme}/>
           <div className="flex gap-3 pt-2">
             {item.acesso_url && <a href={safeUrl(item.acesso_url)} target="_blank" rel="noreferrer" className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-xl px-4 text-[14px] font-semibold text-white shadow-sm transition ${theme.button} ${theme.buttonHover}`}>Entrar no sistema <ExternalLink size={16}/></a>}
-            <button onClick={() => setEdit(item)} className={`grid size-11 place-items-center rounded-xl border bg-white transition ${theme.edit}`}><Pencil size={17}/></button>
-            <button onClick={() => remove(item.id)} disabled={busyRow === item.id} className="grid size-11 place-items-center rounded-xl border border-rose-100 bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"><Trash2 size={17}/></button>
+            <button onClick={() => setEdit(item)} title={draft ? "Completar cadastro" : "Editar cadastro"} className={`grid size-11 place-items-center rounded-xl border bg-white transition ${theme.edit}`}><Pencil size={17}/></button>
+            {!draft && <button onClick={() => remove(item.id)} disabled={busyRow === item.id} className="grid size-11 place-items-center rounded-xl border border-rose-100 bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"><Trash2 size={17}/></button>}
           </div>
         </div>
       </article>;
-    })}</div> : <Empty/>}
-    {edit && <Modal title={edit.id ? "Editar sistema" : "Adicionar sistema"} close={() => setEdit(null)}>
+    })}</div></section>))}</div> : <Empty/>}
+    {edit && <Modal title={edit.id && !edit.id.startsWith("catalog:") ? "Editar sistema" : "Completar cadastro do sistema"} close={() => setEdit(null)}>
       <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
         <Field label="Órgão" wide><input name="orgao" required defaultValue={edit.orgao || ""} className="input"/></Field>
         <Field label="Tipo de órgão"><select name="tipo_orgao" defaultValue={edit.tipo_orgao || "Prefeitura"} className="input"><option>Prefeitura</option><option>Câmara</option><option>Empresa</option><option>Outro órgão</option></select></Field>
         <Field label="Sistema"><input name="sistema" required defaultValue={edit.sistema || "Gestão Licita"} className="input"/></Field>
         <Field label="Domínio"><input name="dominio_url" placeholder="https://..." defaultValue={edit.dominio_url || ""} className="input"/></Field>
-        <Field label="Infraestrutura"><select name="infraestrutura" defaultValue={edit.infraestrutura || (edit.vercel_url ? "Vercel" : "VPS")} className="input"><option>Vercel</option><option>VPS</option><option>Servidor dedicado</option><option>Local</option><option>Outro</option></select></Field>
+        <Field label="Infraestrutura"><select name="infraestrutura" defaultValue={edit.infraestrutura || (edit.vercel_url ? "Vercel" : "VPS")} className="input"><option>Vercel + Supabase</option><option>Vercel + Supabase + Google Drive</option><option>Vercel + Supabase + Cloudflare R2</option><option>Vercel</option><option>VPS</option><option>Servidor dedicado</option><option>Local</option><option>Outro</option></select></Field>
         <Field label="Provedor / datacenter"><input name="provedor" placeholder="Ex.: Hostinger, Contabo, Oracle Cloud..." defaultValue={edit.provedor || ""} className="input"/></Field>
         <Field label="Servidor / IP"><input name="servidor_endereco" placeholder="Ex.: 192.0.2.10 ou vps.exemplo.com" defaultValue={edit.servidor_endereco || ""} className="input"/></Field>
         <Field label="Sistema operacional"><input name="servidor_os" placeholder="Ex.: Ubuntu 24.04 LTS" defaultValue={edit.servidor_os || ""} className="input"/></Field>
@@ -192,13 +249,7 @@ export default function Systems() {
 }
 const safeUrl=(url:string)=>/^https?:\/\//i.test(url)?url:`https://${url}`;
 function faviconFor(url?: string) {
-  if (!url) return "";
-  try {
-    const host = new URL(safeUrl(url)).hostname;
-    return host ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128` : "";
-  } catch {
-    return "";
-  }
+  return "";
 }
 function statusLabel(status?: string) {
   if (status === "implantacao") return "Implantação";
