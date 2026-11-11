@@ -248,9 +248,6 @@ export default function Systems() {
   </div>;
 }
 const safeUrl=(url:string)=>/^https?:\/\//i.test(url)?url:`https://${url}`;
-function faviconFor(url?: string) {
-  return "";
-}
 function statusLabel(status?: string) {
   if (status === "implantacao") return "Implantação";
   if (status === "suspenso") return "Suspenso";
