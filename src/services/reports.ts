@@ -5,7 +5,10 @@ import type { Movement } from "./transactions";
 
 export async function getCompanySettings() {
   const result = await tables.listRows({ databaseId: appwriteConfig.databaseId, tableId: TABLES.company, queries: [Query.limit(1)] });
-  return result.rows[0] ? { ...result.rows[0], id: result.rows[0].$id } : {};
+  const row = result.rows[0];
+  if (!row) return { razao_social: "MW TECH SISTEMAS LTDA" };
+  const name = String(row.razao_social || "").trim();
+  return { ...row, id: row.$id, razao_social: !name || name.toLocaleUpperCase("pt-BR") === "MARCOS WEMERSON DOS SANTOS GONÇALVES" ? "MW TECH SISTEMAS LTDA" : row.razao_social };
 }
 export async function saveCompanySettings(data: Record<string, unknown>, id?: string) {
   return id ? tables.updateRow({ databaseId: appwriteConfig.databaseId, tableId: TABLES.company, rowId: id, data })
