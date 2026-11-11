@@ -67,7 +67,7 @@ export default function Storage() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold text-[#071d35]">Pastas por órgão</h2><span className="text-xs font-semibold text-slate-500">{data.folders.length} monitorada(s)</span></div>
+              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold text-[#071d35]">Pastas por órgão</h2><span className="text-xs font-semibold text-slate-500">{data.folders.length} medida(s) + 1 vinculada</span></div>
               {data.folders.length ? <div className="grid gap-3 sm:grid-cols-2">{data.folders.map(folder => (
                 <article key={folder.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-white text-[#d49d24]"><FolderOpen size={20}/></span><div className="min-w-0"><b className="block truncate text-sm text-[#071d35]">{folder.name}</b><span className="text-xs text-slate-500">{folder.files.toLocaleString("pt-BR")} arquivos • {folder.folders.toLocaleString("pt-BR")} pastas</span></div></div><div className="shrink-0 text-right"><strong className="block whitespace-nowrap text-sm font-semibold text-[#071d35]">{folder.usedGb.toFixed(2)} GB</strong><span className="text-[10px] text-slate-500">{formatFolderSize(folder.bytes)}</span></div></div>
@@ -75,30 +75,23 @@ export default function Storage() {
                   <p className="mt-2 text-right text-[11px] font-bold text-slate-500">{folder.percentOfTotal.toFixed(1)}% do armazenamento total</p>
                   <a href={`https://drive.google.com/drive/folders/${encodeURIComponent(folder.id)}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:underline"><ExternalLink size={13}/> Abrir pasta no Google Drive</a>
                 </article>
-              ))}</div> : <div className="grid min-h-[180px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-center text-sm text-slate-500"><div><FolderOpen className="mx-auto mb-2 text-slate-400"/><b>Nenhuma pasta configurada</b></div></div>}
-            </div>
-          </section>
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h2 className="text-lg font-semibold text-[#071d35]">Pastas de outros sistemas MW TECH</h2>
-                <p className="mt-1 text-xs text-slate-500">Pastas já utilizadas pelos sistemas, mas ainda não incluídas no serviço de medição de armazenamento.</p>
-              </div>
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Medição pendente</span>
-            </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-3">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-blue-700"><FolderOpen size={21}/></span>
-                <div>
-                  <b className="block text-sm text-[#071d35]">MW TECH Patrimônio — Câmara de Ribeiro Gonçalves</b>
-                  <p className="mt-1 text-xs text-slate-500">Google Drive conectado ao Patrimônio · fotos de bens · tamanho não aferido aqui</p>
+              ))}
+              <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-[#d49d24]"><FolderOpen size={20}/></span>
+                    <div className="min-w-0">
+                      <b className="block text-sm text-[#071d35]">MW TECH Patrimônio — Câmara RG</b>
+                      <span className="mt-1 block text-xs text-slate-500">Fotografias dos bens · Google Drive</span>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-800">Aferição pendente</span>
                 </div>
-              </div>
-              <a href="https://drive.google.com/drive/folders/1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50">
-                <ExternalLink size={15}/> Abrir pasta
-              </a>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200" aria-label="Uso do Patrimônio ainda não medido"/>
+                <p className="mt-2 text-right text-[11px] font-semibold text-slate-500">Consumo não incluído no total acima</p>
+                <a href="https://drive.google.com/drive/folders/1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:underline"><ExternalLink size={13}/> Abrir pasta no Google Drive</a>
+              </article></div> : <div className="grid min-h-[180px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-center text-sm text-slate-500"><div><FolderOpen className="mx-auto mb-2 text-slate-400"/><b>Nenhuma pasta configurada</b></div></div>}
             </div>
-            <p className="mt-3 text-[11px] text-slate-500">Os valores de 11,71 GB e 100 GB referem-se à conta consultada pelo painel atual. Esta pasta só poderá ser somada aos indicadores após a configuração de uma medição própria, evitando valores duplicados ou incorretos.</p>
           </section>
         </>
       ) : null}
