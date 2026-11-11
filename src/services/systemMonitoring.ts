@@ -76,6 +76,30 @@ const FALLBACKS = {
     supabaseUrl: "https://jfzavijlkbqzkrnlgphz.supabase.co/rest/v1/",
     healthUrl: "https://jfzavijlkbqzkrnlgphz.supabase.co/functions/v1/mw-health",
   },
+  camara_licita: {
+    name: "Câmara Municipal de Ribeiro Gonçalves - PI",
+    shortName: "Gestão Licita Câmara RG",
+    city: "Ribeiro Gonçalves - PI",
+    accessUrl: "",
+    supabaseUrl: "https://qnitcxoekxkwyqoirdka.supabase.co/rest/v1/",
+    healthUrl: "",
+  },
+  camara_frota: {
+    name: "Câmara Municipal de Ribeiro Gonçalves - PI",
+    shortName: "Gestão Frota Câmara RG",
+    city: "Ribeiro Gonçalves - PI",
+    accessUrl: "",
+    supabaseUrl: "https://uydappvzmdpkkyxslrye.supabase.co/rest/v1/",
+    healthUrl: "",
+  },
+  camara_patrimonio: {
+    name: "Câmara Municipal de Ribeiro Gonçalves - PI",
+    shortName: "MW TECH Patrimônio — Câmara RG",
+    city: "Ribeiro Gonçalves - PI",
+    accessUrl: "",
+    supabaseUrl: "https://ybljkroautoqzmifrkbi.supabase.co/rest/v1/",
+    healthUrl: "",
+  },
   vps_test: {
     name: "Gestão Licita TESTE - VPS Hostinger",
     shortName: "Gestão Licita TESTE",
@@ -106,7 +130,11 @@ function projectRestUrl(value?: string) {
 function inferTenant(item?: Partial<ManagedSystem> | null): string | null {
   const configured = String(item?.monitoring_key || "").trim().toLowerCase();
   if (configured) return configured;
-  const haystack = `${item?.orgao || ""} ${item?.dominio_url || ""} ${item?.acesso_url || ""} ${item?.supabase_url || ""}`.toLowerCase();
+  const haystack = `${item?.orgao || ""} ${item?.sistema || ""} ${item?.dominio_url || ""} ${item?.acesso_url || ""} ${item?.supabase_url || ""}`.toLowerCase();
+  // Distinguish Câmara systems from Prefeitura RG before generic municipality matching.
+  if (haystack.includes("ybljkroautoqzmifrkbi") || haystack.includes("patrimônio") || haystack.includes("patrimonio")) return "camara_patrimonio";
+  if (haystack.includes("uydappvzmdpkkyxslrye") || (haystack.includes("frota") && haystack.includes("câmara"))) return "camara_frota";
+  if (haystack.includes("qnitcxoekxkwyqoirdka") || (haystack.includes("licita") && (haystack.includes("câmara") || haystack.includes("camara")))) return "camara_licita";
   if (
     haystack.includes("ribeiro gonçalves") ||
     haystack.includes("ribeiro goncalves") ||
@@ -278,11 +306,32 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
         },
       ] as ManagedSystem[]);
 
-  const hasVpsTest = baseRows.some((item) => inferTenant(item) === "vps_test");
+  // Show the three Câmara systems even when their managed records have not yet
+  // been created. Avoid duplicates when a system is already configured in Appwrite.
+  const chamberKeys = ["camara_licita", "camara_frota", "camara_patrimonio"] as const;
+  const chamberRows = chamberKeys
+    .filter((key) => !baseRows.some((item) => inferTenant(item) === key))
+    .map((key): ManagedSystem => ({
+      id: `fallback-${key}`,
+      orgao: FALLBACKS[key].name,
+      tipo_orgao: "Câmara",
+      sistema: FALLBACKS[key].shortName,
+      dominio_url: "",
+      acesso_url: "",
+      supabase_url: FALLBACKS[key].supabaseUrl,
+      monitoring_key: key,
+      infraestrutura: "Vercel + Supabase",
+      ambiente: "Produção",
+      status: "ativo",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+  const monitoredRows = [...baseRows, ...chamberRows];
+  const hasVpsTest = monitoredRows.some((item) => inferTenant(item) === "vps_test");
   const sourceRows: ManagedSystem[] = hasVpsTest
-    ? baseRows
+    ? monitoredRows
     : [
-        ...baseRows,
+        ...monitoredRows,
         {
           id: "fallback-vps-test",
           orgao: FALLBACKS.vps_test.name,
@@ -307,7 +356,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
   return Promise.all(
     sourceRows.map(async (stored) => {
       const tenantKey = inferTenant(stored);
-      const fallback = tenantKey === "rg" || tenantKey === "bg" || tenantKey === "vps_test" ? FALLBACKS[tenantKey] : null;
+      const fallback = tenantKey && tenantKey in FALLBACKS ? FALLBACKS[tenantKey as keyof typeof FALLBACKS] : null;
       // O ambiente de teste é acessado pela Vercel. O IP da VPS fica reservado
       // para telemetria/infraestrutura e não deve ser usado como URL pública do app.
       const accessUrl = tenantKey === "vps_test"
