@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Building2, ExternalLink, FileCheck2, Landmark,
-  LayoutGrid, LogOut, RefreshCw, ShieldCheck, Truck,
+  LayoutGrid, LogOut, RefreshCw, ShieldCheck, Truck, CheckCircle2, Layers3,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
@@ -62,15 +62,15 @@ export default function CentralSistemas() {
     normalize(item.status || "ativo") !== "inativo" && !!category && matches(item, category.terms)
   ).sort((a, b) => a.orgao.localeCompare(b.orgao, "pt-BR")), [systems, category]);
 
-  return <main className="min-h-screen bg-[#f2f5f9] text-[#102a43]">
-    <header className="relative z-10 bg-[#0c2945] text-white shadow-sm">
-      <div className="mx-auto flex min-h-[88px] max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4 sm:px-8">
+  return <main className="min-h-screen bg-[radial-gradient(ellipse_at_85%_10%,#d5e6fa_0%,transparent_48%),linear-gradient(150deg,#edf5ff_0%,#f6f9fd_55%,#edf4ff_100%)] text-[#102a43]">
+    <header className="relative z-10 overflow-hidden bg-[linear-gradient(125deg,#071c36_0%,#0d487a_55%,#071c36_100%)] text-white shadow-[0_5px_18px_rgba(2,25,52,.15)]">
+      <div className="mx-auto flex min-h-[92px] max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-5 py-4 sm:px-8">
         <div className="flex min-w-0 items-center gap-4">
-          <div className="grid size-14 shrink-0 place-items-center rounded-2xl border border-white/10 bg-[#163956]">
+          <div className="grid size-14 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/10">
             <img src="/mw-tech-logo.png" alt="MW TECH" className="size-12 object-contain" />
           </div>
           <div className="min-w-0">
-            <div className="text-[11px] font-bold uppercase tracking-[.19em] text-[#dcb878]">MW TECH Sistemas</div>
+            <div className="text-[11px] font-bold uppercase tracking-[.19em] text-[#e7bd7b]">MW TECH SISTEMAS LTDA</div>
             <h1 className="mt-0.5 text-lg font-bold leading-tight sm:text-xl">Central de Sistemas</h1>
             <p className="mt-1 text-xs text-slate-300">Gestão integrada. Acesso simplificado.</p>
           </div>
@@ -82,32 +82,43 @@ export default function CentralSistemas() {
         </div>
       </div>
     </header>
-    <section className="mx-auto max-w-6xl px-5 pb-16 pt-9 sm:px-8 sm:pt-12">
-      <div className="mb-8 rounded-3xl border border-[#dbe4ed] bg-white px-6 py-7 shadow-[0_8px_30px_rgba(16,42,67,.04)] sm:px-8">
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[.12em] text-[#b48742]"><LayoutGrid size={16} /> Portal de acesso</div>
+    <section className="mx-auto max-w-7xl px-5 pb-16 pt-7 sm:px-8 sm:pt-10">
+      <div className="relative mb-7 overflow-hidden rounded-[26px] border border-white/80 bg-[linear-gradient(120deg,#ffffff_0%,#edf6ff_65%,#d8e9fc_100%)] px-6 py-7 shadow-[0_12px_35px_rgba(16,42,67,.08)] sm:px-9 sm:py-9">
+        <div className="pointer-events-none absolute -right-12 -top-28 size-80 rounded-full border-[32px] border-blue-200/30" aria-hidden="true"/>
+        <div className="relative mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[.16em] text-[#aa762d]"><LayoutGrid size={16} /> Portal de acesso</div>
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div className="min-w-0">
             {selected && <button type="button" onClick={() => setSelected(null)} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline"><ArrowLeft size={16}/> Todos os sistemas</button>}
-            <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-[29px]">{selected || "Qual sistema deseja acessar?"}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{selected ? "Selecione o órgão para abrir o ambiente correspondente." : "Selecione uma solução abaixo e, em seguida, escolha a prefeitura ou câmara."}</p>
+            <h2 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-[37px]">{selected || "Central de Sistemas"}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{selected ? "Selecione o órgão para abrir o ambiente correspondente." : "Selecione uma solução abaixo e, em seguida, escolha a prefeitura ou câmara."}</p>
           </div>
           <button type="button" onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-[#f8fafc] px-4 py-2.5 text-sm font-semibold hover:bg-slate-100 disabled:opacity-50"><RefreshCw size={16}/> Atualizar</button>
         </div>
-        <div className="mt-6 flex items-center gap-2 text-xs font-semibold">
-          <span className={selected ? "text-blue-700" : "text-[#0c2945]"}>01 · Escolher sistema</span>
+        <div className="mt-6 flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <span className={`rounded-full border border-blue-200 px-3 py-1.5 ${selected ? "text-blue-700" : "bg-blue-50 text-[#0c2945]"}`}>01 · Escolher sistema</span>
           <ArrowRight size={14} className="text-slate-400"/>
-          <span className={selected ? "text-[#0c2945]" : "text-slate-400"}>02 · Escolher órgão</span>
+          <span className={`rounded-full border border-blue-100 px-3 py-1.5 ${selected ? "bg-blue-50 text-[#0c2945]" : "text-slate-400"}`}>02 · Escolher órgão</span>
         </div>
       </div>
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
-      {!selected ? <div className="grid gap-4 sm:grid-cols-2">
-        {categories.map(({name,description,icon:Icon}) => {
-          const available = systems.filter((item) => normalize(item.status || "ativo") !== "inativo" && matches(item, categories.find((c) => c.name === name)!.terms)).length;
-          return <button type="button" key={name} onClick={() => setSelected(name)} className="group flex min-h-[150px] items-center gap-5 rounded-2xl border border-[#dce5ee] bg-white p-5 text-left shadow-[0_4px_18px_rgba(16,42,67,.045)] transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg sm:p-7">
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-[#e9f1fb] text-[#1257a5] transition group-hover:bg-[#dceafd]"><Icon size={29} strokeWidth={1.8}/></span>
-            <span className="min-w-0 flex-1"><span className="block text-lg font-bold">{name}</span><span className="mt-1 block text-sm leading-5 text-slate-500">{description}</span><span className="mt-3 block text-xs font-semibold text-[#54718f]">{loading ? "Carregando órgãos..." : available === 1 ? "1 órgão cadastrado" : available + " órgãos cadastrados"}</span></span>
-            <ArrowRight size={20} className="shrink-0 text-slate-400 group-hover:text-blue-700"/>
+      {!selected ? <div className="grid gap-5 md:grid-cols-2">
+        {categories.map(({name,description,icon:Icon,terms}, index) => {
+          const available = systems.filter((item) => normalize(item.status || "ativo") !== "inativo" && matches(item, terms)).length;
+          return <button type="button" key={name} onClick={() => setSelected(name)} className="group relative flex min-h-[184px] w-full items-center gap-4 overflow-hidden rounded-[23px] border border-[#d7e4f1] bg-white/95 p-5 text-left shadow-[0_9px_25px_rgba(14,48,91,.07)] transition duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_14px_34px_rgba(35,92,165,.14)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:gap-5 sm:p-7">
+            <span className="pointer-events-none absolute -bottom-16 -right-16 size-52 rounded-full bg-blue-50/70 transition group-hover:bg-blue-100/60" aria-hidden="true"/>
+            <span className="relative grid size-[74px] shrink-0 place-items-center rounded-2xl bg-[linear-gradient(155deg,#1776c5,#092750)] text-white shadow-sm sm:size-[85px]">
+              <Icon size={36} strokeWidth={1.75} aria-hidden="true" />
+              <span className="absolute bottom-3 h-[3px] w-9 rounded-full bg-[#e6b46c]"/>
+            </span>
+            <span className="relative min-w-0 flex-1">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-[#43607e]">MW TECH</span>
+              <span className="mt-1 block text-lg font-extrabold tracking-tight text-[#0b2444] sm:text-[21px]">{name}</span>
+              <span className="mt-1.5 block text-xs leading-5 text-[#566c84] sm:text-sm">{description}</span>
+              <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#f0f5fb] px-2.5 py-1 text-[11px] font-semibold text-[#375678]"><Building2 size={13} />{loading ? "Carregando órgãos..." : available === 1 ? "1 órgão cadastrado" : available + " órgãos cadastrados"}</span>
+            </span>
+            <span className="relative hidden shrink-0 items-center gap-1 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-bold text-[#155eab] transition group-hover:border-blue-600 group-hover:bg-[#1265af] group-hover:text-white sm:inline-flex">Acessar <ArrowRight size={16}/></span>
+            <ArrowRight size={18} className="relative shrink-0 text-blue-600 sm:hidden"/>
           </button>;
         })}
       </div> : loading ? <div className="rounded-2xl bg-white p-7 text-sm text-slate-600">Carregando órgãos...</div> : organs.length ? <div className="grid gap-4 sm:grid-cols-2">{organs.map((item) => {
@@ -120,7 +131,7 @@ export default function CentralSistemas() {
       })}</div> : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-600">
         Nenhum órgão ativo encontrado para este sistema. Cadastre o órgão e seu endereço na opção <strong>Sistemas e órgãos</strong> do MW TECH Control.
       </div>}
-      <div className="mt-8 flex items-start gap-3 rounded-xl border border-[#dde5ee] bg-[#eaf0f7]/70 px-5 py-4 text-xs leading-5 text-slate-600">
+      <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[#c9dcf3] bg-[#e8f2ff]/75 px-5 py-4 text-xs leading-5 text-[#486481]">
         <ShieldCheck size={18} className="shrink-0 text-[#235b88]"/>
         <p>A Central reúne os links cadastrados. As permissões e o login de cada sistema continuam independentes.</p>
       </div>
