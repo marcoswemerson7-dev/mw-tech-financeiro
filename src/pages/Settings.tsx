@@ -5,7 +5,7 @@ import { PageHeader, Toast } from "../components/UI";
 
 const defaults: Record<string, string> = {
   nome_empresa: "MW TECH",
-  razao_social: "MARCOS WEMERSON DOS SANTOS GONÇALVES",
+  razao_social: "MW TECH SISTEMAS LTDA",
   cnpj: "62.308.511/0001-12",
   telefone: "",
   email: "marcoswemerson7@gmail.com",
