@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Building2, ExternalLink, FileCheck2, Landmark,
-  LayoutGrid, LogOut, RefreshCw, ShieldCheck, Truck, CheckCircle2, Layers3,
+  LayoutGrid, LogOut, RefreshCw, ShieldCheck, Truck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
