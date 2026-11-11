@@ -348,7 +348,7 @@ function PrintHeader({
           className="report-screen-logo"
         />
         <div className="report-company-details min-w-0 pt-0.5">
-          <p className="report-company-name mt-1 max-w-[500px] text-[11px] font-semibold leading-snug text-slate-700">{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"}</p>
+          <p className="report-company-name mt-1 max-w-[500px] text-[11px] font-semibold leading-snug text-slate-700">{company.razao_social || "MW TECH SISTEMAS LTDA"}</p>
           <p className="mt-1 text-[10px] font-semibold text-slate-500">CNPJ: {company.cnpj || "62.308.511/0001-12"}</p>
           <p className="mt-0.5 max-w-[520px] text-[10px] leading-snug text-slate-500">Endereço: {[company.endereco || "R. Antônio Pinto de Mesquita, 345", company.cidade ? `${company.cidade}${company.estado ? `/${company.estado}` : ""}` : "Bela Vista/PI", company.cep].filter(Boolean).join(" · ")}</p>
           <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{[company.telefone, company.email || "marcoswemerson7@gmail.com"].filter(Boolean).join(" · ")}</p>
@@ -366,7 +366,7 @@ function PrintHeader({
 function ReportFooter({ company, issuedAt }: { company: Company; issuedAt: string }) {
   return <footer className="report-footer mt-7 flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t border-slate-200 pt-3 text-[10px] text-slate-500">
     <span>Documento gerado pelo sistema <strong className="text-[#0b2b66]">MW TECH Control</strong></span>
-    <span>{company.razao_social || "MARCOS WEMERSON DOS SANTOS GONÇALVES"} · CNPJ: {company.cnpj || "62.308.511/0001-12"}</span>
+    <span>{company.razao_social || "MW TECH SISTEMAS LTDA"} · CNPJ: {company.cnpj || "62.308.511/0001-12"}</span>
     <span>Emissão: {issuedAt}</span>
     <span className="report-page-number" aria-label="Número da página">Página </span>
   </footer>;
