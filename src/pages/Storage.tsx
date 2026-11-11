@@ -78,6 +78,28 @@ export default function Storage() {
               ))}</div> : <div className="grid min-h-[180px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-center text-sm text-slate-500"><div><FolderOpen className="mx-auto mb-2 text-slate-400"/><b>Nenhuma pasta configurada</b></div></div>}
             </div>
           </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold text-[#071d35]">Pastas de outros sistemas MW TECH</h2>
+                <p className="mt-1 text-xs text-slate-500">Pastas já utilizadas pelos sistemas, mas ainda não incluídas no serviço de medição de armazenamento.</p>
+              </div>
+              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Medição pendente</span>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center gap-3">
+                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white text-blue-700"><FolderOpen size={21}/></span>
+                <div>
+                  <b className="block text-sm text-[#071d35]">MW TECH Patrimônio — Câmara de Ribeiro Gonçalves</b>
+                  <p className="mt-1 text-xs text-slate-500">Google Drive conectado ao Patrimônio · fotos de bens · tamanho não aferido aqui</p>
+                </div>
+              </div>
+              <a href="https://drive.google.com/drive/folders/1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50">
+                <ExternalLink size={15}/> Abrir pasta
+              </a>
+            </div>
+            <p className="mt-3 text-[11px] text-slate-500">Os valores de 11,71 GB e 100 GB referem-se à conta consultada pelo painel atual. Esta pasta só poderá ser somada aos indicadores após a configuração de uma medição própria, evitando valores duplicados ou incorretos.</p>
+          </section>
         </>
       ) : null}
     </div>
