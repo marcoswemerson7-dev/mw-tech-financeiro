@@ -67,7 +67,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    res.status(200).json(body);
+    // O Patrimônio usa outra integração OAuth. Consultar apenas métricas agregadas
+    // para não confundir o espaço da conta atual com o consumo dessa pasta.
+    let externalFolders: unknown[] = [];
+    let externalError = "";
+    const externalController = new AbortController();
+    const externalTimeout = setTimeout(() => externalController.abort(), 12000);
+    try {
+      const externalResponse = await fetch(
+        "https://ybljkroautoqzmifrkbi.supabase.co/functions/v1/patrimonio-drive?action=storage-summary",
+        {method:"GET",headers:{"Accept":"application/json"},signal:externalController.signal,cache:"no-store"}
+      );
+      const externalData = await externalResponse.json().catch(() => ({}));
+      if (externalResponse.ok && externalData.folder && externalData.folder.complete === true) {
+        externalFolders = [externalData.folder];
+      } else {
+        externalError = "Medição do Patrimônio temporariamente indisponível.";
+      }
+    } catch {
+      externalError = "Medição do Patrimônio temporariamente indisponível.";
+    } finally {
+      clearTimeout(externalTimeout);
+    }
+    res.status(200).json({...body,externalFolders,externalError});
   } catch (error: any) {
     const message =
       error?.name === "AbortError"
