@@ -449,6 +449,7 @@ export default function Monitoring() {
   const [statusFilter, setStatusFilter] = useState<"todos" | HealthState>("todos");
   const [driveData, setDriveData] = useState<DriveStorageUsage | null>(() => getCachedDriveStorageUsage());
   const [driveError, setDriveError] = useState("");
+  const patrimonioDrive = driveData?.externalFolders?.find(folder => folder.id === "1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r");
 
   const visibleItems = useMemo(() => items.filter((item) => {
     const matchesOrg = orgFilter === "todos" || item.key === orgFilter;
@@ -841,9 +842,9 @@ export default function Monitoring() {
                 <div className="border-t border-slate-100 pt-3">
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-2 text-[10px] font-semibold text-slate-600"><FolderOpen size={13} className="shrink-0 text-amber-500"/><span className="truncate">MW TECH Patrimônio — Câmara RG</span></span>
-                    <span className="shrink-0 text-[9px] font-semibold text-amber-700">Medição pendente</span>
+                    <span className={patrimonioDrive ? "shrink-0 text-[10px] font-semibold text-emerald-700" : "shrink-0 text-[9px] font-semibold text-amber-700"}>{patrimonioDrive ? formatBytes(patrimonioDrive.bytes) : "Medição pendente"}</span>
                   </div>
-                  <p className="text-[9px] text-slate-400">Pasta vinculada, ainda fora dos totais da conta</p>
+                  <p className="text-[9px] text-slate-400">{patrimonioDrive ? `${patrimonioDrive.files} arquivo(s) · ${patrimonioDrive.folders} subpasta(s)` : "Medição ainda indisponível"} · conta Google separada</p>
                   <a href="https://drive.google.com/drive/folders/1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold text-blue-700">Abrir pasta <ExternalLink size={11}/></a>
                 </div>
               </div>
