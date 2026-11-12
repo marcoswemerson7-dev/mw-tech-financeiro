@@ -9,6 +9,12 @@ export type ManagedSystem = {
   dominio_url?: string;
   vercel_url?: string;
   supabase_url?: string;
+  github_url?: string;
+  vercel_email?: string;
+  supabase_project?: string;
+  supabase_email?: string;
+  drive_url?: string;
+  drive_email?: string;
   acesso_url?: string;
   logo_url?: string;
   monitoring_key?: string;
@@ -26,6 +32,12 @@ export type ManagedSystem = {
 type SystemMeta = {
   notes?: string;
   supabase_url?: string;
+  github_url?: string;
+  vercel_email?: string;
+  supabase_project?: string;
+  supabase_email?: string;
+  drive_url?: string;
+  drive_email?: string;
   logo_url?: string;
   monitoring_key?: string;
   infraestrutura?: string;
@@ -105,6 +117,12 @@ function parseMeta(value?: string): SystemMeta {
       return {
         notes: String(parsed.notes || ""),
         supabase_url: String(parsed.supabase_url || ""),
+        github_url: String(parsed.github_url || ""),
+        vercel_email: String(parsed.vercel_email || ""),
+        supabase_project: String(parsed.supabase_project || ""),
+        supabase_email: String(parsed.supabase_email || ""),
+        drive_url: String(parsed.drive_url || ""),
+        drive_email: String(parsed.drive_email || ""),
         logo_url: String(parsed.logo_url || ""),
         monitoring_key: String(parsed.monitoring_key || ""),
         infraestrutura: String(parsed.infraestrutura || ""),
@@ -132,6 +150,12 @@ function serializeMeta(values: Partial<ManagedSystem>) {
     __mw_control_meta: true,
     notes: values.observacao || "",
     supabase_url: values.supabase_url || "",
+    github_url: values.github_url?.trim() || "",
+    vercel_email: values.vercel_email?.trim() || "",
+    supabase_project: values.supabase_project?.trim() || "",
+    supabase_email: values.supabase_email?.trim() || "",
+    drive_url: values.drive_url?.trim() || "",
+    drive_email: values.drive_email?.trim() || "",
     logo_url: values.logo_url || "",
     monitoring_key: values.monitoring_key || "",
     infraestrutura: values.infraestrutura || "",
@@ -150,6 +174,12 @@ function serializeFallback(values: Partial<ManagedSystem>) {
     dominio_url: values.dominio_url || "",
     vercel_url: values.vercel_url || "",
     supabase_url: values.supabase_url || "",
+    github_url: values.github_url?.trim() || "",
+    vercel_email: values.vercel_email?.trim() || "",
+    supabase_project: values.supabase_project?.trim() || "",
+    supabase_email: values.supabase_email?.trim() || "",
+    drive_url: values.drive_url?.trim() || "",
+    drive_email: values.drive_email?.trim() || "",
     acesso_url: values.acesso_url || values.dominio_url || "",
     logo_url: values.logo_url || "",
     monitoring_key: values.monitoring_key || "",
@@ -178,6 +208,12 @@ const normalize = (row: any): ManagedSystem => {
     status: meta.status || row.status || (row.ativo === false ? "inativo" : "ativo"),
     observacao: meta.notes || "",
     supabase_url: meta.supabase_url || row.supabase_url || "",
+    github_url: meta.github_url || "",
+    vercel_email: meta.vercel_email || "",
+    supabase_project: meta.supabase_project || "",
+    supabase_email: meta.supabase_email || "",
+    drive_url: meta.drive_url || "",
+    drive_email: meta.drive_email || "",
     logo_url: meta.logo_url || row.logo_url || "",
     monitoring_key: meta.monitoring_key || row.monitoring_key || "",
     infraestrutura: meta.infraestrutura || row.infraestrutura || "",
