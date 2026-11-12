@@ -16,12 +16,22 @@ export type DriveStorageUsage = {
   availableGb: number;
   percent: number;
   folders: DriveFolderUsage[];
+  externalFolders?: Array<{
+    id: string;
+    name: string;
+    bytes: number;
+    files: number;
+    folders: number;
+    updatedAt: string;
+    complete: boolean;
+  }>;
+  externalError?: string;
   updatedAt: string;
   account?: string;
 };
 
 const DRIVE_STORAGE_ENDPOINT = "/api/drive-storage";
-const CACHE_KEY = "drive-storage-summary:v2";
+const CACHE_KEY = "drive-storage-summary:v3";
 const LEGACY_CACHE_KEY = "drive-storage-summary";
 const CACHE_TTL = 15 * 60 * 1000;
 const STALE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
