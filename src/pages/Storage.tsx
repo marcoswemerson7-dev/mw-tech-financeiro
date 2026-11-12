@@ -19,6 +19,7 @@ export default function Storage() {
   useEffect(() => { load(false); }, []);
 
   const percent = Math.max(0, Math.min(100, data?.percent || 0));
+  const patrimonio = data?.externalFolders?.find(item => item.id === "1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r");
   const formatFolderSize = (bytes: number) => bytes >= 1024 ** 3
     ? `${(bytes / 1024 ** 3).toFixed(2)} GB`
     : bytes >= 1024 ** 2 ? `${(bytes / 1024 ** 2).toFixed(2)} MB`
@@ -67,7 +68,7 @@ export default function Storage() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold text-[#071d35]">Pastas por órgão</h2><span className="text-xs font-semibold text-slate-500">{data.folders.length} medida(s) + 1 vinculada</span></div>
+              <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold text-[#071d35]">Pastas por órgão</h2><span className="text-xs font-semibold text-slate-500">{data.folders.length} na conta principal + 1 Patrimônio</span></div>
               {data.folders.length ? <div className="grid gap-3 sm:grid-cols-2">{data.folders.map(folder => (
                 <article key={folder.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><span className="grid size-10 place-items-center rounded-lg bg-white text-[#d49d24]"><FolderOpen size={20}/></span><div className="min-w-0"><b className="block truncate text-sm text-[#071d35]">{folder.name}</b><span className="text-xs text-slate-500">{folder.files.toLocaleString("pt-BR")} arquivos • {folder.folders.toLocaleString("pt-BR")} pastas</span></div></div><div className="shrink-0 text-right"><strong className="block whitespace-nowrap text-sm font-semibold text-[#071d35]">{folder.usedGb.toFixed(2)} GB</strong><span className="text-[10px] text-slate-500">{formatFolderSize(folder.bytes)}</span></div></div>
@@ -82,13 +83,13 @@ export default function Storage() {
                     <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white text-[#d49d24]"><FolderOpen size={20}/></span>
                     <div className="min-w-0">
                       <b className="block text-sm text-[#071d35]">MW TECH Patrimônio — Câmara RG</b>
-                      <span className="mt-1 block text-xs text-slate-500">Fotografias dos bens · Google Drive</span>
+                      <span className="mt-1 block text-xs text-slate-500">{patrimonio ? `${patrimonio.files.toLocaleString("pt-BR")} arquivo(s) • ${patrimonio.folders.toLocaleString("pt-BR")} subpasta(s)` : "Fotografias dos bens · Google Drive"}</span>
                     </div>
                   </div>
-                  <span className="shrink-0 rounded-lg bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-800">Aferição pendente</span>
+                  <span className={`shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold ${patrimonio ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{patrimonio ? formatFolderSize(patrimonio.bytes) : "Aferição pendente"}</span>
                 </div>
                 <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200" aria-label="Uso do Patrimônio ainda não medido"/>
-                <p className="mt-2 text-right text-[11px] font-semibold text-slate-500">Consumo não incluído no total acima</p>
+                <p className="mt-2 text-right text-[11px] font-semibold text-slate-500">{patrimonio ? `Uso medido: ${formatFolderSize(patrimonio.bytes)} · ${new Date(patrimonio.updatedAt).toLocaleTimeString("pt-BR")}` : "Medição ainda indisponível"} · conta separada dos 100 GB acima</p>
                 <a href="https://drive.google.com/drive/folders/1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r" target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:underline"><ExternalLink size={13}/> Abrir pasta no Google Drive</a>
               </article></div> : <div className="grid min-h-[180px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-center text-sm text-slate-500"><div><FolderOpen className="mx-auto mb-2 text-slate-400"/><b>Nenhuma pasta configurada</b></div></div>}
             </div>
