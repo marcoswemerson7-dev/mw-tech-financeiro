@@ -17,6 +17,85 @@ type Tab = "dashboard"|"processos"|"kanban"|"atendimentos"|"clientes"|"modelos";
 const KEY="mw-despachante-organizado-v2";
 const defaultRegistries:RegistryOption[]=[{id:'cartorio-ribeiro-goncalves',name:'Cartório de Ribeiro Gonçalves – PI'},{id:'cartorio-baixa-grande-do-ribeiro',name:'Cartório de Baixa Grande do Ribeiro – PI'}];
 const predefined:Model[]=[
+{id:"urbano-pj-pj",name:"Escritura de Imóvel Urbano PJ–PJ",groups:[
+{title:"Vendedores · Pessoa jurídica",docs:[
+"Comprovante de inscrição no CNPJ (consulta pela internet)",
+"Contrato ou estatuto social autenticado, última alteração e alteração de diretoria, ou código para verificação na Junta Comercial (art. 135, III, Código de Normas do PI)",
+"RG, CPF, profissão, estado civil e comprovante de residência do diretor, sócio ou procurador que assinará (original e cópia autenticada)",
+"Certidão negativa de débitos trabalhistas (internet)",
+"Certidão de débitos relativos a créditos tributários federais e à Dívida Ativa da União (internet)",
+"Certidão de indisponibilidade, retirada pelo cartório (art. 865, Código de Normas do PI)"]},
+{title:"Compradores · Pessoa jurídica",docs:[
+"Comprovante de inscrição no CNPJ (consulta pela internet)",
+"Contrato ou estatuto social autenticado, última alteração e alteração de diretoria, ou código para verificação na Junta Comercial (art. 135, III, Código de Normas do PI)",
+"RG, CPF, profissão, estado civil e comprovante de residência do diretor, sócio ou procurador que assinará (original e cópia autenticada)",
+"Certidão negativa de débitos trabalhistas (internet)",
+"Certidão de débitos relativos a créditos tributários federais e à Dívida Ativa da União (internet)",
+"Certidão de indisponibilidade, retirada pelo cartório (art. 865, Código de Normas do PI)"]},
+{title:"Imóvel urbano",docs:[
+"Título aquisitivo (art. 135, IX, Código de Normas do PI)",
+"ITBI e comprovante de pagamento, se apresentado no ato da lavratura",
+"Certidão de inteiro teor atualizada (30 dias; válida na data da lavratura)",
+"Certidão de ações reais e pessoais reipersecutórias atualizada (30 dias; válida na data da lavratura)",
+"Certidão de ônus reais atualizada (30 dias; válida na data da lavratura)",
+"Informar valor da compra e forma de pagamento",
+"Laudo de avaliação da prefeitura, quando o ITBI não informar a avaliação do imóvel",
+"Termo de quitação da prefeitura",
+"Laudêmio com baixa de enfiteuse, quando aplicável",
+"Declaração de inscrição imobiliária"]},
+{title:"Desmembramento de parte do imóvel · quando aplicável",docs:[
+"Planta do imóvel aprovada pela prefeitura",
+"Memorial descritivo",
+"Anuência dos confrontantes, assinada e com reconhecimento de firma",
+"ART e comprovante de pagamento",
+"Certidão de revisão de limites e metragens, expedida pela prefeitura"]},
+{title:"Orientações e situações específicas",docs:[
+"Procuração ou substabelecimento atualizado (90 dias), com reconhecimento de sinal público, quando aplicável",
+"Documentos originais ou cópias autenticadas",
+"Documentos do procurador, inventariante, curador ou representante (RG, CPF, estado civil, profissão e residência), quando houver",
+"Documentação complementar eventualmente exigida pela serventia após análise jurídica",
+"Verificar possibilidade de lavratura via e-Notariado e autenticação eletrônica, quando pertinente"]}]},
+{id:"urbano-pf-pf",name:"Escritura de Imóvel Urbano PF–PF",groups:[
+{title:"Vendedores · Pessoa física",docs:[
+"RG e CPF dos vendedores e respectivos cônjuges, quando aplicável",
+"Certidão de nascimento ou de casamento atualizada; averbações de divórcio ou óbito, se houver",
+"Informar nacionalidade, profissão, estado civil e endereço completo",
+"Comprovante de residência",
+"Pacto antenupcial registrado, quando aplicável",
+"Documentos de procuração ou representação, quando aplicável",
+"Certidão de indisponibilidade, retirada pelo cartório"]},
+{title:"Compradores · Pessoa física",docs:[
+"RG e CPF dos compradores e respectivos cônjuges, quando aplicável",
+"Certidão de nascimento ou de casamento atualizada; averbações de divórcio ou óbito, se houver",
+"Informar nacionalidade, profissão, estado civil e endereço completo",
+"Comprovante de residência",
+"Pacto antenupcial registrado, quando aplicável",
+"Documentos de procuração ou representação, quando aplicável",
+"Certidão de indisponibilidade, retirada pelo cartório"]},
+{title:"Imóvel urbano",docs:[
+"Título aquisitivo (art. 135, IX, Código de Normas do PI)",
+"ITBI e comprovante de pagamento, se apresentado no ato da lavratura",
+"Certidão de inteiro teor atualizada (30 dias; válida na data da lavratura)",
+"Certidão de ações reais e pessoais reipersecutórias atualizada (30 dias; válida na data da lavratura)",
+"Certidão de ônus reais atualizada (30 dias; válida na data da lavratura)",
+"Informar valor da compra e forma de pagamento",
+"Laudo de avaliação da prefeitura, quando o ITBI não informar a avaliação do imóvel",
+"Termo de quitação da prefeitura",
+"Laudêmio com baixa de enfiteuse, quando aplicável",
+"Declaração de inscrição imobiliária"]},
+{title:"Desmembramento de parte do imóvel · quando aplicável",docs:[
+"Planta do imóvel aprovada pela prefeitura",
+"Memorial descritivo",
+"Anuência dos confrontantes, assinada e com reconhecimento de firma",
+"ART e comprovante de pagamento",
+"Certidão de revisão de limites e metragens, expedida pela prefeitura"]},
+{title:"Orientações e situações específicas",docs:[
+"Procuração ou substabelecimento atualizado (90 dias), com reconhecimento de sinal público, quando aplicável",
+"Documentos originais ou cópias autenticadas",
+"Documentos do procurador, inventariante, curador ou representante (RG, CPF, estado civil, profissão e residência), quando houver",
+"Verificar CPF individual do cônjuge e registro do pacto antenupcial, quando aplicável",
+"Documentação complementar eventualmente exigida pela serventia após análise jurídica",
+"Verificar possibilidade de lavratura via e-Notariado e autenticação eletrônica, quando pertinente"]}]},
 {id:"rural",name:"Escritura Rural PF–PF",groups:[
 {title:"Vendedores",docs:["RG e CPF, inclusive dos cônjuges","Certidão de nascimento ou casamento","Pacto antenupcial registrado, se houver","Comprovante de endereço","Informar profissão","Certidão de indisponibilidade"]},
 {title:"Compradores",docs:["RG e CPF, inclusive dos cônjuges","Certidão de nascimento ou casamento","Pacto antenupcial registrado, se houver","Comprovante de endereço","Informar profissão","Certidão de indisponibilidade"]},
