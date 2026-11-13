@@ -1,6 +1,6 @@
 /** Three-way synchronization. Never resolves conflicting edits by dropping a device's data. */
 type RecordValue = { id: string; [key: string]: unknown };
-export type SyncSnapshot = { clients: RecordValue[]; models: RecordValue[]; jobs: RecordValue[]; processes: RecordValue[] };
+export type SyncSnapshot = { clients: RecordValue[]; models: RecordValue[]; jobs: RecordValue[]; processes: RecordValue[]; registryCatalog?: RecordValue[] };
 const same = (a: unknown, b: unknown): boolean => {
  if (Object.is(a,b)) return true;
  if (Array.isArray(a) && Array.isArray(b)) return a.length===b.length && a.every((v,i)=>same(v,b[i]));
@@ -14,7 +14,7 @@ export function sameSnapshot(a:unknown,b:unknown):boolean {
  if(!a||!b||typeof a!=="object"||typeof b!=="object")return same(a,b);
  const left=a as Record<string,unknown>,right=b as Record<string,unknown>;
  return [...new Set([...Object.keys(left),...Object.keys(right)])].every(key=>{
-  if(["clients","models","jobs","processes"].includes(key)&&Array.isArray(left[key])&&Array.isArray(right[key])){
+  if(["clients","models","jobs","processes","registryCatalog"].includes(key)&&Array.isArray(left[key])&&Array.isArray(right[key])){
    const x=left[key] as RecordValue[],y=right[key] as RecordValue[];
    const indexed=new Map(y.map(r=>[r.id,r]));return x.length===y.length&&x.every(r=>same(r,indexed.get(r.id)));
   }
@@ -48,10 +48,10 @@ export function reconcileSnapshots<T extends SyncSnapshot>(base:T|null,local:T,r
   conflicts.push(path);return l;
  }
  const data={...local};
- for(const key of ['clients','models','jobs','processes'] as const){
+ for(const key of ['clients','models','jobs','processes','registryCatalog'] as const){
   const before=new Map((base?.[key]||[]).map(x=>[x.id,x]));
-  const left=new Map(local[key].map(x=>[x.id,x])),right=new Map(remote[key].map(x=>[x.id,x]));
-  data[key]=[...new Set([...left.keys(),...right.keys(),...before.keys()])].flatMap(id=>{
+  const left=new Map((local[key]||[]).map(x=>[x.id,x])),right=new Map((remote[key]||[]).map(x=>[x.id,x]));
+  (data as Record<string,unknown>)[key]=[...new Set([...left.keys(),...right.keys(),...before.keys()])].flatMap(id=>{
    const b=before.get(id),l=left.get(id),r=right.get(id);
    if(!l&&!r)return [];
    if(b&&(!l||!r)){
