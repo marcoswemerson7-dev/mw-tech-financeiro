@@ -460,7 +460,26 @@ tr{break-inside:avoid!important}
  .cover-print .brand svg{height:15mm;width:15mm}
  .cover-print .title{margin-bottom:3mm}
  .cover-print .footer.cover-footer{min-height:16mm!important;margin:2.5mm 0 0!important;padding:2mm 3mm!important}
-}`;
+}
+/* Rodapé institucional na base da folha A4, sem espaço vazio abaixo do conteúdo. */
+@media print{
+ @page{size:A4 portrait;margin:8mm 12mm 25mm}
+ .cover-print .footer.cover-footer{
+  position:fixed!important;
+  top:auto!important;
+  bottom:-21mm!important;
+  left:0!important;
+  right:0!important;
+  width:auto!important;
+  height:16mm!important;
+  min-height:16mm!important;
+  margin:0!important;
+  padding:2mm 3mm!important;
+  break-inside:avoid!important;
+ }
+ .cover-print .content{padding-bottom:0!important}
+}
+`;
  const body=cover?coverBody:checklistBody;
  const popup=window.open("","_blank");
  if(!popup){alert("O navegador bloqueou a janela de impressão. Permita pop-ups para este site.");return;}
