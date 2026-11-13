@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarDays, GripVertical, MapPin, Search, ArrowUpRight, ClipboardList, AlertTriangle, Building2, Hash, Filter, ArrowRight } from "lucide-react";
+import { CalendarDays, GripVertical, MapPin, Search, ClipboardList, AlertTriangle, Building2, Hash, Filter, ArrowRight } from "lucide-react";
 import type { Tracking } from "./Processos";
 
 type Process = Tracking & { id:string; clientId:string; title:string; created:string };
