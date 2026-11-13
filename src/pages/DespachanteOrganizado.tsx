@@ -479,6 +479,34 @@ tr{break-inside:avoid!important}
  }
  .cover-print .content{padding-bottom:0!important}
 }
+
+/* A4: footer participates in the normal page flow; never use negative page offsets. */
+@media print{
+ @page{size:A4 portrait;margin:8mm 12mm 9mm}
+ body.cover-print{
+   display:flex!important;
+   flex-direction:column!important;
+   min-height:275mm!important;
+   height:auto!important;
+ }
+ .cover-print .content{
+   flex:1 0 auto!important;
+   width:100%!important;
+ }
+ .cover-print .footer.cover-footer{
+   position:relative!important;
+   left:auto!important;
+   right:auto!important;
+   top:auto!important;
+   bottom:auto!important;
+   margin:5mm 0 0!important;
+   width:100%!important;
+   height:auto!important;
+   min-height:16mm!important;
+   flex-shrink:0!important;
+   break-inside:avoid!important;
+ }
+}
 `;
  const body=cover?coverBody:checklistBody;
  const popup=window.open("","_blank");
