@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, CheckCircle2, ClipboardCheck, Clock3, FileWarning, FolderOpen, Plus, Users, Building2, MapPin, ChevronRight, Activity, Layers3, FileText } from 'lucide-react';
+import { ArrowRight, CalendarDays, CheckCircle2, ClipboardCheck, Clock3, FileWarning, FolderOpen, Plus, Users, ChevronRight, Activity, Layers3, FileText } from 'lucide-react';
 
 type Item = { id: string; clientId: string; title: string; created: string; updatedAt?: string; status?: string; deadline?: string; nextAction?: string; location?: string; history?: { id: string; at: string; title: string; text: string }[] };
 type Checklist = Item & { docs: { checked: boolean; status?: string }[] };
