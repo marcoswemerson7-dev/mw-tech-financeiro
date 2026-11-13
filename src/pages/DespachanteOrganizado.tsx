@@ -11,9 +11,11 @@ import { ClipboardCheck, Printer, Plus, Trash2, Users, FolderOpen, FileText, Pen
 type Client = {id:string; name:string; phone:string};
 type Model = {id:string; name:string; groups:{title:string; docs:string[]}[]};
 type Job = Tracking & {id:string; clientId:string; title:string; modelId:string; sellers?:string[]; buyers?:string[]; docs:{name:string; group:string; checked:boolean; status?:"pendente"|"recebido"|"dispensado"; detail?:string}[]; notes:string; created:string};
-type Store = {clients:Client[]; models:Model[]; jobs:Job[]; processes:Job[]};
+type RegistryOption = {id:string;name:string};
+type Store = {clients:Client[]; models:Model[]; jobs:Job[]; processes:Job[]; registryCatalog:RegistryOption[]};
 type Tab = "dashboard"|"processos"|"kanban"|"atendimentos"|"clientes"|"modelos";
 const KEY="mw-despachante-organizado-v2";
+const defaultRegistries:RegistryOption[]=[{id:'cartorio-ribeiro-goncalves',name:'Cartório de Ribeiro Gonçalves – PI'},{id:'cartorio-baixa-grande-do-ribeiro',name:'Cartório de Baixa Grande do Ribeiro – PI'}];
 const predefined:Model[]=[
 {id:"rural",name:"Escritura Rural PF–PF",groups:[
 {title:"Vendedores",docs:["RG e CPF, inclusive dos cônjuges","Certidão de nascimento ou casamento","Pacto antenupcial registrado, se houver","Comprovante de endereço","Informar profissão","Certidão de indisponibilidade"]},
@@ -89,7 +91,7 @@ const predefined:Model[]=[
 {title:"Outros documentos",docs:["Procuração do advogado","Cópia da OAB do advogado"]}]}];
 const id=()=>crypto.randomUUID();
 function legacyStore():Store {
- const result:Store={clients:[],models:[],jobs:[],processes:[]};
+ const result:Store={clients:[],models:[],jobs:[],processes:[],registryCatalog:defaultRegistries};
  try {
   const old=JSON.parse(localStorage.getItem("mw-despachante-local-v1")||"null");
   if(!old)return result;
@@ -103,8 +105,9 @@ function legacyStore():Store {
  }catch { /* Preserve current data if the legacy backup is unreadable. */ }
  return result;
 }
-function normalizeStore(value:Omit<Store,"processes"> & {processes?:Job[]}):Store {
- if(Array.isArray(value.processes))return {...value,processes:value.processes};
+function normalizeStore(value:Omit<Store,"processes"|"registryCatalog"> & {processes?:Job[];registryCatalog?:RegistryOption[]}):Store {
+ const catalog=[...defaultRegistries,...(Array.isArray(value.registryCatalog)?value.registryCatalog:[]).filter(x=>x&&typeof x.name==="string"&&!defaultRegistries.some(d=>d.id===x.id))];
+ if(Array.isArray(value.processes))return {...value,processes:value.processes,registryCatalog:catalog};
  const jobs:Job[]=[],processes:Job[]=[];
  for(const job of value.jobs){
   const hasChecklist=Boolean(job.modelId||job.docs?.length||job.sellers?.length||job.buyers?.length);
@@ -112,7 +115,7 @@ function normalizeStore(value:Omit<Store,"processes"> & {processes?:Job[]}):Stor
   if(hasChecklist)jobs.push(job);
   if(hasProcess)processes.push({...job,id:hasChecklist?"process-"+job.id:job.id,checklistJobId:job.checklistJobId||(hasChecklist?job.id:undefined),modelId:"",docs:[],sellers:[],buyers:[]});
  }
- return {...value,jobs,processes};
+ return {...value,jobs,processes,registryCatalog:catalog};
 }
 function mergeMissing(current:Store,incoming:Store):Store {
  current=normalizeStore(current);incoming=normalizeStore(incoming);
@@ -133,7 +136,7 @@ function mergeMissing(current:Store,incoming:Store):Store {
    modelId:job.modelId||source.modelId,
   };
  });
- return {clients:add(current.clients,incoming.clients.filter(c=>!legacyIds.has(c.id)||neededClients.has(c.id))),models:add(current.models,incoming.models),jobs:add(jobs,incoming.jobs),processes:add(current.processes,incoming.processes)};
+ return {clients:add(current.clients,incoming.clients.filter(c=>!legacyIds.has(c.id)||neededClients.has(c.id))),models:add(current.models,incoming.models),jobs:add(jobs,incoming.jobs),processes:add(current.processes,incoming.processes),registryCatalog:add(current.registryCatalog,incoming.registryCatalog)};
 }
 function load():Store {
  try {
@@ -144,7 +147,7 @@ function load():Store {
    return normalizeStore({...value,models:[...predefined,...value.models.filter((m:Model)=>!builtins.has(m.id))]});
   }
  }catch { /* Legacy remains available for recovery. */ }
- return mergeMissing({clients:[],models:predefined,jobs:[],processes:[]},legacyStore());
+ return mergeMissing({clients:[],models:predefined,jobs:[],processes:[],registryCatalog:defaultRegistries},legacyStore());
 }
 
 const input="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm outline-none focus:border-[#9b7951]";
@@ -199,7 +202,7 @@ useEffect(()=>{
    }
    if(!alive)return;
    const local=canonical(dataRef.current);
-   const empty:Store={clients:[],models:predefined,jobs:[],processes:[]};
+   const empty:Store={clients:[],models:predefined,jobs:[],processes:[],registryCatalog:defaultRegistries};
    const cloud=canonical(remote||empty);
    const result=reconcileSnapshots(baseline.current?canonical(baseline.current):null,local,cloud);
    if(result.conflicts.length){
@@ -364,7 +367,7 @@ return <div className="mx-auto max-w-7xl space-y-5"><div className="flex flex-wr
 <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">{([{k:"dashboard",label:"Visão geral",Icon:FolderOpen},{k:"processos",label:"Processos",Icon:FolderOpen},{k:"kanban",label:"Kanban",Icon:FolderOpen},{k:"atendimentos",label:"Checklists",Icon:ClipboardCheck},{k:"clientes",label:"Clientes",Icon:Users},{k:"modelos",label:"Modelos de checklist",Icon:FileText}] as const).map(x=><button key={x.k} onClick={()=>{setTab(x.k);setSelected("");setJobClient("");}} className={"flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold "+(tab===x.k?"bg-[#10234d] text-white":"border border-slate-200 bg-white text-slate-700")}><x.Icon size={16}/>{x.label}</button>)}</div>
 {tab==="dashboard"&&<Dashboard processes={data.processes} checklists={data.jobs} clients={data.clients} navigate={section=>{setTab(section);setSelected("");setJobClient("");setSearch("");}} openProcess={processId=>{setSelected(processId);setJobClient("");setTab("processos");}} openChecklist={checklistId=>{setSelected(checklistId);setSearch("");setTab("atendimentos");}}/>}
 {tab==="kanban"&&<KanbanProcessos processes={data.processes} clients={data.clients} openProcess={processId=>{setSelected(processId);setJobClient("");setTab("processos");}} goToProcesses={()=>{setSelected("");setJobClient("");setTab("processos");}} changeStatus={(processId,status)=>{const labels:Record<string,string>={preparacao:"Em preparação",protocolado:"Protocolado",analise:"Em análise",devolutiva:"Nota devolutiva",cliente:"Aguardando cliente",finalizado:"Finalizado",cancelado:"Cancelado"};changeProcess(processId,p=>{const previous=p.status||"preparacao";if(previous===status)return p;const at=new Date().toISOString();return {...p,status,updatedAt:at,history:[{id:id(),at,title:"Etapa atualizada pelo Kanban",text:(labels[previous]||previous)+" → "+(labels[status]||status)},...(p.history||[])]};});}}/>}
-{tab==="processos"&&<Processos onCreateClient={(name,phone)=>{const clientId=id();setData(d=>({...d,clients:[...d.clients,{id:clientId,name,phone}]}));return clientId;}} linkChecklist={linkChecklist} remove={jobId=>{const job=data.processes.find(j=>j.id===jobId);if(job)removeProcess(job);}} key={selected+jobClient} initialId={selected} initialClient={jobClient?data.clients.find(c=>c.id===jobClient)?.name||"":""} printCover={jobId=>{const job=data.processes.find(j=>j.id===jobId);if(job){const checklist=data.jobs.find(j=>j.id===job.checklistJobId);printJob({...job,docs:checklist?.docs||job.docs,sellers:checklist?.sellers||job.sellers,buyers:checklist?.buyers||job.buyers,notes:checklist&&checklist.id!==job.id?[job.notes&&"Observações do processo: "+job.notes,checklist.notes&&"Observações do checklist: "+checklist.notes].filter(Boolean).join("\n\n"):job.notes,history:checklist&&checklist.id!==job.id?[...(job.history||[]),...(checklist.history||[])].filter((entry,index,list)=>list.findIndex(item=>item.id===entry.id)===index).sort((a,b)=>b.at.localeCompare(a.at)):job.history},true);}}} jobs={data.processes} checklists={data.jobs} clients={data.clients} update={(jobId,fn)=>changeProcess(jobId,j=>({...j,...fn(j)}))} create={(clientId,title)=>{const jobId=id();const at=new Date().toISOString();setData(d=>({...d,processes:[{id:jobId,clientId,title,modelId:"",docs:[],notes:"",created:at,status:"preparacao",location:"Escritório"},...d.processes]}));return jobId;}} openChecklist={jobId=>{const job=data.processes.find(j=>j.id===jobId);if(!job?.checklistJobId)return;setSearch("");setSelected(job.checklistJobId);setTab("atendimentos");}}/>}
+{tab==="processos"&&<Processos registryOptions={data.registryCatalog} onCreateRegistry={(name)=>{const existing=data.registryCatalog.find(item=>item.name.toLocaleLowerCase('pt-BR')===name.trim().toLocaleLowerCase('pt-BR'));if(existing)return existing.name;const newEntry={id:id(),name:name.trim()};setData(d=>({...d,registryCatalog:[...d.registryCatalog,newEntry]}));return newEntry.name;}} onCreateClient={(name,phone)=>{const clientId=id();setData(d=>({...d,clients:[...d.clients,{id:clientId,name,phone}]}));return clientId;}} linkChecklist={linkChecklist} remove={jobId=>{const job=data.processes.find(j=>j.id===jobId);if(job)removeProcess(job);}} key={selected+jobClient} initialId={selected} initialClient={jobClient?data.clients.find(c=>c.id===jobClient)?.name||"":""} printCover={jobId=>{const job=data.processes.find(j=>j.id===jobId);if(job){const checklist=data.jobs.find(j=>j.id===job.checklistJobId);printJob({...job,docs:checklist?.docs||job.docs,sellers:checklist?.sellers||job.sellers,buyers:checklist?.buyers||job.buyers,notes:checklist&&checklist.id!==job.id?[job.notes&&"Observações do processo: "+job.notes,checklist.notes&&"Observações do checklist: "+checklist.notes].filter(Boolean).join("\n\n"):job.notes,history:checklist&&checklist.id!==job.id?[...(job.history||[]),...(checklist.history||[])].filter((entry,index,list)=>list.findIndex(item=>item.id===entry.id)===index).sort((a,b)=>b.at.localeCompare(a.at)):job.history},true);}}} jobs={data.processes} checklists={data.jobs} clients={data.clients} update={(jobId,fn)=>changeProcess(jobId,j=>({...j,...fn(j)}))} create={(clientId,title)=>{const jobId=id();const at=new Date().toISOString();setData(d=>({...d,processes:[{id:jobId,clientId,title,modelId:"",docs:[],notes:"",created:at,status:"preparacao",location:"Escritório"},...d.processes]}));return jobId;}} openChecklist={jobId=>{const job=data.processes.find(j=>j.id===jobId);if(!job?.checklistJobId)return;setSearch("");setSelected(job.checklistJobId);setTab("atendimentos");}}/>}
 {tab==="clientes"&&<div className="grid gap-5 lg:grid-cols-3"><form onSubmit={addClient} className={panel+" space-y-3"}><h2 className="font-bold">Novo cliente</h2><label className="block text-sm">Nome completo<input className={input} required value={clientName} onChange={e=>setClientName(e.target.value)}/></label><label className="block text-sm">Telefone<input className={input} value={phone} onChange={e=>setPhone(e.target.value)}/></label><button className="rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white">Cadastrar cliente</button></form><section className={panel+" lg:col-span-2"}><h2 className="mb-3 font-bold">Clientes cadastrados</h2>{!data.clients.length?<p className="text-sm text-slate-500">Nenhum cliente cadastrado.</p>:<div className="space-y-2">{data.clients.map(c=><div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"><span><b className="block text-sm">{c.name}</b><small className="text-slate-500">{c.phone||"Sem telefone"} · {data.jobs.filter(j=>j.clientId===c.id).length} checklist(s) · {data.processes.filter(j=>j.clientId===c.id).length} processo(s)</small></span><div className="flex gap-2"><button className="rounded-lg border px-3 py-2 text-xs font-semibold" onClick={()=>{setJobClient(c.id);setSelected("");setTab("processos");}}>Ver processos</button><button title="Novo checklist" onClick={()=>{setJobClient(c.id);setTab("atendimentos");}} className="rounded-lg border px-3 py-2 text-xs"><Plus size={15}/></button><button title="Editar" onClick={()=>{const name=prompt("Nome do cliente",c.name);if(name===null||!name.trim())return;const tel=prompt("Telefone",c.phone);if(tel===null)return;setData(d=>({...d,clients:d.clients.map(x=>x.id===c.id?{...x,name:name.trim(),phone:tel}:x)}));}} className="rounded-lg border px-3 py-2"><Pencil size={15}/></button><button title="Excluir" onClick={()=>removeClient(c)} className="rounded-lg border border-red-200 px-3 py-2 text-red-700"><Trash2 size={15}/></button></div></div>)}</div>}</section></div>}
 {tab==="modelos"&&<div className="grid gap-5 lg:grid-cols-2"><form onSubmit={addModel} className={panel+" space-y-3"}><h2 className="font-bold">Criar modelo de checklist</h2><label className="block text-sm">Nome do modelo<input className={input} value={modelName} onChange={e=>setModelName(e.target.value)} required/></label><label className="block text-sm">Documentos (um por linha)<textarea className={input+" min-h-36"} value={modelDocs} onChange={e=>setModelDocs(e.target.value)} required/></label><button className="rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white">Salvar modelo</button></form><section className={panel}><h2 className="mb-3 font-bold">Modelos disponíveis</h2><div className="space-y-2">{data.models.map(m=><div key={m.id} className="flex items-center justify-between gap-2 rounded-lg border p-3"><div><b className="text-sm">{m.name}</b><p className="text-xs text-slate-500">{m.groups.reduce((sum,g)=>sum+g.docs.length,0)} itens</p></div>{!predefined.some(p=>p.id===m.id)&&<button title="Excluir modelo" onClick={()=>{if(data.jobs.some(j=>j.modelId===m.id)){alert("Este modelo está em uso.");return;}if(confirm("Excluir modelo?"))setData(d=>({...d,models:d.models.filter(x=>x.id!==m.id)}));}} className="text-red-600"><Trash2 size={16}/></button>}</div>)}</div></section></div>}
 {tab==="atendimentos"&&<><div className="grid gap-5 lg:grid-cols-2"><form onSubmit={addJob} className={panel+" space-y-3"}><h2 className="font-bold">Novo checklist</h2><label className="block text-sm">Cliente<select className={input} required value={jobClient} onChange={e=>setJobClient(e.target.value)}><option value="">Selecione o cliente</option>{data.clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label><button type="button" className="text-xs font-semibold text-[#846640] underline" onClick={()=>setTab("clientes")}>+ Cadastrar novo cliente</button><label className="block text-sm">Serviço / assunto<input className={input} required value={jobTitle} onChange={e=>setJobTitle(e.target.value)} placeholder="Ex.: Escritura do imóvel rural"/></label><label className="block text-sm">Modelo<select className={input} value={jobModel} onChange={e=>setJobModel(e.target.value)}>{data.models.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>{peopleFields("sellers",sellers,sellerDraft,setSellerDraft)}{peopleFields("buyers",buyers,buyerDraft,setBuyerDraft)}<button className="rounded-lg bg-[#10234d] px-4 py-2.5 text-sm font-bold text-white">Criar checklist do cliente</button></form><div className={panel}><h2 className="font-bold">Como funciona</h2><p className="mt-2 text-sm leading-7 text-slate-600">Cadastre o cliente apenas uma vez. Crie quantos atendimentos precisar e escolha o modelo de documentos. Abra o atendimento para marcar cada item e imprimir o relatório com os documentos recebidos e pendentes.</p></div></div>
