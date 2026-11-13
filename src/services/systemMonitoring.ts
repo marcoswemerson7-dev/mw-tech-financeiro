@@ -322,7 +322,7 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       acesso_url: "",
       supabase_url: FALLBACKS[key].supabaseUrl,
       monitoring_key: key,
-      infraestrutura: "Vercel + Supabase",
+      infraestrutura: key === "camara_patrimonio" ? "Vercel + Supabase + Google Drive" : "Vercel + Supabase",
       ambiente: "Produção",
       status: "ativo",
       created_at: new Date().toISOString(),
