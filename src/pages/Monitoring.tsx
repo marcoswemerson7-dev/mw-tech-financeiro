@@ -313,22 +313,34 @@ function SystemCard({
             {!metricsAvailable && <span className="rounded-full bg-amber-50 px-2 py-1 text-[8px] font-semibold text-amber-700">Integração de métricas pendente</span>}
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <MetricBox label="Processos" value={m?.processes ?? "—"} icon={<FileStack size={12} />} />
-            <MetricBox label="Contratos" value={m?.contracts ?? "—"} icon={<FileText size={12} />} />
-            <MetricBox label="Notas fiscais" value={m?.invoices ?? "—"} icon={<Receipt size={12} />} />
-            <MetricBox label="Pagamentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />
+            <MetricBox label={item.tenantKey === "camara_frota" ? "Solicitações" : item.tenantKey === "camara_patrimonio" ? "Inventários" : "Processos"} value={m?.processes ?? "—"} icon={<FileStack size={12} />} />
+            <MetricBox label={item.tenantKey === "camara_patrimonio" ? "Termos patrimoniais" : "Contratos"} value={m?.contracts ?? "—"} icon={<FileText size={12} />} />
+            {item.tenantKey !== "camara_patrimonio" && <MetricBox label="Notas fiscais" value={m?.invoices ?? "—"} icon={<Receipt size={12} />} />}
+            {item.tenantKey === "camara_frota" && <MetricBox label="Abastecimentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />}
+            {!isChamberSystem && <MetricBox label="Pagamentos" value={m?.payments ?? "—"} icon={<CreditCard size={12} />} />}
             <MetricBox
-              label="Arquivos de processos"
+              label={item.tenantKey === "camara_frota" ? "Anexos de solicitações" : item.tenantKey === "camara_patrimonio" ? "Arquivos vinculados no Drive" : "Arquivos de processos"}
               value={m?.files ?? "—"}
               icon={<HardDrive size={12} />}
               hint="Registros da tabela de arquivos de processos"
             />
-            <MetricBox
-              label="Volume dos arquivos de processos"
-              value={formatBytes(m?.fileBytes)}
+            {m?.fileBytes !== null && m?.fileBytes !== undefined && <MetricBox
+              label={item.tenantKey === "camara_patrimonio" ? "Tamanho registrado no Drive" : "Volume dos arquivos registrados"}
+              value={formatBytes(m.fileBytes)}
               icon={<HardDrive size={12} />}
-              hint="Soma dos tamanhos cadastrados; não é o uso total do Drive"
-            />
+              hint="Soma dos tamanhos cadastrados; não é necessariamente o uso físico da conta"
+            />}
+            {m?.extra && Object.entries(m.extra).map(([key, count]) => {
+              const labels: Record<string, string> = {
+                aditivos: "Aditivos", itens: "Itens de processos", numeracoes: "Numerações",
+                vehicles: "Veículos", drivers: "Motoristas", suppliers: "Fornecedores",
+                fuelOrders: "Autorizações", fuelEvents: "Abastecimentos", fuelRequests: "Solicitações",
+                assets: "Bens patrimoniais", decommissioned: "Baixas",
+                movements: "Movimentações", maintenance: "Manutenções",
+                inventories: "Inventários", driveFiles: "Documentos no Drive",
+              };
+              return <MetricBox key={key} label={labels[key] || key} value={count ?? "—"} icon={<Database size={12} />} />;
+            })}
             <MetricBox
               label="Objetos físicos no Supabase"
               value={m?.supabaseStorageFiles ?? "—"}
@@ -353,7 +365,7 @@ function SystemCard({
         {isChamberSystem && <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
           <h4 className="text-[11px] font-semibold text-blue-900">Monitoramento da Câmara Municipal</h4>
           <p className="mt-1 text-[10px] leading-5 text-blue-800">
-            O sistema está incluído no painel. Indicadores específicos de {item.tenantKey === "camara_frota" ? "abastecimentos e notas fiscais" : item.tenantKey === "camara_patrimonio" ? "bens, tombamentos e arquivos" : "processos, contratos e documentos"} serão apresentados quando a integração de telemetria for configurada. Os campos sem fonte de dados permanecem sem informação.
+            {metricsAvailable ? "Dados agregados obtidos do banco Supabase do órgão. Somente totais e volumes são exibidos; os arquivos do Google Drive são monitorados em separado." : "As métricas agregadas ainda não estão disponíveis. Verifique a integração de telemetria do órgão."}
           </p>
           {!item.accessUrl && <p className="mt-2 text-[10px] font-semibold text-amber-800">Endereço público do sistema ainda não cadastrado. Configure-o em Sistemas para habilitar o teste de disponibilidade e latência da aplicação.</p>}
         </div>}
