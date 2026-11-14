@@ -110,9 +110,9 @@ async function probeOnce(url: string) {
   }
 }
 
-// Medir separadamente a conexão inicial e uma segunda resposta na mesma origem.
-// A leitura aquecida é útil para comparar os sites em condições mais próximas
-// de uma conexão reutilizada; a inicial permanece disponível como diagnóstico.
+// Duas requisições sequenciais para comparar a primeira e a segunda resposta.
+// O runtime pode reutilizar a conexão, mas fetch não garante isso; portanto,
+// estas durações NÃO isolam DNS, TLS ou latência da aplicação.
 async function probeApplication(url: string) {
   const checkedAt = new Date().toISOString();
   try {
