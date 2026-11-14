@@ -9,7 +9,7 @@ type VercelResponse = {
   json: (body: unknown) => void;
 };
 
-type TenantKey = "rg" | "bg" | "camara_licita" | "camara_frota" | "camara_patrimonio";
+type TenantKey = "rg" | "bg" | "camara_licita" | "camara_frota" | "camara_patrimonio" | "vps_test";
 
 const TENANTS: Record<TenantKey, {
   projectRef: string;
@@ -49,6 +49,12 @@ const TENANTS: Record<TenantKey, {
     url: "https://ybljkroautoqzmifrkbi.supabase.co",
     accessUrl: "https://patrimonio-camara-rg.mwtechsistemas.com.br",
     keyEnv: "SUPABASE_CAMARA_PATRIMONIO_SERVICE_ROLE_KEY",
+  },
+  vps_test: {
+    projectRef: "",
+    url: "",
+    accessUrl: "https://gestao-licitacoes-teste.vercel.app",
+    keyEnv: "SUPABASE_TESTE_SERVICE_ROLE_KEY",
   },
 };
 
@@ -209,7 +215,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const keys: TenantKey[] = ["rg", "bg", "camara_licita", "camara_frota", "camara_patrimonio"];
+  const keys: TenantKey[] = ["rg", "bg", "camara_licita", "camara_frota", "camara_patrimonio", "vps_test"];
   const systems = await Promise.all(keys.map((key) => tenantMetrics(key)));
   res.status(200).json({ ok: true, systems, generatedAt: new Date().toISOString() });
 }
