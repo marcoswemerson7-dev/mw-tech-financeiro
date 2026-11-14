@@ -36,6 +36,7 @@ export type MonitoringMetrics = {
   supabaseStorageBytes: number | null;
   audit24h: number | null;
   databaseBytes: number | null;
+  extra?: Record<string, number | null> | null;
   checkedAt?: string;
   message?: string;
 };
