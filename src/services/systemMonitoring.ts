@@ -80,7 +80,7 @@ const FALLBACKS = {
     name: "Câmara Municipal de Ribeiro Gonçalves - PI",
     shortName: "Gestão Licita Câmara RG",
     city: "Ribeiro Gonçalves - PI",
-    accessUrl: "",
+    accessUrl: "https://camara-rg.gestaolicitacoes.com.br",
     supabaseUrl: "https://qnitcxoekxkwyqoirdka.supabase.co/rest/v1/",
     healthUrl: "",
   },
@@ -88,7 +88,7 @@ const FALLBACKS = {
     name: "Câmara Municipal de Ribeiro Gonçalves - PI",
     shortName: "Gestão Frota Câmara RG",
     city: "Ribeiro Gonçalves - PI",
-    accessUrl: "",
+    accessUrl: "https://frota-camara-rg.mwtechsistemas.com.br",
     supabaseUrl: "https://uydappvzmdpkkyxslrye.supabase.co/rest/v1/",
     healthUrl: "",
   },
@@ -96,7 +96,7 @@ const FALLBACKS = {
     name: "Câmara Municipal de Ribeiro Gonçalves - PI",
     shortName: "MW TECH Patrimônio — Câmara RG",
     city: "Ribeiro Gonçalves - PI",
-    accessUrl: "",
+    accessUrl: "https://patrimonio-camara-rg.mwtechsistemas.com.br",
     supabaseUrl: "https://ybljkroautoqzmifrkbi.supabase.co/rest/v1/",
     healthUrl: "",
   },
@@ -318,8 +318,8 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       orgao: FALLBACKS[key].name,
       tipo_orgao: "Câmara",
       sistema: FALLBACKS[key].shortName,
-      dominio_url: "",
-      acesso_url: "",
+      dominio_url: FALLBACKS[key].accessUrl,
+      acesso_url: FALLBACKS[key].accessUrl,
       supabase_url: FALLBACKS[key].supabaseUrl,
       monitoring_key: key,
       infraestrutura: key === "camara_patrimonio" ? "Vercel + Supabase + Google Drive" : "Vercel + Supabase",
@@ -363,17 +363,19 @@ export async function getSystemHealth(): Promise<SystemHealthSnapshot[]> {
       // para telemetria/infraestrutura e não deve ser usado como URL pública do app.
       const accessUrl = tenantKey === "vps_test"
         ? safeUrl(FALLBACKS.vps_test.accessUrl)
-        : safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
+        : tenantKey?.startsWith("camara_") && fallback?.accessUrl
+          ? safeUrl(fallback.accessUrl)
+          : safeUrl(stored.acesso_url || stored.dominio_url || fallback?.accessUrl || "");
       const supabaseUrl = projectRestUrl(stored.supabase_url || fallback?.supabaseUrl || "");
       const vercelUrl = tenantKey === "vps_test"
         ? safeUrl(FALLBACKS.vps_test.vercelUrl)
         : safeUrl(stored.vercel_url || "");
       const healthUrl = fallback?.healthUrl || "";
       const tenantMetrics = tenantKey ? metrics.get(tenantKey) || null : null;
-      const monitoredApp: EndpointHealth | null = tenantMetrics?.appLatencyMs !== null && tenantMetrics?.appLatencyMs !== undefined
+      const monitoredApp: EndpointHealth | null = tenantMetrics?.appState && tenantMetrics?.appState !== "checking" && tenantMetrics?.appState !== "unconfigured"
         ? {
             state: tenantMetrics.appState === "attention" || tenantMetrics.appState === "offline" ? tenantMetrics.appState : "online",
-            latencyMs: tenantMetrics.appLatencyMs,
+            latencyMs: tenantMetrics.appLatencyMs ?? null,
             checkedAt: tenantMetrics.appCheckedAt || new Date().toISOString(),
             url: accessUrl,
             message: tenantMetrics.appState === "attention"
