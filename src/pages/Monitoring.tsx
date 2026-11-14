@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 import {
   Activity,
   AlertTriangle,
@@ -747,6 +748,8 @@ export default function Monitoring() {
               <p className="mp-muted text-xs">Medições reais a cada 60 segundos · {chartHistory.length} leituras na janela selecionada</p>
             </div>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => {setIsolatedLatencySystem(null); setFocusedLatencySystem(null);}} className="mp-range mp-show-all rounded-lg px-3 py-2 text-xs font-semibold"><Activity size={14} className="mr-1 inline-block"/> Mostrar todos</button>
           <div className="flex flex-wrap gap-1" aria-label="Período do gráfico">
             {[5, 30, 60, 360, 1440].map((range) => (
               <button key={range} type="button" aria-pressed={chartRange === range} onClick={() => setChartRange(range)}
@@ -754,6 +757,7 @@ export default function Monitoring() {
                 {range === 5 ? "5 min" : range === 30 ? "30 min" : range === 60 ? "1 hora" : range === 360 ? "6 horas" : "24 horas"}
               </button>
             ))}
+          </div>
           </div>
         </div>
         <div className="grid gap-3 p-4 xl:grid-cols-[minmax(0,1fr)_330px]">
@@ -871,14 +875,20 @@ export default function Monitoring() {
                 </button>;
               })}
             </div>
-            {detailItem && <section className="mp-card mp-diagnostic mt-4 rounded-2xl p-4 sm:p-5">
+            {detailItem && createPortal(
+              <div className="mw-monitor-panel mp-diagnostic-overlay fixed inset-0 z-[100] flex items-center justify-center px-3 py-5 sm:px-6">
+                <button type="button" className="mp-diagnostic-backdrop absolute inset-0" aria-label="Fechar diagnóstico" onClick={() => setDetailLatencySystem(null)} />
+                <section role="dialog" aria-modal="true" aria-label={"Diagnóstico de " + systemChartLabel(detailItem)} className="mp-card mp-diagnostic relative z-10 max-h-[90vh] w-full max-w-[850px] overflow-y-auto rounded-2xl p-4 shadow-2xl sm:p-6">
               <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="mp-muted text-[10px] font-semibold uppercase">Diagnóstico individual</p><h3 className="mp-title mt-1 text-lg font-bold">{systemChartLabel(detailItem)}</h3><p className="mp-muted text-xs">{detailItem.ambiente || "Ambiente não informado"} · {detailItem.infraestrutura || "Infraestrutura não informada"}</p></div><button type="button" className="mp-range rounded-lg px-3 py-2 text-xs" onClick={() => {setDetailLatencySystem(null);setIsolatedLatencySystem(null);}}>Fechar</button></div>
               <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">{([["Atual",detailStats?.current],["Mínima",detailStats?.min],["Média",detailStats?.avg],["Máxima",detailStats?.max]] as const).map(([label,value]) => <div key={label} className="mp-performance-stats rounded-xl p-3"><p className="mp-muted text-[10px]">{label}</p><b className="mp-title mt-1 block text-lg">{formatMs(value ?? null)}</b></div>)}</div>
               <div className="mt-3 grid gap-3 md:grid-cols-2"><div className="mp-performance-stats rounded-xl p-3"><h4 className="mp-title mb-2 text-xs font-bold">Estado dos serviços</h4>{([["Aplicação",detailItem.app.state],["Backend",detailItem.backend.state],["Banco de dados",detailItem.database.state]] as const).map(([label,state]) => <div key={label} className="mb-2 flex justify-between gap-2 text-xs"><span className="mp-muted">{label}</span><b className="mp-title">{stateLabel(state)}</b></div>)}</div>
               <div className="mp-performance-stats rounded-xl p-3"><h4 className="mp-title mb-2 text-xs font-bold">Infraestrutura e HTTP</h4><p className="mp-muted text-xs">Provedor: {detailItem.provedor || "Não informado"}</p><p className="mp-muted mt-2 text-xs">HTTP: {detailItem.metrics?.appStatusCode ?? "Indisponível"}</p><p className="mp-muted mt-2 text-xs">Primeira requisição: {formatMs(detailItem.metrics?.appColdLatencyMs ?? null)}</p><p className="mp-muted mt-2 text-xs">Verificado em: {detailItem.app.checkedAt ? new Date(detailItem.app.checkedAt).toLocaleString("pt-BR") : "—"}</p></div></div>
               <div className="mp-performance-stats mt-3 rounded-xl p-3"><p className="mp-title text-xs font-semibold">Histórico da janela selecionada</p><p className="mp-muted mt-1 text-xs">{chartHistory.filter(p => typeof p[detailItem.key] === "number").length} leituras · {chartHistory.filter(p => typeof p[detailItem.key] === "number" && (p[detailItem.key] as number) > 800).length} acima de 800 ms</p><p className="mp-muted mt-2 text-[11px]">Disponibilidade histórica e taxa de erros exigem monitoramento persistente; o histórico exibido é local deste navegador.</p></div>
               <button type="button" className="mp-range mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs" onClick={() => setActiveTab("systems")}>Ver dados completos <ArrowRight size={14}/></button>
-            </section>}
+                </section>
+              </div>,
+              document.body
+            )}
           </div>
         </div>
       </section>
