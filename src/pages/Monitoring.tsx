@@ -718,15 +718,15 @@ export default function Monitoring() {
                   <XAxis dataKey="timestamp" type="category" scale="point" interval="preserveStartEnd"
                     tickFormatter={(value) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={26} />
-                  <YAxis tick={{ fontSize: 10 }} width={49} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} />
+                  <YAxis tick={{ fontSize: 10 }} width={55} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} scale="sqrt" />
                   <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
                   {chartStats.map(({ item, color }) => (
                     <Fragment key={item.key}>
-                      <Area type="monotone" dataKey={item.key} name={systemChartLabel(item)}
+                      <Area type="linear" dataKey={item.key} name={systemChartLabel(item)}
                         stroke={color} fill={`url(#mw-latency-fill-${item.key.replace(/[^a-zA-Z0-9_-]/g, "-")})`}
                         strokeWidth={2.7} dot={chartHistory.length < 3 ? { r: 3 } : false} activeDot={{ r: 5, strokeWidth: 2 }}
                         connectNulls={false} isAnimationActive={false} />
-                      <Area className="mp-live-pulse" type="monotone" dataKey={item.key}
+                      <Area className="mp-live-pulse" type="linear" dataKey={item.key}
                         stroke={color} strokeWidth={3.8} strokeOpacity={0.9} strokeDasharray="8 26"
                         fill="none" dot={false} activeDot={false} legendType="none" tooltipType="none"
                         connectNulls={false} isAnimationActive={false} />
@@ -735,6 +735,7 @@ export default function Monitoring() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            <p className="mp-muted mt-2 text-[11px]">Escala vertical ajustada para visualizar leituras baixas e picos no mesmo gráfico; os valores medidos permanecem reais. Picos acima de 800 ms merecem acompanhamento.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
                 <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
@@ -769,15 +770,16 @@ export default function Monitoring() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:col-span-2 xl:grid-cols-3">
             {chartStats.map(({ item, color, current }) => {
-              const value = current === null ? 0 : Math.max(0, Math.min(current, 200));
+              const gaugeMax = 1000;
+              const value = current === null ? 0 : Math.max(0, Math.min(current, gaugeMax));
               return (
                 <div key={item.key} className="mp-card rounded-2xl p-4">
                   <p className="mp-title flex items-center gap-2 text-xs font-semibold"><i className="size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</p>
                   <div className="mp-gauge" role="img" aria-label={`Latência de ${systemChartLabel(item)}: ${formatMs(current)}`}>
-                    <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 1.8}deg` } as CSSProperties} />
+                    <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 180 / gaugeMax}deg` } as CSSProperties} />
                     <div className="mp-gauge-value">{formatMs(current)}</div>
                   </div>
-                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Latência atual</span><span>200 ms</span></div>
+                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Latência atual</span><span>1.000 ms</span></div>
                 </div>
               );
             })}
