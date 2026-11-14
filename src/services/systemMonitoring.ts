@@ -14,6 +14,7 @@ export type MonitoringMetrics = {
   configured: boolean;
   source?: string;
   appLatencyMs?: number | null;
+  appColdLatencyMs?: number | null;
   appState?: HealthState;
   appCheckedAt?: string;
   appStatusCode?: number | null;
