@@ -116,18 +116,12 @@ async function probeApplication(url: string) {
   const checkedAt = new Date().toISOString();
 
   try {
-    // A primeira chamada pode carregar DNS/TLS/conexão da função serverless.
-    // Ela serve apenas para aquecer a conexão e não entra no valor exibido.
-    await probeOnce(url).catch(() => null);
-
-    const samples: Awaited<ReturnType<typeof probeOnce>>[] = [];
-    for (let index = 0; index < 3; index += 1) {
-      try {
-        samples.push(await probeOnce(url));
-      } catch {
-        // Uma amostra isolada não deve transformar um sistema saudável em pico.
-      }
-    }
+    // Verificações simultâneas evitam exceder o tempo da função serverless
+    // quando vários órgãos são monitorados na mesma atualização.
+    const results = await Promise.allSettled([probeOnce(url), probeOnce(url)]);
+    const samples = results
+      .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof probeOnce>>> => result.status === "fulfilled")
+      .map((result) => result.value);
 
     const successful = samples.filter((sample) => sample.ok);
     if (!successful.length) {
