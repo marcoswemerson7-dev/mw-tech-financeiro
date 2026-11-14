@@ -759,7 +759,7 @@ export default function Monitoring() {
                     tickFormatter={(value) => new Date(value).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={26} />
                   <YAxis tick={{ fontSize: 10 }} width={55} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} scale="sqrt" />
-                  <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
+                  <Tooltip wrapperClassName="mp-chart-tooltip" cursor={{ stroke: "#38bdf8", strokeWidth: 1, strokeDasharray: "4 5" }} contentStyle={{ borderRadius: 14, fontSize: 12, padding: "12px 14px", backgroundColor: "var(--mp-tooltip)", color: "var(--mp-text)", border: "1px solid var(--mp-border)", boxShadow: "0 16px 35px rgba(0,0,0,.22)" }} labelStyle={{ color: "var(--mp-muted)", marginBottom: 6 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
                   {chartStats.map(({ item, color }) => (
                     <Fragment key={item.key}>
                       <Area type="linear" dataKey={item.key} name={systemChartLabel(item)}
@@ -835,7 +835,10 @@ export default function Monitoring() {
                     <div className="mp-gauge" role="img" aria-label={`Latência de ${systemChartLabel(item)}: ${formatMs(current)}`}><div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color":color, "--gauge-angle":`${dial*180/1000}deg` } as CSSProperties}/><div className="mp-gauge-value">{formatMs(current)}</div></div>
                     <div className="min-w-0"><p className="mp-muted text-[10px]">Últimas leituras</p><svg className="mp-sparkline h-[72px] w-full" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={`Tendência com ${readings.length} medições reais`}>
                       <path d="M 0 65 H 300" stroke="var(--mp-border)" strokeDasharray="3 5" fill="none"/>
-                      {readings.length > 1 && <polyline points={sparkline} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>}
+                      {readings.length > 1 && <>
+                        <polyline points={sparkline} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>
+                        <polyline className="mp-sparkline-flow" points={sparkline} fill="none" stroke={color} strokeWidth="4" strokeOpacity=".65" strokeDasharray="3 22" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" aria-hidden="true"/>
+                      </>}
                       {readings.length > 0 && <circle cx={readings.length===1 ? 10:290} cy={64-(readings[readings.length-1]-lower)/span*45} r="5" fill={color} className="mp-sparkline-dot"/>}
                       {readings.length===0 && <text x="150" y="42" fontSize="18" textAnchor="middle" fill="var(--mp-muted)">Sem histórico</text>}
                     </svg></div>
