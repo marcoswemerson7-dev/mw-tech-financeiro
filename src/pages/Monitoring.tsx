@@ -448,6 +448,8 @@ export default function Monitoring() {
   const [orgFilter, setOrgFilter] = useState("todos");
   const [statusFilter, setStatusFilter] = useState<"todos" | HealthState>("todos");
   const [focusedLatencySystem, setFocusedLatencySystem] = useState<string | null>(null);
+  const [isolatedLatencySystem, setIsolatedLatencySystem] = useState<string | null>(null);
+  const [detailLatencySystem, setDetailLatencySystem] = useState<string | null>(null);
   const [driveData, setDriveData] = useState<DriveStorageUsage | null>(() => getCachedDriveStorageUsage());
   const [driveError, setDriveError] = useState("");
   const patrimonioDrive = driveData?.externalFolders?.find(folder => folder.id === "1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r");
@@ -597,6 +599,8 @@ export default function Monitoring() {
       avg: samples.length ? Math.round(samples.reduce((a, b) => a + b, 0) / samples.length) : null,
     };
   }), [visibleItems, history, chartHistory]);
+  const detailItem = visibleItems.find(item => item.key === detailLatencySystem) ?? null;
+  const detailStats = detailItem ? chartStats.find(stat => stat.item.key === detailItem.key) : null;
   const formatMs = (value: number | null) => value === null ? "—" : `${value} ms`;
   return (
     <div className="mx-auto w-full max-w-[1480px] space-y-5">
@@ -740,9 +744,9 @@ export default function Monitoring() {
             ))}
           </div>
         </div>
-        <div className="grid gap-4 p-4 xl:grid-cols-[minmax(0,1fr)_350px]">
+        <div className="grid gap-3 p-4 xl:grid-cols-[minmax(0,1fr)_330px]">
           <div className="mp-card min-w-0 rounded-2xl p-3">
-            <div className="mp-market-chart relative h-[290px] w-full overflow-hidden">
+            <div className="mp-market-chart relative h-[260px] w-full overflow-hidden">
               <div className="mp-chart-scan" aria-hidden="true"><span className="mp-chart-scan-dot" /></div>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
@@ -760,11 +764,11 @@ export default function Monitoring() {
                     tick={{ fontSize: 10 }} axisLine={false} tickLine={false} minTickGap={26} />
                   <YAxis tick={{ fontSize: 10 }} width={55} axisLine={false} tickLine={false} unit=" ms" domain={[0, "auto"]} scale="sqrt" />
                   <Tooltip wrapperClassName="mp-chart-tooltip" cursor={{ stroke: "#38bdf8", strokeWidth: 1, strokeDasharray: "4 5" }} contentStyle={{ borderRadius: 14, fontSize: 12, padding: "12px 14px", backgroundColor: "var(--mp-tooltip)", color: "var(--mp-text)", border: "1px solid var(--mp-border)", boxShadow: "0 16px 35px rgba(0,0,0,.22)" }} labelStyle={{ color: "var(--mp-muted)", marginBottom: 6 }} labelFormatter={(value) => new Date(Number(value)).toLocaleTimeString("pt-BR")} formatter={(value) => formatMs(typeof value === "number" ? value : Number(value))} />
-                  {chartStats.map(({ item, color }) => (
+                  {chartStats.filter(({item}) => !isolatedLatencySystem || item.key === isolatedLatencySystem).map(({ item, color }) => (
                     <Fragment key={item.key}>
                       <Area type="linear" dataKey={item.key} name={systemChartLabel(item)}
                         stroke={color} fill={`url(#mw-latency-fill-${item.key.replace(/[^a-zA-Z0-9_-]/g, "-")})`}
-                        strokeWidth={focusedLatencySystem === item.key ? 4 : 2.7} strokeOpacity={focusedLatencySystem && focusedLatencySystem !== item.key ? 0.2 : 1} dot={chartHistory.length < 3 ? { r: 3 } : false} activeDot={{ r: 5, strokeWidth: 2 }}
+                        strokeWidth={focusedLatencySystem === item.key || isolatedLatencySystem === item.key ? 4 : 2.7} strokeOpacity={focusedLatencySystem && focusedLatencySystem !== item.key ? 0.2 : 1} dot={chartHistory.length < 3 ? { r: 3 } : false} activeDot={{ r: 5, strokeWidth: 2 }}
                         connectNulls={false} isAnimationActive={false} />
                       <Area className="mp-live-pulse" type="linear" dataKey={item.key}
                         stroke={color} strokeWidth={3.8} strokeOpacity={0.9} strokeDasharray="8 26"
@@ -778,7 +782,7 @@ export default function Monitoring() {
             <p className="mp-muted mt-2 text-[11px]">Duas requisições HTTP sequenciais medidas pela Vercel. A segunda pode aproveitar uma conexão existente, mas a reutilização não é garantida. Não mede ping ICMP nem carregamento da tela.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
-                <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
+                <button type="button" key={item.key} aria-pressed={isolatedLatencySystem === item.key} onClick={() => setIsolatedLatencySystem(prev => prev === item.key ? null : item.key)} onMouseEnter={() => setFocusedLatencySystem(item.key)} onMouseLeave={() => setFocusedLatencySystem(null)} className={`mp-legend-option mp-muted flex items-center gap-2 rounded-lg px-2 py-1 text-xs ${isolatedLatencySystem === item.key ? "mp-legend-active" : ""}`}><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color,color }} />{systemChartLabel(item)}</button>
               ))}
             </div>
           </div>
@@ -810,8 +814,8 @@ export default function Monitoring() {
           </div>
           <div className="xl:col-span-2">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <div><h3 className="mp-title text-sm font-bold">Desempenho por sistema</h3><p className="mp-muted text-xs">Passe o mouse para destacar no gráfico · valores de leituras reais</p></div>
-              <span className="mp-muted text-[11px]">{chartHistory.length} registros</span>
+              <div><h3 className="mp-title text-sm font-bold">Desempenho por sistema</h3><p className="mp-muted text-xs">Passe o mouse para destacar · clique em um cartão para analisar</p></div>
+              <button type="button" onClick={() => {setIsolatedLatencySystem(null);setDetailLatencySystem(null);}} className="mp-range rounded-lg px-3 py-2 text-[11px]">Mostrar todos</button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {chartStats.map(({ item, color, current, min, max, avg }) => {
@@ -823,7 +827,7 @@ export default function Monitoring() {
                 return <button type="button" key={item.key}
                   onMouseEnter={() => setFocusedLatencySystem(item.key)} onMouseLeave={() => setFocusedLatencySystem(null)}
                   onFocus={() => setFocusedLatencySystem(item.key)} onBlur={() => setFocusedLatencySystem(null)}
-                  onClick={() => { setFocusedLatencySystem(item.key); setSelectedKey(item.key); }}
+                  onClick={() => { setDetailLatencySystem(item.key); setSelectedKey(item.key); setIsolatedLatencySystem(item.key); }}
                   className={`mp-card mp-system-performance min-w-0 rounded-2xl p-4 text-left ${focusedLatencySystem === item.key ? "mp-performance-selected" : ""}`}
                   style={{ "--mp-accent":color } as CSSProperties}
                   aria-label={`${systemChartLabel(item)}: atual ${formatMs(current)}, mínimo ${formatMs(min)}, média ${formatMs(avg)}, máximo ${formatMs(max)}. Destacar curva no gráfico.`}>
