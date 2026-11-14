@@ -9,14 +9,14 @@ type VercelResponse = {
   json: (body: unknown) => void;
 };
 
-type TenantKey = "rg" | "bg";
+type TenantKey = "rg" | "bg" | "camara_licita" | "camara_frota" | "camara_patrimonio";
 
 const TENANTS: Record<TenantKey, {
   projectRef: string;
   url: string;
   accessUrl: string;
   keyEnv: string;
-  publicKey: string;
+  publicKey?: string;
 }> = {
   rg: {
     projectRef: "kiviwxonxeqmzqlmshpc",
@@ -31,6 +31,24 @@ const TENANTS: Record<TenantKey, {
     accessUrl: "https://gestaolicitabrg.com.br",
     keyEnv: "SUPABASE_BG_SERVICE_ROLE_KEY",
     publicKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmemF2aWpsa2JxemtybmxncGh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MjkyNTgsImV4cCI6MjA5NjAwNTI1OH0.13-RRfTSeFuCg3pUYYnaQgFp93iKR4tBgVjaUDOFccU",
+  },
+  camara_licita: {
+    projectRef: "qnitcxoekxkwyqoirdka",
+    url: "https://qnitcxoekxkwyqoirdka.supabase.co",
+    accessUrl: "https://camara-rg.gestaolicitacoes.com.br",
+    keyEnv: "SUPABASE_CAMARA_LICITA_SERVICE_ROLE_KEY",
+  },
+  camara_frota: {
+    projectRef: "uydappvzmdpkkyxslrye",
+    url: "https://uydappvzmdpkkyxslrye.supabase.co",
+    accessUrl: "https://frota-camara-rg.mwtechsistemas.com.br",
+    keyEnv: "SUPABASE_CAMARA_FROTA_SERVICE_ROLE_KEY",
+  },
+  camara_patrimonio: {
+    projectRef: "ybljkroautoqzmifrkbi",
+    url: "https://ybljkroautoqzmifrkbi.supabase.co",
+    accessUrl: "https://patrimonio-camara-rg.mwtechsistemas.com.br",
+    keyEnv: "SUPABASE_CAMARA_PATRIMONIO_SERVICE_ROLE_KEY",
   },
 };
 
@@ -151,6 +169,22 @@ async function tenantMetrics(tenant: TenantKey) {
   const key = serviceKey || config.publicKey;
   const rpc = serviceKey ? "mw_control_monitoring_snapshot" : "mw_control_monitoring_snapshot_public";
 
+  // Sistemas novos podem estar acessíveis antes de a telemetria SQL ser implantada.
+  // Nunca apresentar zeros inventados ou consultar tabelas privadas sem credencial.
+  if (!key) return {
+    tenant,
+    configured: false,
+    ...appProbe,
+    source: "telemetry_not_configured",
+    processes: null, contracts: null, users: null, activeUsers: null,
+    recent30m: null, active24h: null, active7d: null, latestLoginAt: null,
+    invoices: null, payments: null, files: null, fileBytes: null,
+    supabaseStorageFiles: null, supabaseStorageBytes: null, audit24h: null,
+    databaseBytes: null,
+    message: "Monitoramento da aplicação ativo; métricas do banco dependem da instalação da função RPC e chave de serviço no servidor.",
+    checkedAt: new Date().toISOString(),
+  };
+
   try {
     const snapshot = await getSnapshot(config.url, key, rpc);
     return {
@@ -211,6 +245,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const [rg, bg] = await Promise.all([tenantMetrics("rg"), tenantMetrics("bg")]);
-  res.status(200).json({ ok: true, systems: [rg, bg], generatedAt: new Date().toISOString() });
+  const keys: TenantKey[] = ["rg", "bg", "camara_licita", "camara_frota", "camara_patrimonio"];
+  const systems = await Promise.all(keys.map((key) => tenantMetrics(key)));
+  res.status(200).json({ ok: true, systems, generatedAt: new Date().toISOString() });
 }
