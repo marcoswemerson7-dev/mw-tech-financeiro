@@ -774,7 +774,7 @@ export default function Monitoring() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="mp-muted mt-2 text-[11px]">Tempo HTTP com conexão reutilizada medido pela Vercel; a primeira conexão é registrada à parte. Não é ping ICMP nem tempo total de carregamento das telas. Picos acima de 800 ms merecem acompanhamento.</p>
+            <p className="mp-muted mt-2 text-[11px]">Duas requisições HTTP sequenciais medidas pela Vercel. A segunda pode aproveitar uma conexão existente, mas a reutilização não é garantida. Não mede ping ICMP nem carregamento da tela.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
                 <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
@@ -818,9 +818,9 @@ export default function Monitoring() {
                     <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 180 / gaugeMax}deg` } as CSSProperties} />
                     <div className="mp-gauge-value">{formatMs(current)}</div>
                   </div>
-                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>HTTP reutilizado</span><span>1.000 ms</span></div>
-                  <p className="mp-muted mt-2 text-center text-[10px]">Resposta HTTP com conexão reutilizada · Vercel{item.metrics?.appStatusCode ? ` · HTTP ${item.metrics.appStatusCode}` : ""}</p>
-                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-center text-[10px]">Primeira conexão: {formatMs(item.metrics.appColdLatencyMs)}</p>}
+                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>2ª requisição</span><span>1.000 ms</span></div>
+                  <p className="mp-muted mt-2 text-center text-[10px]">2ª resposta HTTP · Vercel{item.metrics?.appStatusCode ? ` · HTTP ${item.metrics.appStatusCode}` : ""}</p>
+                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-center text-[10px]">1ª requisição: {formatMs(item.metrics.appColdLatencyMs)}</p>}
                 </div>
               );
             })}
