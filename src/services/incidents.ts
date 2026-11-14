@@ -30,6 +30,48 @@ export type IncidentHistoryItem = MonitoringIncident & {
 };
 
 const HISTORY_KEY = "mw-control:incident-history";
+const FROTA_LATENCY_KEY = "mw-control:frota-latency-streak:v1";
+const FROTA_WARNING_MS = 300;
+const FROTA_CRITICAL_MS = 800;
+type FrotaLatencyState = { consecutive: number; lastCheckedAt: string };
+function frotaLatencyIncident(item: SystemHealthSnapshot): MonitoringIncident | null {
+  if (item.tenantKey !== "camara_frota") return null;
+  const ms = item.app.latencyMs;
+  const checkedAt = item.app.checkedAt || nowIso();
+  let previous: FrotaLatencyState = { consecutive: 0, lastCheckedAt: "" };
+  try {
+    const saved = JSON.parse(localStorage.getItem(FROTA_LATENCY_KEY) || "null");
+    if (saved && typeof saved.consecutive === "number" && typeof saved.lastCheckedAt === "string") previous = saved;
+  } catch {}
+  // A mesma amostra pode ser lida por mais de uma tela: não contá-la duas vezes.
+  if (checkedAt === previous.lastCheckedAt) {
+    if (typeof ms !== "number" || ms < FROTA_WARNING_MS || previous.consecutive < 2) return null;
+  } else {
+    const priorTime = Date.parse(previous.lastCheckedAt);
+    const currentTime = Date.parse(checkedAt);
+    // Depois de 5 minutos sem uma leitura, começar uma sequência nova.
+    const contiguous = Number.isFinite(priorTime) && Number.isFinite(currentTime) && currentTime >= priorTime && currentTime - priorTime <= 5 * 60_000;
+    const consecutive = typeof ms === "number" && Number.isFinite(ms) && item.app.state !== "offline" && ms >= FROTA_WARNING_MS
+      ? (contiguous ? previous.consecutive : 0) + 1 : 0;
+    previous = { consecutive, lastCheckedAt: checkedAt };
+    try { localStorage.setItem(FROTA_LATENCY_KEY, JSON.stringify(previous)); } catch {}
+  }
+  if (typeof ms !== "number" || previous.consecutive < 2 || ms < FROTA_WARNING_MS) return null;
+  const critical = ms >= FROTA_CRITICAL_MS;
+  return {
+    id: "health:camara_frota:latency-sustained",
+    system: "camara_frota",
+    systemLabel: item.shortName || "Gestão Frota Câmara RG",
+    severity: critical ? "critical" : "warning",
+    source: "health",
+    title: critical ? "Latência crítica persistente" : "Latência elevada persistente",
+    message: `Resposta HTTP de ${ms} ms, acima de ${FROTA_WARNING_MS} ms por ${previous.consecutive} verificações consecutivas. A medição não é ping ICMP.`,
+    occurredAt: checkedAt,
+    actionUrl: item.accessUrl,
+    active: true,
+  };
+}
+
 
 function nowIso() { return new Date().toISOString(); }
 function systemLabel(key: IncidentSystem) {
@@ -84,6 +126,9 @@ function healthIncidents(items: SystemHealthSnapshot[]): MonitoringIncident[] {
         active: true,
       });
     }
+
+    const frotaAlert = frotaLatencyIncident(item);
+    if (frotaAlert) result.push(frotaAlert);
 
     if (item.database.state === "offline") {
       result.push({
