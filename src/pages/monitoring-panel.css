@@ -154,3 +154,17 @@ html.mw-dark .mw-monitor-panel{--mp-bg:#0c1723;--mp-card:#111f2c;--mp-border:#26
  .mw-monitor-panel .mp-gauge-animated,
  .mw-monitor-panel .mp-gauge-animated::before { animation: none !important; }
 }
+
+/* Interactive technical telemetry cards. Motion is purely decorative; readings are never interpolated into fake samples. */
+.mw-monitor-panel .mp-system-performance{position:relative;cursor:pointer;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;outline-offset:3px}
+.mw-monitor-panel .mp-system-performance::before{content:"";position:absolute;top:0;left:14px;right:14px;height:2px;background:var(--mp-accent);opacity:.45;transition:opacity .25s}
+.mw-monitor-panel .mp-system-performance:hover,.mw-monitor-panel .mp-system-performance:focus-visible,.mw-monitor-panel .mp-performance-selected{transform:translateY(-3px);border-color:var(--mp-accent);box-shadow:0 12px 28px rgba(15,35,60,.13)}
+.mw-monitor-panel .mp-system-performance:hover::before,.mw-monitor-panel .mp-performance-selected::before{opacity:1}
+.mw-monitor-panel .mp-live-pill{color:#047857;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2)}
+.mw-monitor-panel .mp-performance-stats{background:rgba(127,145,170,.075);border:1px solid var(--mp-border)}
+.mw-monitor-panel .mp-sparkline{overflow:visible}
+.mw-monitor-panel .mp-sparkline polyline{stroke-dasharray:850;stroke-dashoffset:0;transition:stroke-width .2s}
+.mw-monitor-panel .mp-system-performance:hover .mp-sparkline polyline,.mw-monitor-panel .mp-performance-selected .mp-sparkline polyline{stroke-width:4}
+.mw-monitor-panel .mp-sparkline-dot{transform-box:fill-box;transform-origin:center;animation:mw-telemetry-pulse 2.8s ease-in-out infinite}
+@keyframes mw-telemetry-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.4)}}
+@media(prefers-reduced-motion:reduce){.mw-monitor-panel .mp-system-performance{transition:none}.mw-monitor-panel .mp-system-performance:hover,.mw-monitor-panel .mp-system-performance:focus-visible{transform:none}.mw-monitor-panel .mp-sparkline-dot{animation:none}}
