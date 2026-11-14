@@ -447,6 +447,7 @@ export default function Monitoring() {
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [orgFilter, setOrgFilter] = useState("todos");
   const [statusFilter, setStatusFilter] = useState<"todos" | HealthState>("todos");
+  const [focusedLatencySystem, setFocusedLatencySystem] = useState<string | null>(null);
   const [driveData, setDriveData] = useState<DriveStorageUsage | null>(() => getCachedDriveStorageUsage());
   const [driveError, setDriveError] = useState("");
   const patrimonioDrive = driveData?.externalFolders?.find(folder => folder.id === "1h_JXX8d9jyOMRHfYgyifEB6w8611Bj-r");
@@ -763,7 +764,7 @@ export default function Monitoring() {
                     <Fragment key={item.key}>
                       <Area type="linear" dataKey={item.key} name={systemChartLabel(item)}
                         stroke={color} fill={`url(#mw-latency-fill-${item.key.replace(/[^a-zA-Z0-9_-]/g, "-")})`}
-                        strokeWidth={2.7} dot={chartHistory.length < 3 ? { r: 3 } : false} activeDot={{ r: 5, strokeWidth: 2 }}
+                        strokeWidth={focusedLatencySystem === item.key ? 4 : 2.7} strokeOpacity={focusedLatencySystem && focusedLatencySystem !== item.key ? 0.2 : 1} dot={chartHistory.length < 3 ? { r: 3 } : false} activeDot={{ r: 5, strokeWidth: 2 }}
                         connectNulls={false} isAnimationActive={false} />
                       <Area className="mp-live-pulse" type="linear" dataKey={item.key}
                         stroke={color} strokeWidth={3.8} strokeOpacity={0.9} strokeDasharray="8 26"
@@ -807,23 +808,48 @@ export default function Monitoring() {
               <p className="mp-muted mt-4 text-xs">Última verificação: {lastChecked(items)}</p>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:col-span-2 xl:grid-cols-3">
-            {chartStats.map(({ item, color, current }) => {
-              const gaugeMax = 1000;
-              const value = current === null ? 0 : Math.max(0, Math.min(current, gaugeMax));
-              return (
-                <div key={item.key} className="mp-card rounded-2xl p-4">
-                  <p className="mp-title flex items-center gap-2 text-xs font-semibold"><i className="size-2.5 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</p>
-                  <div className="mp-gauge" role="img" aria-label={`Latência de ${systemChartLabel(item)}: ${formatMs(current)}`}>
-                    <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 180 / gaugeMax}deg` } as CSSProperties} />
-                    <div className="mp-gauge-value">{formatMs(current)}</div>
+          <div className="xl:col-span-2">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div><h3 className="mp-title text-sm font-bold">Desempenho por sistema</h3><p className="mp-muted text-xs">Passe o mouse para destacar no gráfico · valores de leituras reais</p></div>
+              <span className="mp-muted text-[11px]">{chartHistory.length} registros</span>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {chartStats.map(({ item, color, current, min, max, avg }) => {
+                const readings = chartHistory.filter(point => typeof point[item.key] === "number" && Number.isFinite(point[item.key] as number)).slice(-24).map(point => point[item.key] as number);
+                const lower = readings.length ? Math.min(...readings) : 0;
+                const span = Math.max(1, (readings.length ? Math.max(...readings) : 0) - lower);
+                const sparkline = readings.map((value,index) => `${10 + 280 * index / Math.max(1,readings.length-1)},${64 - (value-lower)/span*45}`).join(" ");
+                const dial = current === null ? 0 : Math.max(0,Math.min(1000,current));
+                return <button type="button" key={item.key}
+                  onMouseEnter={() => setFocusedLatencySystem(item.key)} onMouseLeave={() => setFocusedLatencySystem(null)}
+                  onFocus={() => setFocusedLatencySystem(item.key)} onBlur={() => setFocusedLatencySystem(null)}
+                  onClick={() => { setFocusedLatencySystem(item.key); setSelectedKey(item.key); }}
+                  className={`mp-card mp-system-performance min-w-0 rounded-2xl p-4 text-left ${focusedLatencySystem === item.key ? "mp-performance-selected" : ""}`}
+                  style={{ "--mp-accent":color } as CSSProperties}
+                  aria-label={`${systemChartLabel(item)}: atual ${formatMs(current)}, mínimo ${formatMs(min)}, média ${formatMs(avg)}, máximo ${formatMs(max)}. Destacar curva no gráfico.`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0"><p className="mp-title flex items-center gap-2 text-xs font-semibold"><i className="mp-latency-dot relative size-2.5 shrink-0 rounded-full" style={{ backgroundColor:color,color }} />{systemChartLabel(item)}</p><p className="mp-muted mt-1 pl-4 text-[10px]">{stateLabel(effectiveState(history,item))}</p></div>
+                    <span className="mp-live-pill shrink-0 rounded-full px-2 py-1 text-[9px] font-bold">60 s</span>
                   </div>
-                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>2ª requisição</span><span>1.000 ms</span></div>
-                  <p className="mp-muted mt-2 text-center text-[10px]">2ª resposta HTTP · Vercel{item.metrics?.appStatusCode ? ` · HTTP ${item.metrics.appStatusCode}` : ""}</p>
-                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-center text-[10px]">1ª requisição: {formatMs(item.metrics.appColdLatencyMs)}</p>}
-                </div>
-              );
-            })}
+                  <div className="mt-2 grid grid-cols-[minmax(100px,1fr)_minmax(0,1fr)] items-center gap-2">
+                    <div className="mp-gauge" role="img" aria-label={`Latência de ${systemChartLabel(item)}: ${formatMs(current)}`}><div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color":color, "--gauge-angle":`${dial*180/1000}deg` } as CSSProperties}/><div className="mp-gauge-value">{formatMs(current)}</div></div>
+                    <div className="min-w-0"><p className="mp-muted text-[10px]">Últimas leituras</p><svg className="mp-sparkline h-[72px] w-full" viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={`Tendência com ${readings.length} medições reais`}>
+                      <path d="M 0 65 H 300" stroke="var(--mp-border)" strokeDasharray="3 5" fill="none"/>
+                      {readings.length > 1 && <polyline points={sparkline} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"/>}
+                      {readings.length > 0 && <circle cx={readings.length===1 ? 10:290} cy={64-(readings[readings.length-1]-lower)/span*45} r="5" fill={color} className="mp-sparkline-dot"/>}
+                      {readings.length===0 && <text x="150" y="42" fontSize="18" textAnchor="middle" fill="var(--mp-muted)">Sem histórico</text>}
+                    </svg></div>
+                  </div>
+                  <div className="mp-performance-stats mt-2 grid grid-cols-3 gap-2 rounded-xl p-2.5">
+                    <div><p className="mp-muted text-[9px] uppercase">Mínimo</p><b className="mp-title text-xs tabular-nums">{formatMs(min)}</b></div>
+                    <div><p className="mp-muted text-[9px] uppercase">Média</p><b className="mp-title text-xs tabular-nums">{formatMs(avg)}</b></div>
+                    <div><p className="mp-muted text-[9px] uppercase">Máximo</p><b className="mp-title text-xs tabular-nums">{formatMs(max)}</b></div>
+                  </div>
+                  <p className="mp-muted mt-2 flex flex-wrap justify-between gap-2 text-[10px]"><span>HTTP {item.metrics?.appStatusCode ?? "—"} · conexão reutilizada</span><span>{readings.length} leituras</span></p>
+                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-[10px]">Primeira conexão: {formatMs(item.metrics.appColdLatencyMs)}</p>}
+                </button>;
+              })}
+            </div>
           </div>
         </div>
       </section>
