@@ -110,21 +110,38 @@ async function probeOnce(url: string) {
   }
 }
 
-// Uma única solicitação por domínio: sondagens em paralelo para o mesmo host
-// criavam contenção de conexões e picos correlacionados artificiais.
+// Medir separadamente a conexão inicial e uma segunda resposta na mesma origem.
+// A leitura aquecida é útil para comparar os sites em condições mais próximas
+// de uma conexão reutilizada; a inicial permanece disponível como diagnóstico.
 async function probeApplication(url: string) {
   const checkedAt = new Date().toISOString();
   try {
-    const result = await probeOnce(url);
-    return {
-      appLatencyMs: result.latencyMs,
-      appState: result.ok ? (result.latencyMs > 800 ? "attention" : "online") : "offline",
+    const initial = await probeOnce(url);
+    if (!initial.ok) return {
+      appLatencyMs: initial.latencyMs,
+      appColdLatencyMs: initial.latencyMs,
+      appState: "offline",
       appCheckedAt: checkedAt,
-      appStatusCode: result.statusCode,
+      appStatusCode: initial.statusCode,
+    };
+
+    let warm = initial;
+    try {
+      warm = await probeOnce(url);
+    } catch {
+      // Se a segunda tentativa falhar, manter a leitura real da primeira.
+    }
+    return {
+      appLatencyMs: warm.latencyMs,
+      appColdLatencyMs: initial.latencyMs,
+      appState: warm.ok ? (warm.latencyMs > 800 ? "attention" : "online") : "offline",
+      appCheckedAt: checkedAt,
+      appStatusCode: warm.statusCode,
     };
   } catch {
     return {
       appLatencyMs: null,
+      appColdLatencyMs: null,
       appState: "offline",
       appCheckedAt: checkedAt,
       appStatusCode: null,
