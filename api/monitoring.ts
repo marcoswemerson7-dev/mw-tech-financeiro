@@ -118,7 +118,7 @@ async function probeApplication(url: string) {
   try {
     // Verificações simultâneas evitam exceder o tempo da função serverless
     // quando vários órgãos são monitorados na mesma atualização.
-    const results = await Promise.allSettled([probeOnce(url), probeOnce(url)]);
+    const results = await Promise.allSettled([probeOnce(url), probeOnce(url), probeOnce(url)]);
     const samples = results
       .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof probeOnce>>> => result.status === "fulfilled")
       .map((result) => result.value);
