@@ -104,47 +104,17 @@ async function probeOnce(url: string) {
   }
 }
 
-function median(values: number[]) {
-  const ordered = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(ordered.length / 2);
-  return ordered.length % 2
-    ? ordered[middle]
-    : Math.round((ordered[middle - 1] + ordered[middle]) / 2);
-}
-
+// Uma única solicitação por domínio: sondagens em paralelo para o mesmo host
+// criavam contenção de conexões e picos correlacionados artificiais.
 async function probeApplication(url: string) {
   const checkedAt = new Date().toISOString();
-
   try {
-    // Verificações simultâneas evitam exceder o tempo da função serverless
-    // quando vários órgãos são monitorados na mesma atualização.
-    const results = await Promise.allSettled([probeOnce(url), probeOnce(url), probeOnce(url)]);
-    const samples = results
-      .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof probeOnce>>> => result.status === "fulfilled")
-      .map((result) => result.value);
-
-    const successful = samples.filter((sample) => sample.ok);
-    if (!successful.length) {
-      const last = samples[samples.length - 1];
-      return {
-        appLatencyMs: last?.latencyMs ?? null,
-        appState: "offline",
-        appCheckedAt: checkedAt,
-        appStatusCode: last?.statusCode ?? null,
-      };
-    }
-
-    const latencyMs = median(successful.map((sample) => sample.latencyMs));
-    const state = latencyMs > 800 ? "attention" : "online";
-    const representative = successful.reduce((best, sample) =>
-      Math.abs(sample.latencyMs - latencyMs) < Math.abs(best.latencyMs - latencyMs) ? sample : best
-    );
-
+    const result = await probeOnce(url);
     return {
-      appLatencyMs: latencyMs,
-      appState: state,
+      appLatencyMs: result.latencyMs,
+      appState: result.ok ? (result.latencyMs > 800 ? "attention" : "online") : "offline",
       appCheckedAt: checkedAt,
-      appStatusCode: representative.statusCode,
+      appStatusCode: result.statusCode,
     };
   } catch {
     return {
