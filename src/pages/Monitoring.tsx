@@ -49,7 +49,7 @@ import {
 import { getCachedDriveStorageUsage, getDriveStorageUsage, type DriveStorageUsage } from "../services/googleDrive";
 
 const refreshEveryMs = 60000;
-const historyKey = "mw-control:monitoring-history:v4";
+const historyKey = "mw-control:monitoring-history:v5";
 const chartColors = ["#2563eb", "#7c3aed", "#059669", "#d97706", "#dc2626", "#0891b2", "#4f46e5"];
 
 type HistoryPoint = {
@@ -735,7 +735,7 @@ export default function Monitoring() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="mp-muted mt-2 text-[11px]">Tempo de resposta HTTP medido a partir da infraestrutura da Vercel. Pode ser diferente do tempo visto no seu navegador e do ping ICMP. Picos acima de 800 ms merecem acompanhamento.</p>
+            <p className="mp-muted mt-2 text-[11px]">Tempo HTTP com conexão reutilizada medido pela Vercel; a primeira conexão é registrada à parte. Não é ping ICMP nem tempo total de carregamento das telas. Picos acima de 800 ms merecem acompanhamento.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
                 <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
@@ -779,8 +779,9 @@ export default function Monitoring() {
                     <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 180 / gaugeMax}deg` } as CSSProperties} />
                     <div className="mp-gauge-value">{formatMs(current)}</div>
                   </div>
-                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Resposta HTTP</span><span>1.000 ms</span></div>
-                  <p className="mp-muted mt-2 text-center text-[10px]">Verificação feita pela Vercel, não é ping ICMP{item.metrics?.appStatusCode ? ` · HTTP ${item.metrics.appStatusCode}` : ""}</p>
+                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>HTTP reutilizado</span><span>1.000 ms</span></div>
+                  <p className="mp-muted mt-2 text-center text-[10px]">Resposta HTTP com conexão reutilizada · Vercel{item.metrics?.appStatusCode ? ` · HTTP ${item.metrics.appStatusCode}` : ""}</p>
+                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-center text-[10px]">Primeira conexão: {formatMs(item.metrics.appColdLatencyMs)}</p>}
                 </div>
               );
             })}
