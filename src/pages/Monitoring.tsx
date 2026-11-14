@@ -646,40 +646,79 @@ export default function Monitoring() {
           </button>
         ))}
       </nav>
-      {activeTab === "overview" && (<>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="Sistemas operacionais" value={loading ? "—" : `${summary.online + summary.attention}/${items.length}`} hint={summary.offline ? `${summary.offline} indisponível` : summary.attention ? `${summary.attention} operacional com atenção` : "Todos em operação"} icon={<ShieldCheck size={20} />} tone="blue" />
-        <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
-        <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
-        <SummaryCard label="Contratos" value={loading ? "—" : String(summary.contracts)} hint="Total cadastrado" icon={<FileText size={20} />} tone="slate" />
-        <SummaryCard label="Notas fiscais" value={loading ? "—" : String(summary.invoices)} hint="Total cadastrado" icon={<Receipt size={20} />} tone="amber" />
-        <SummaryCard label="Pagamentos" value={loading ? "—" : String(summary.payments)} hint="Registros financeiros" icon={<CreditCard size={20} />} tone="emerald" />
-        <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
-        <SummaryCard label="Latência consolidada" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · mediana das últimas leituras`} icon={<Gauge size={20} />} tone="amber" />
-      </div>
-
-      </>)}
       {activeTab === "overview" && (
-        <section className="grid gap-3 md:grid-cols-3" aria-label="Resumo do monitoramento">
-          <button type="button" onClick={() => setActiveTab("systems")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
-            <div className="mb-3 flex items-center justify-between"><ShieldCheck className="text-emerald-600" size={23}/><ArrowRight className="text-slate-400" size={17}/></div>
-            <p className="text-xs font-semibold text-slate-500">Sistemas e alertas</p>
-            <b className="mt-1 block text-2xl font-semibold text-[#07182d]">{summary.online + summary.attention} <span className="text-sm text-slate-400">/ {items.length}</span></b>
-            <p className="mt-2 text-[11px] text-slate-500">{summary.offline} indisponíveis · {items.filter((item) => effectiveState(history,item) === "unconfigured").length} aguardando configuração</p>
-          </button>
-          <button type="button" onClick={() => setActiveTab("latency")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
-            <div className="mb-3 flex items-center justify-between"><Gauge className="text-blue-600" size={23}/><ArrowRight className="text-slate-400" size={17}/></div>
-            <p className="text-xs font-semibold text-slate-500">Latência dos sistemas configurados</p>
-            <b className="mt-1 block text-2xl font-semibold text-[#07182d]">{formatMs(summary.average)}</b>
-            <p className="mt-2 text-[11px] text-slate-500">Medições atualizadas a cada 60 segundos</p>
-          </button>
-          <button type="button" onClick={() => setActiveTab("storage")} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
-            <div className="mb-3 flex items-center justify-between"><HardDrive className="text-violet-600" size={23}/><ArrowRight className="text-slate-400" size={17}/></div>
-            <p className="text-xs font-semibold text-slate-500">Armazenamento Google Drive</p>
-            <b className="mt-1 block text-2xl font-semibold text-[#07182d]">{driveData ? `${driveData.usedGb.toFixed(2)} GB` : "—"}</b>
-            <p className="mt-2 text-[11px] text-slate-500">{driveError ? "Dados em cache · conferir integração" : "Arquivos e bancos acompanhados separadamente"}</p>
-          </button>
-        </section>
+        <div className="space-y-4">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label="Panorama operacional">
+            <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-700"><Activity size={24} /></div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-blue-600">Central de operações · MW TECH</p>
+                  <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">Panorama dos sistemas</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">Indicadores consolidados dos órgãos e sistemas selecionados nos filtros.</p>
+                  <p className="mt-2 flex items-center gap-2 text-[11px] text-slate-500"><Clock3 size={13} /> Última verificação: {lastChecked(visibleItems)} · atualização automática a cada 60 segundos</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 sm:min-w-[340px]">
+                <div className="rounded-xl bg-emerald-50 p-3"><p className="text-[10px] font-semibold text-emerald-700">Operacionais</p><p className="mt-1 text-2xl font-bold tabular-nums text-emerald-800">{loading ? "—" : summary.online}</p></div>
+                <div className="rounded-xl bg-amber-50 p-3"><p className="text-[10px] font-semibold text-amber-700">Em atenção</p><p className="mt-1 text-2xl font-bold tabular-nums text-amber-800">{loading ? "—" : summary.attention}</p></div>
+                <div className="rounded-xl bg-rose-50 p-3"><p className="text-[10px] font-semibold text-rose-700">Indisponíveis</p><p className="mt-1 text-2xl font-bold tabular-nums text-rose-800">{loading ? "—" : summary.offline}</p></div>
+              </div>
+            </div>
+            <div className="border-t border-slate-100 bg-slate-50/70 px-5 py-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs"><span className="font-semibold text-slate-700">Disponibilidade atual dos sistemas configurados</span><span className="font-bold tabular-nums text-slate-900">{loading ? "—" : `${operationalPercent}%`}</span></div>
+              <div className="flex h-2 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuenow={operationalPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Percentual dos sistemas em operação"><span className="bg-emerald-500 transition-all" style={{ width: `${totalSystems ? summary.online / totalSystems * 100 : 0}%` }} /><span className="bg-amber-400 transition-all" style={{ width: `${totalSystems ? summary.attention / totalSystems * 100 : 0}%` }} /></div>
+              <p className="mt-2 text-[10px] text-slate-500">Em atenção conta como acessível, mas exige acompanhamento. Sistemas sem configuração não são tratados como operacionais.</p>
+            </div>
+          </section>
+
+          <div className="flex flex-wrap items-end justify-between gap-2 pt-1">
+            <div><h3 className="text-base font-bold text-slate-900">Indicadores de utilização</h3><p className="text-xs text-slate-500">Totais retornados pelas integrações dos sistemas selecionados</p></div>
+            <span className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-500">{visibleItems.length} sistemas no filtro</span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <SummaryCard label="Sistemas em operação" value={loading ? "—" : `${summary.online + summary.attention}/${visibleItems.length}`} hint={summary.offline ? `${summary.offline} indisponível(is)` : summary.attention ? `${summary.attention} requer(em) atenção` : "Consulte os estados individuais"} icon={<ShieldCheck size={20} />} tone="blue" />
+            <SummaryCard label="Usuários cadastrados" value={loading ? "—" : String(summary.users)} hint={`${summary.activeUsers} habilitados`} icon={<UsersRound size={20} />} tone="emerald" />
+            <SummaryCard label="Processos" value={loading ? "—" : String(summary.processes)} hint="Total cadastrado" icon={<FileStack size={20} />} tone="violet" />
+            <SummaryCard label="Contratos" value={loading ? "—" : String(summary.contracts)} hint="Total cadastrado" icon={<FileText size={20} />} tone="slate" />
+            <SummaryCard label="Notas fiscais" value={loading ? "—" : String(summary.invoices)} hint="Total cadastrado" icon={<Receipt size={20} />} tone="amber" />
+            <SummaryCard label="Pagamentos" value={loading ? "—" : String(summary.payments)} hint="Registros financeiros" icon={<CreditCard size={20} />} tone="emerald" />
+            <SummaryCard label="Arquivos" value={loading ? "—" : String(summary.files)} hint="Arquivos registrados" icon={<HardDrive size={20} />} tone="violet" />
+            <SummaryCard label="Latência atual média" value={loading || summary.average === null ? "—" : `${summary.average} ms`} hint={`${currentLatencyQuality.label} · média das leituras estáveis`} icon={<Gauge size={20} />} tone="amber" />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,1fr)]">
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label="Situação por sistema">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div><h3 className="text-sm font-bold text-slate-900">Situação por sistema</h3><p className="mt-0.5 text-[11px] text-slate-500">Estado e tempo de resposta por aplicação</p></div>
+                <button type="button" onClick={() => setActiveTab("systems")} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline">Ver detalhes <ArrowRight size={14} /></button>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {visibleItems.length === 0 && <p className="px-5 py-8 text-center text-xs text-slate-500">Nenhum sistema corresponde aos filtros selecionados.</p>}
+                {visibleItems.map((item) => {
+                  const state = effectiveState(history,item);
+                  const ms = stableLatency(history,item);
+                  return <div key={item.key} className="flex flex-wrap items-center gap-3 px-5 py-3.5 sm:flex-nowrap">
+                    <span className={`size-2.5 shrink-0 rounded-full ${state === "online" ? "bg-emerald-500" : state === "attention" ? "bg-amber-500" : state === "offline" ? "bg-rose-500" : "bg-slate-300"}`} />
+                    <div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800">{item.name}</p><p className="mt-0.5 text-[10px] text-slate-500">{stateLabel(state)}</p></div>
+                    <span className="shrink-0 text-right text-xs font-bold tabular-nums text-slate-700">{formatMs(ms)}</span>
+                  </div>;
+                })}
+              </div>
+            </section>
+            <div className="space-y-4">
+              <button type="button" onClick={() => setActiveTab("latency")} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
+                <div><span className="flex items-center gap-2 text-xs font-semibold text-slate-500"><Gauge size={16} className="text-blue-600"/> Latência consolidada</span><b className="mt-2 block text-2xl font-bold text-slate-900">{formatMs(summary.average)}</b><p className="mt-1 text-[11px] text-slate-500">Ver histórico, picos e tempo de resposta</p></div><ArrowRight size={17} className="text-slate-400"/>
+              </button>
+              <button type="button" onClick={() => setActiveTab("storage")} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
+                <div><span className="flex items-center gap-2 text-xs font-semibold text-slate-500"><HardDrive size={16} className="text-violet-600"/> Armazenamento Google Drive</span><b className="mt-2 block text-2xl font-bold text-slate-900">{driveData ? `${driveData.usedGb.toFixed(2)} GB` : "—"}</b><p className="mt-1 text-[11px] text-slate-500">{driveError ? "Integração indisponível; exibindo dados em cache quando disponíveis" : "Ver uso e distribuição dos arquivos"}</p></div><ArrowRight size={17} className="text-slate-400"/>
+              </button>
+              <button type="button" onClick={() => setActiveTab("systems")} className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-blue-300 hover:shadow-md">
+                <div><span className="flex items-center gap-2 text-xs font-semibold text-slate-500"><AlertTriangle size={16} className="text-amber-600"/> Alertas e verificações</span><b className="mt-2 block text-2xl font-bold text-slate-900">{summary.attention + summary.offline} <span className="text-xs font-medium text-slate-500">sistemas exigem atenção</span></b><p className="mt-1 text-[11px] text-slate-500">Abrir diagnóstico detalhado</p></div><ArrowRight size={17} className="text-slate-400"/>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {activeTab === "latency" && (<>
       <section className="mw-monitor-panel overflow-hidden rounded-3xl shadow-sm">
