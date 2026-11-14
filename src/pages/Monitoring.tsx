@@ -635,7 +635,7 @@ export default function Monitoring() {
       <nav className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 xl:grid-cols-4" aria-label="Seções do monitoramento">
         {([
           {key:"overview",label:"Visão geral",hint:"Indicadores principais",icon:Activity},
-          {key:"latency",label:"Latência",hint:"Ping e histórico",icon:Gauge},
+          {key:"latency",label:"Latência",hint:"Resposta HTTP e histórico",icon:Gauge},
           {key:"storage",label:"Armazenamento",hint:"Drive e Supabase",icon:HardDrive},
           {key:"systems",label:"Sistemas e alertas",hint:"Órgãos e detalhes",icon:Server},
         ] as const).map(({key,label,hint,icon:Icon}) => (
@@ -735,7 +735,7 @@ export default function Monitoring() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="mp-muted mt-2 text-[11px]">Escala vertical ajustada para visualizar leituras baixas e picos no mesmo gráfico; os valores medidos permanecem reais. Picos acima de 800 ms merecem acompanhamento.</p>
+            <p className="mp-muted mt-2 text-[11px]">Tempo de resposta HTTP medido a partir da infraestrutura da Vercel. Pode ser diferente do tempo visto no seu navegador e do ping ICMP. Picos acima de 800 ms merecem acompanhamento.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
                 <span key={item.key} className="mp-muted flex items-center gap-2 text-xs"><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color }} />{systemChartLabel(item)}</span>
@@ -779,7 +779,8 @@ export default function Monitoring() {
                     <div className="mp-gauge-ring mp-gauge-animated" style={{ "--gauge-color": color, "--gauge-angle": `${value * 180 / gaugeMax}deg` } as CSSProperties} />
                     <div className="mp-gauge-value">{formatMs(current)}</div>
                   </div>
-                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Latência atual</span><span>1.000 ms</span></div>
+                  <div className="mp-muted flex justify-between text-[10px]"><span>0 ms</span><span>Resposta HTTP</span><span>1.000 ms</span></div>
+                  <p className="mp-muted mt-2 text-center text-[10px]">Verificação feita pela Vercel, não é ping ICMP{item.metrics?.appStatusCode ? ` · HTTP ${item.metrics.appStatusCode}` : ""}</p>
                 </div>
               );
             })}
