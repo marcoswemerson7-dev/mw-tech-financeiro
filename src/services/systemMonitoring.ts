@@ -18,6 +18,8 @@ export type MonitoringMetrics = {
   appState?: HealthState;
   appCheckedAt?: string;
   appStatusCode?: number | null;
+  appCacheStatus?: string | null;
+  appCacheAgeSeconds?: number | null;
   processes: number | null;
   contracts: number | null;
   users: number | null;
