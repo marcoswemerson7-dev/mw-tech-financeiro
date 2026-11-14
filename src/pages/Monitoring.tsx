@@ -848,8 +848,9 @@ export default function Monitoring() {
                     <div><p className="mp-muted text-[9px] uppercase">Média</p><b className="mp-title text-xs tabular-nums">{formatMs(avg)}</b></div>
                     <div><p className="mp-muted text-[9px] uppercase">Máximo</p><b className="mp-title text-xs tabular-nums">{formatMs(max)}</b></div>
                   </div>
-                  <p className="mp-muted mt-2 flex flex-wrap justify-between gap-2 text-[10px]"><span>HTTP {item.metrics?.appStatusCode ?? "—"} · conexão reutilizada</span><span>{readings.length} leituras</span></p>
-                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-[10px]">Primeira conexão: {formatMs(item.metrics.appColdLatencyMs)}</p>}
+                  <p className="mp-muted mt-2 flex flex-wrap justify-between gap-2 text-[10px]"><span>HTTP {item.metrics?.appStatusCode ?? "—"} · 2ª requisição</span><span>{readings.length} leituras</span></p>
+                  {typeof item.metrics?.appColdLatencyMs === "number" && <p className="mp-muted mt-1 text-[10px]">1ª requisição: {formatMs(item.metrics.appColdLatencyMs)}</p>}
+                  {item.metrics?.appCacheStatus && <p className="mp-muted mt-1 text-[10px]">Cache CDN: {item.metrics.appCacheStatus}{typeof item.metrics.appCacheAgeSeconds === "number" && Number.isFinite(item.metrics.appCacheAgeSeconds) ? ` · idade ${item.metrics.appCacheAgeSeconds}s` : ""}</p>}
                 </button>;
               })}
             </div>
