@@ -104,6 +104,8 @@ async function probeOnce(url: string) {
       ok: response.ok,
       latencyMs: Math.round(performance.now() - started),
       statusCode: response.status,
+      cacheStatus: response.headers.get("x-vercel-cache") || response.headers.get("cf-cache-status") || null,
+      cacheAgeSeconds: response.headers.has("age") ? Number(response.headers.get("age")) : null,
     };
   } finally {
     clearTimeout(timeout);
@@ -123,6 +125,8 @@ async function probeApplication(url: string) {
       appState: "offline",
       appCheckedAt: checkedAt,
       appStatusCode: initial.statusCode,
+      appCacheStatus: initial.cacheStatus,
+      appCacheAgeSeconds: initial.cacheAgeSeconds,
     };
 
     let warm = initial;
@@ -137,6 +141,8 @@ async function probeApplication(url: string) {
       appState: warm.ok ? (warm.latencyMs > 800 ? "attention" : "online") : "offline",
       appCheckedAt: checkedAt,
       appStatusCode: warm.statusCode,
+      appCacheStatus: warm.cacheStatus,
+      appCacheAgeSeconds: warm.cacheAgeSeconds,
     };
   } catch {
     return {
@@ -145,6 +151,8 @@ async function probeApplication(url: string) {
       appState: "offline",
       appCheckedAt: checkedAt,
       appStatusCode: null,
+      appCacheStatus: null,
+      appCacheAgeSeconds: null,
     };
   }
 }
