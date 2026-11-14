@@ -35,6 +35,18 @@ export default function IncidentNotifier(){
         const set=new Set(seen);
         const fresh=active.filter(item=>!set.has(item.id));
         if(initialized.current && fresh.length){
+          const frota = fresh.find((item) => item.id === "health:camara_frota:latency-sustained");
+          if (frota) {
+            window.dispatchEvent(new CustomEvent("mw-tech-toast", {
+              detail: {
+                title: "Alerta de latência · Gestão Frota Câmara",
+                message: frota.message,
+                kind: "error",
+                actionHref: "/monitoramento/incidentes",
+                actionLabel: "Ver incidente",
+              },
+            }));
+          }
           const critical=fresh.filter(item=>item.severity==="critical");
           if(critical.length) playAlertTone();
           if("Notification" in window && Notification.permission==="granted"){
