@@ -866,7 +866,7 @@ export default function Monitoring() {
               <div className="mp-performance-stats rounded-xl p-3"><h4 className="mp-title mb-2 text-xs font-bold">Infraestrutura e HTTP</h4><p className="mp-muted text-xs">Provedor: {detailItem.provedor || "Não informado"}</p><p className="mp-muted mt-2 text-xs">HTTP: {detailItem.metrics?.appStatusCode ?? "Indisponível"}</p><p className="mp-muted mt-2 text-xs">Primeira requisição: {formatMs(detailItem.metrics?.appColdLatencyMs ?? null)}</p><p className="mp-muted mt-2 text-xs">Verificado em: {detailItem.app.checkedAt ? new Date(detailItem.app.checkedAt).toLocaleString("pt-BR") : "—"}</p></div></div>
               <div className="mp-performance-stats mt-3 rounded-xl p-3"><p className="mp-title text-xs font-semibold">Histórico da janela selecionada</p><p className="mp-muted mt-1 text-xs">{chartHistory.filter(p => typeof p[detailItem.key] === "number").length} leituras · {chartHistory.filter(p => typeof p[detailItem.key] === "number" && (p[detailItem.key] as number) > 800).length} acima de 800 ms</p><p className="mp-muted mt-2 text-[11px]">Disponibilidade histórica e taxa de erros exigem monitoramento persistente; o histórico exibido é local deste navegador.</p></div>
               <button type="button" className="mp-range mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs" onClick={() => setActiveTab("systems")}>Ver dados completos <ArrowRight size={14}/></button>
-            </section>
+            </section>}
           </div>
         </div>
       </section>
