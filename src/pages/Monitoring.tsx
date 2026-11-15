@@ -616,7 +616,7 @@ export default function Monitoring() {
   const detailStats = detailItem ? chartStats.find(stat => stat.item.key === detailItem.key) : null;
   const formatMs = (value: number | null) => value === null ? "—" : `${value} ms`;
   return (
-    <div className="mx-auto w-full max-w-[1480px] space-y-5">
+    <div className="mw-monitor-mobile mx-auto w-full min-w-0 max-w-[1480px] space-y-5">
       <PageHeader
         title="Monitoramento dos sistemas"
         subtitle="Visão consolidada dos sistemas dos órgãos atendidos pela MW TECH."
@@ -636,7 +636,7 @@ export default function Monitoring() {
         }
       />
 
-      <section className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <section className="mp-mobile-filters flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
         <div className="mr-2 flex items-center gap-2 text-sm font-semibold text-[#07182d]"><span className="grid size-8 place-items-center rounded-lg bg-blue-50 text-blue-700"><Filter size={16} /></span> Filtros do monitoramento</div>
         <select value={orgFilter} onChange={(event) => setOrgFilter(event.target.value)} className="min-w-[175px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
           <option value="todos">Todos os órgãos</option>
@@ -650,7 +650,7 @@ export default function Monitoring() {
       </section>
 
 
-      <nav className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 xl:grid-cols-4" aria-label="Seções do monitoramento">
+      <nav className="mp-mobile-nav grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-2 xl:grid-cols-4" aria-label="Seções do monitoramento">
         {([
           {key:"overview",label:"Visão geral",hint:"Indicadores principais",icon:Activity},
           {key:"latency",label:"Latência",hint:"Resposta HTTP e histórico",icon:Gauge},
@@ -740,7 +740,7 @@ export default function Monitoring() {
       )}
       {activeTab === "latency" && (<>
       <section className="mw-monitor-panel overflow-hidden rounded-3xl shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b mp-divider px-5 py-5">
+        <div className="mp-latency-header flex flex-wrap items-center justify-between gap-4 border-b mp-divider px-5 py-5">
           <div className="flex items-center gap-3">
             <span className="grid size-11 place-items-center rounded-2xl mp-card text-amber-500"><Gauge size={22} /></span>
             <div>
@@ -748,9 +748,9 @@ export default function Monitoring() {
               <p className="mp-muted text-xs">Medições reais a cada 60 segundos · {chartHistory.length} leituras na janela selecionada</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mp-latency-controls flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => {setIsolatedLatencySystem(null); setFocusedLatencySystem(null);}} className="mp-range mp-show-all rounded-lg px-3 py-2 text-xs font-semibold"><Activity size={14} className="mr-1 inline-block"/> Mostrar todos</button>
-          <div className="flex flex-wrap gap-1" aria-label="Período do gráfico">
+          <div className="mp-period-controls flex flex-wrap gap-1" aria-label="Período do gráfico">
             {[5, 30, 60, 360, 1440].map((range) => (
               <button key={range} type="button" aria-pressed={chartRange === range} onClick={() => setChartRange(range)}
                 className="mp-range rounded-lg px-3 py-2 text-xs font-medium transition-colors">
@@ -799,14 +799,14 @@ export default function Monitoring() {
               </ResponsiveContainer>
             </div>
             <p className="mp-muted mt-2 text-[11px]">Duas requisições HTTP sequenciais medidas pela Vercel. A segunda pode aproveitar uma conexão existente, mas a reutilização não é garantida. Não mede ping ICMP nem carregamento da tela.</p>
-            <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
+            <div className="mp-mobile-legend mt-2 flex flex-wrap justify-center gap-x-5 gap-y-2">
               {chartStats.map(({ item, color }) => (
                 <button type="button" key={item.key} aria-pressed={isolatedLatencySystem === item.key} onClick={() => setIsolatedLatencySystem(prev => prev === item.key ? null : item.key)} onMouseEnter={() => setFocusedLatencySystem(item.key)} onMouseLeave={() => setFocusedLatencySystem(null)} className={`mp-legend-option mp-muted flex items-center gap-2 rounded-lg px-2 py-1 text-xs ${isolatedLatencySystem === item.key ? "mp-legend-active" : ""}`}><i className="mp-latency-dot relative size-3 rounded-full" style={{ backgroundColor: color,color }} />{systemChartLabel(item)}</button>
               ))}
             </div>
           </div>
           <div className="flex min-w-0 flex-col gap-3">
-            <div className="mp-card overflow-x-auto rounded-2xl p-3">
+            <div className="mp-card mp-mobile-metrics overflow-x-auto rounded-2xl p-3">
               <table className="w-full text-left text-[11px]">
                 <thead><tr className="mp-muted border-b mp-divider"><th className="pb-3 font-semibold">Sistema</th><th className="pb-3 font-semibold">Atual</th><th className="pb-3 font-semibold">Mín</th><th className="pb-3 font-semibold">Máx</th><th className="pb-3 font-semibold">Média</th></tr></thead>
                 <tbody>{chartStats.map(({ item, color, current, min, max, avg }) => (
@@ -833,7 +833,7 @@ export default function Monitoring() {
           </div>
           <div className="xl:col-span-2">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <div><h3 className="mp-title text-sm font-bold">Desempenho por sistema</h3><p className="mp-muted text-xs">Passe o mouse para destacar · clique em um cartão para analisar</p></div>
+              <div><h3 className="mp-title text-sm font-bold">Desempenho por sistema</h3><p className="mp-muted text-xs">Toque ou clique em um cartão para analisar</p></div>
               <button type="button" onClick={() => {setIsolatedLatencySystem(null);setDetailLatencySystem(null);}} className="mp-range rounded-lg px-3 py-2 text-[11px]">Mostrar todos</button>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
