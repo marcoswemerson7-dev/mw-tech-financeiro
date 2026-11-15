@@ -265,3 +265,60 @@ html.mw-dark .mw-monitor-panel .mp-performance-stats{background:rgba(5,17,29,.45
  .mw-monitor-panel .mp-market-chart .mp-live-pulse.recharts-area-curve,
  .mw-monitor-panel .mp-market-chart path.mp-live-pulse{animation:none!important;opacity:0}
 }
+
+/* Visible bidirectional sweep across the LIVE latency chart. The sweep is decorative;
+   sampled values and axis positions remain tied to actual HTTP measurements. */
+.mw-monitor-panel .mp-market-chart .mp-chart-scan {
+  z-index: 6;
+  width: 4px;
+  top: 7px;
+  bottom: 28px;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(125,211,252,.95) 18%, #38bdf8 50%, rgba(125,211,252,.95) 82%, transparent 100%);
+  box-shadow: 0 0 10px 3px rgba(56,189,248,.65), 0 0 30px 7px rgba(59,130,246,.24);
+  animation: mw-visible-chart-pingpong 3s ease-in-out infinite alternate !important;
+  will-change: left;
+}
+.mw-monitor-panel .mp-market-chart .mp-chart-scan::before {
+  right: 3px;
+  width: 75px;
+  background: linear-gradient(to left, rgba(56,189,248,.20), rgba(59,130,246,.06) 45%, transparent);
+}
+.mw-monitor-panel .mp-market-chart .mp-chart-scan-dot {
+  width: 13px;
+  height: 13px;
+  top: 48%;
+  left: -5px;
+  background: #7dd3fc;
+  border: 2px solid white;
+  box-shadow: 0 0 0 6px rgba(56,189,248,.25), 0 0 22px 6px rgba(56,189,248,.72);
+}
+@keyframes mw-visible-chart-pingpong {
+  from { left: 2%; }
+  to { left: 97%; }
+}
+/* Animate the curve highlights in both directions, not the underlying real readings. */
+.mw-monitor-panel .mp-market-chart .mp-live-pulse.recharts-area-curve,
+.mw-monitor-panel .mp-market-chart .mp-live-pulse path.recharts-area-curve,
+.mw-monitor-panel .mp-market-chart path.mp-live-pulse {
+  stroke-dasharray: 22 20 !important;
+  stroke-opacity: 1 !important;
+  animation: mw-visible-curve-tracer 3s linear infinite alternate !important;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+@keyframes mw-visible-curve-tracer {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -84; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-monitor-panel .mp-market-chart .mp-chart-scan,
+  .mw-monitor-panel .mp-market-chart .mp-live-pulse.recharts-area-curve,
+  .mw-monitor-panel .mp-market-chart .mp-live-pulse path.recharts-area-curve,
+  .mw-monitor-panel .mp-market-chart path.mp-live-pulse {
+    animation: none !important;
+  }
+  .mw-monitor-panel .mp-market-chart .mp-chart-scan,
+  .mw-monitor-panel .mp-market-chart .mp-live-pulse {
+    opacity: 0;
+  }
+}
