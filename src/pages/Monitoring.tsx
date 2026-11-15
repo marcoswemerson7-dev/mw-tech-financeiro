@@ -763,7 +763,10 @@ export default function Monitoring() {
         <div className="grid gap-3 p-4 xl:grid-cols-[minmax(0,1fr)_330px]">
           <div className="mp-card min-w-0 rounded-2xl p-3">
             <div className="mp-market-chart relative h-[260px] w-full overflow-hidden">
-              <div className="mp-chart-scan" aria-hidden="true"><span className="mp-chart-scan-dot" /></div>
+              {/* Independent moving sweep: stays animated even when Recharts has no new readings. */}
+              <div className="mp-live-sweep-track" aria-hidden="true">
+                <div className="mp-live-sweep-beam"><span className="mp-live-sweep-orb" /></div>
+              </div>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartHistory} margin={{ top: 12, right: 12, left: 0, bottom: 5 }}>
                   <defs>
