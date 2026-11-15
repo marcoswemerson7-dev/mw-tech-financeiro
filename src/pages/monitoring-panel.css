@@ -254,11 +254,11 @@ html.mw-dark .mw-monitor-panel .mp-performance-stats{background:rgba(5,17,29,.45
 .mw-monitor-panel .mp-market-chart path.mp-live-pulse{
   stroke-linecap:round!important;
   stroke-dasharray:5 20!important;
-  animation:mw-latency-moving-stroke 2.2s linear infinite!important;
+  animation:mw-latency-moving-stroke 4s ease-in-out infinite alternate!important;
   filter:drop-shadow(0 0 4px currentColor);
   pointer-events:none;
 }
-@keyframes mw-latency-moving-stroke{from{stroke-dashoffset:0}to{stroke-dashoffset:-50}}
+@keyframes mw-latency-moving-stroke{from{stroke-dashoffset:0}to{stroke-dashoffset:-100}}
 @media(prefers-reduced-motion:reduce){
  .mw-monitor-panel .mp-diagnostic{animation:none}
  .mw-monitor-panel .mp-market-chart .mp-live-pulse path.recharts-area-curve,
