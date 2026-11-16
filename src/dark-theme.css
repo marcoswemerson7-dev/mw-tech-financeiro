@@ -141,3 +141,74 @@ html.mw-dark .mw-finance-dashboard [class*="text-slate-400"]{color:#b6c8d5!impor
 html.mw-dark .mw-finance-dashboard [class*="text-[#245477"]{color:#9ed1ff!important}
 html.mw-dark .mw-finance-dashboard .mw-dark-card :is(a,button):focus-visible{outline:2px solid #d7a23a!important;outline-offset:2px}
 }
+
+/* Refinamento de contraste do painel executivo: 2026-11-16.
+   Somente interface escura; a aparência clara e os PDFs não são afetados. */
+@media screen {
+  html.mw-dark {
+    --mw-bg:#090f18;
+    --mw-card:#131f2c;
+    --mw-card-2:#1b2d3d;
+    --mw-border:#30465a;
+    --mw-text:#eef5fb;
+    --mw-muted:#acbfd0;
+  }
+  html.mw-dark .mw-finance-dashboard {
+    color:var(--mw-text);
+  }
+  html.mw-dark .mw-finance-dashboard .mw-dark-card {
+    background:#131f2c!important;
+    border-color:#31465a!important;
+    color:#eef5fb!important;
+    box-shadow:0 5px 24px rgba(0,0,0,.10)!important;
+  }
+  html.mw-dark .mw-finance-dashboard .mw-dark-inner,
+  html.mw-dark .mw-finance-dashboard [class*="mw-dark-inner/"] {
+    background:#1b2d3d!important;
+    border-color:#375066!important;
+    color:#edf5fc!important;
+  }
+  html.mw-dark .mw-finance-dashboard [class*="mw-dark-inner/"] :is(p,span,small),
+  html.mw-dark .mw-finance-dashboard .mw-dark-inner :is(p,span,small) {
+    color:inherit;
+  }
+  html.mw-dark .mw-finance-dashboard [class*="text-[#18324d"],
+  html.mw-dark .mw-finance-dashboard [class*="text-[#17324d"],
+  html.mw-dark .mw-finance-dashboard [class*="text-[#0b2239"],
+  html.mw-dark .mw-finance-dashboard [class*="text-[#334155"] {
+    color:#edf5fc!important;
+  }
+  html.mw-dark .mw-finance-dashboard [class*="text-slate-400"],
+  html.mw-dark .mw-finance-dashboard [class*="text-slate-500"],
+  html.mw-dark .mw-finance-dashboard [class*="text-slate-600"] {
+    color:#afc2d2!important;
+  }
+  html.mw-dark .mw-finance-dashboard [class*="bg-blue-50"] {
+    background:#213c58!important;
+    color:#98cbff!important;
+  }
+  html.mw-dark .mw-finance-dashboard [class*="text-blue-600"] {
+    color:#9ad1ff!important;
+  }
+  /* As linhas do Drive e de Sistemas e Órgãos não podem voltar ao branco. */
+  html.mw-dark .mw-finance-dashboard .mw-dark-inner.bg-slate-50,
+  html.mw-dark .mw-finance-dashboard [class*="mw-dark-inner/"].bg-slate-50 {
+    background:#1b2d3d!important;
+  }
+  html.mw-dark .mw-finance-dashboard .mw-dark-inner:hover,
+  html.mw-dark .mw-finance-dashboard [class*="mw-dark-inner/"]:hover {
+    background:#253c50!important;
+  }
+  html.mw-dark .mw-finance-dashboard a.mw-dark-card:hover {
+    border-color:#6889a2!important;
+    background:#192b3b!important;
+  }
+  html.mw-dark .mw-finance-dashboard .recharts-tooltip-wrapper,
+  html.mw-dark .mw-finance-dashboard .recharts-default-tooltip {
+    color:#eef5fb!important;
+  }
+  html.mw-dark .mw-finance-dashboard :is(a,button):focus-visible {
+    outline:2px solid #e5b45d!important;
+    outline-offset:2px;
+  }
+}
