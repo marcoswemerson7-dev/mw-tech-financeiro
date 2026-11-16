@@ -275,10 +275,10 @@ function DriveCard({ data, loading, error, refresh }: { data: DriveStorageUsage 
           <div className="mb-2 flex items-center justify-between"><p className="text-[11px] font-medium text-[#18324d]">Pastas monitoradas</p><span className="text-[10px] text-slate-400">{folders.length} pasta{folders.length === 1 ? "" : "s"}</span></div>
           <div className="space-y-2">
             {folders.length ? folders.slice(0, 3).map((folder) => (
-              <div key={folder.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 mw-dark-inner/80 px-3 py-2.5">
+              <div key={folder.id} className="mw-drive-folder-row flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600"><Folder size={16} /></span>
-                <div className="min-w-0 flex-1"><p className="truncate text-[11px] font-medium text-[#17324d]">{folder.name}</p><p className="mt-0.5 text-[10px] text-slate-400">{folder.files} arquivos • {folder.folders} pastas</p></div>
-                <span className="text-[11px] font-semibold text-[#17324d]">{folder.usedGb.toFixed(2)} GB</span>
+                <div className="min-w-0 flex-1"><p className="mw-drive-folder-name truncate text-[11px] font-medium text-[#17324d]">{folder.name}</p><p className="mw-drive-folder-meta mt-0.5 text-[10px] text-slate-400">{folder.files} arquivos • {folder.folders} pastas</p></div>
+                <span className="mw-drive-folder-size text-[11px] font-semibold text-[#17324d]">{folder.usedGb.toFixed(2)} GB</span>
                 <MoreHorizontal size={14} className="text-slate-400" />
               </div>
             )) : <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-[11px] text-slate-400">Nenhuma pasta monitorada.</div>}
