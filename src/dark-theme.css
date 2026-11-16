@@ -212,3 +212,31 @@ html.mw-dark .mw-finance-dashboard .mw-dark-card :is(a,button):focus-visible{out
     outline-offset:2px;
   }
 }
+
+/* Google Drive: seletor dedicado, sem depender de nomes Tailwind com "/". */
+@media screen {
+  html.mw-dark body #root main .mw-finance-dashboard .mw-drive-folder-row {
+    background-color:#1b2d3d!important;
+    background-image:none!important;
+    border:1px solid #3a5165!important;
+    color:#edf5fc!important;
+    box-shadow:none!important;
+    transition:background-color .18s ease,border-color .18s ease;
+  }
+  html.mw-dark body #root main .mw-finance-dashboard .mw-drive-folder-row:hover {
+    background-color:#253c50!important;
+    border-color:#66859a!important;
+  }
+  html.mw-dark body #root main .mw-finance-dashboard .mw-drive-folder-row .mw-drive-folder-name,
+  html.mw-dark body #root main .mw-finance-dashboard .mw-drive-folder-row .mw-drive-folder-size {
+    color:#f2f7fc!important;
+    opacity:1!important;
+  }
+  html.mw-dark body #root main .mw-finance-dashboard .mw-drive-folder-row .mw-drive-folder-meta {
+    color:#b9ccdb!important;
+    opacity:1!important;
+  }
+  html.mw-dark body #root main .mw-finance-dashboard .mw-drive-folder-row > svg {
+    color:#a8bfd2!important;
+  }
+}
